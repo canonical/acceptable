@@ -21,9 +21,8 @@ class EndpointMapTestCase(TestCase):
         view = object()
 
         m.add_view('1.0', None, view)
-        observed = m.get_view('1.0')
 
-        self.assertEqual(observed, view)
+        self.assertEqual(view, m.get_view('1.0'))
 
     def test_version_upgrade(self):
         # If we can't satisfy the version requirement we'll return a
@@ -32,9 +31,8 @@ class EndpointMapTestCase(TestCase):
         view = object()
 
         m.add_view('1.2', None, view)
-        observed = m.get_view('1.1')
 
-        self.assertEqual(observed, view)
+        self.assertEqual(view, m.get_view('1.1'))
 
     def test_flagged_view(self):
         # Test an exact match with flags:
@@ -45,11 +43,8 @@ class EndpointMapTestCase(TestCase):
         m.add_view('1.0', None, normal_view)
         m.add_view('1.0', 'flag', flagged_view)
 
-        observed_normal = m.get_view('1.0')
-        observed_flagged = m.get_view('1.0', 'flag')
-
-        self.assertEqual(observed_normal, normal_view)
-        self.assertEqual(observed_flagged, flagged_view)
+        self.assertEqual(normal_view, m.get_view('1.0'))
+        self.assertEqual(flagged_view, m.get_view('1.0', 'flag'))
 
     def test_flagged_downgrade(self):
         # If we can't satisfy the flag request we'll ignore it:
@@ -57,9 +52,8 @@ class EndpointMapTestCase(TestCase):
         normal_view = object()
 
         m.add_view('1.0', None, normal_view)
-        observed_view = m.get_view('1.0', 'flag')
 
-        self.assertEqual(observed_view, normal_view)
+        self.assertEqual(normal_view, m.get_view('1.0', 'flag'))
 
     def test_does_not_version_downgrade(self):
         # if we can't satisfy the version request we won't downgrade to
@@ -68,9 +62,8 @@ class EndpointMapTestCase(TestCase):
         view = object()
 
         m.add_view('1.2', None, view)
-        observed = m.get_view('1.3')
 
-        self.assertEqual(observed, None)
+        self.assertEqual(None, m.get_view('1.3'))
 
     def test_version_upgrde_is_smallest_increment(self):
         # If we can't satisfy the exact version requested, give the
@@ -84,8 +77,7 @@ class EndpointMapTestCase(TestCase):
         m.add_view('1.2', None, view12)
         m.add_view('1.3', None, view13)
 
-        observed = m.get_view('1.0')
-        self.assertEqual(observed, view11)
+        self.assertEqual(view11, m.get_view('1.0'))
 
 
 class EndpointMapTypeCheckingTests(TestWithScenarios):
