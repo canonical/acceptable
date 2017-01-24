@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/canonical-ols/acceptable.svg?branch=master)](https://travis-ci.org/canonical-ols/acceptable)
+
 # acceptable
 
 Acceptable combines API versioning and API flags to make developing a
