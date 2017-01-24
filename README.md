@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/canonical-ols/acceptable.svg?branch=master)](https://travis-ci.org/canonical-ols/acceptable)
-
+[![Coverage Status](https://coveralls.io/repos/github/canonical-ols/acceptable/badge.svg?branch=master)](https://coveralls.io/github/canonical-ols/acceptable?branch=master)
 # acceptable
 
 Acceptable combines API versioning and API flags to make developing a
