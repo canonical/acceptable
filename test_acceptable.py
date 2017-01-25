@@ -105,9 +105,9 @@ class EndpointMapTypeCheckingTests(TestWithScenarios):
             'expected_error': "Major version number is not an integer",
         }),
         ('bad minor version', {
-            'args': ('one.2', None, None),
+            'args': ('1.two', None, None),
             'exception': ValueError,
-            'expected_error': "Major version number is not an integer",
+            'expected_error': "Minor version number is not an integer",
         }),
     ]
 
