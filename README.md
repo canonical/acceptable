@@ -30,8 +30,8 @@ The acceptable library helps developers provide a predictable API to clients.
 It does this by requiring developers to annotate views with two pieces of
 information:
 
- 1) The version number the view was introduced at.
- 2) The API Flag (if any) that the view is present under.
+ 1. The version number the view was introduced at.
+ 2. The API Flag (if any) that the view is present under.
 
 
 ### Version Numbers
