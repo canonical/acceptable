@@ -51,6 +51,7 @@ class AcceptableService:
         """
         api = AcceptableAPI(self)
         name = '%s.%s' % (self.vendor, url)
+        name += ','.join(options.get('methods', []))
         if self._flask_app is None:
             self._late_registrations.append((url, name, api, options))
         else:

@@ -12,7 +12,6 @@ from testtools.matchers import (
     Contains,
     Equals,
     Matcher,
-    Mismatch,
 )
 
 from acceptable import (
@@ -232,6 +231,23 @@ class AcceptableAPITestCase(TestCase):
         resp = client.get('/new')
 
         self.assertThat(resp, IsResponse("new view"))
+
+        def test_can_reuse_url_with_different_method(self):
+            fixture = self.useFixture(SimpleAPIServiceFixture())
+
+            # /foo already exists as a POST endpoint, we should be able to
+            # create another /foo API with a GET endpoint.
+            foo_get_api = fixture.service.api('/foo', methods=['GET'])
+
+            @foo_get_api.view(introduced_at='1.0')
+            def get_foo():
+                return "Foo GET API"
+
+            client = fixture.app.test_client()
+            resp_get = client.get('/foo')
+
+            self.assertThat(resp_get, IsResponse("Foo GET API"))
+
 
 class EndpointMapTestCase(TestCase):
 
