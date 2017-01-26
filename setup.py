@@ -29,7 +29,7 @@ setup(
     author='Canonical Online Services',
     author_email='online-services@lists.canonical.com',
     license='LGPLv3',
-    py_module=['acceptable'],
+    packages=['acceptable'],
     install_requires=parse_requirements_file('requirements.txt'),
     test_suite='test_acceptable',
     tests_require=parse_requirements_file('requirements-dev.txt')
