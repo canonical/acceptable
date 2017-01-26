@@ -18,15 +18,28 @@ class AcceptableService:
     instance of this class is required to create an API endpoint.
     """
 
-    def __init__(self, vendor, flask_app):
+    def __init__(self, vendor, flask_app=None):
         """Create an instance of AcceptableService.
 
         :param vendor: The vendor string. Must not contain spaces or
             punctuation.
-        :param flask_app: an instance of flask.Flask.
+        :param flask_app: an instance of flask.Flask. If not specified, the
+            'initialise' method must be called before any of the API endpoints
+            will be registered in the Flask URL route.
+        :raises ValueError: If the vendor string contains spaces or
+            punctuation.
+        :raises TypeError: If the vendor string is something other than a
+            string.
         """
+        if not isinstance(vendor, str):
+            raise TypeError(
+                "vendor must be a string, not %s" % type(vendor).__name__)
+        if not vendor.isalpha():
+            raise ValueError("vendor identifier must consist of alphanumeric "
+                             "characters only.")
         self.vendor = vendor
         self._flask_app = flask_app
+        self._late_registrations = []
 
     def api(self, url, **options):
         """Add a URL endpoint.
@@ -37,8 +50,29 @@ class AcceptableService:
         """
         api = AcceptableAPI(self)
         name = '%s.%s' % (self.vendor, url)
-        self._flask_app.add_url_rule(url, name, view_func=api, **options)
+        if self._flask_app is None:
+            self._late_registrations.append((url, name, api, options))
+        else:
+            self._flask_app.add_url_rule(url, name, view_func=api, **options)
         return api
+
+    def initialise(self, flask_app):
+        """Initialise the API.
+
+        This method initialises the API for the cases where no flask
+        application was passed to AcceptableService.__init__.
+
+        Calling this method after the service has already been initialised
+        (either by calling this method previously, or by passing a flask
+        application to the initialiser) will cause a ValueError to be raised.
+        """
+        if self._flask_app is not None:
+            raise ValueError(
+                "AcceptableService has already been initialised.")
+        self._flask_app = flask_app
+        while self._late_registrations:
+            url, name, api, options = self._late_registrations.pop()
+            self._flask_app.add_url_rule(url, name, view_func=api, **options)
 
 
 class AcceptableAPI:
@@ -51,6 +85,8 @@ class AcceptableAPI:
         # find the correct version / tagged view and call it.
         version, flag = parse_accept_headers(
             self.service.vendor, request.accept_mimetypes.values())
+        if version is None:
+            version = EndpointMap.DefaultView
         view = self.endpoint_map.get_view(version, flag)
         if view:
             return view(*args, **kwargs)
@@ -61,11 +97,16 @@ class AcceptableAPI:
 
     def view(self, introduced_at, flag=None):
         assert isinstance(introduced_at, str)
-        assert isinstance(flag, str)
+        assert isinstance(flag, (str, type(None)))
 
         def wrapper(fn):
-            self.endpoint_map.add_view(introduced_at, flag, fn)
+            self.register_view(introduced_at, flag, fn)
         return wrapper
+
+    def register_view(self, introduced_at, flag, view_fn):
+        assert isinstance(introduced_at, str)
+        assert isinstance(flag, (str, type(None)))
+        self.endpoint_map.add_view(introduced_at, flag, view_fn)
 
 
 def parse_accept_headers(vendor, header_values):
@@ -109,6 +150,10 @@ class EndpointMap:
     applies semantic meaning to the 'keys' listed above.
     """
 
+    # The DefaultView sentinel represents whatever is the default version of
+    # a view:
+    DefaultView = object()
+
     def __init__(self):
         self._map = {}
 
@@ -125,6 +170,9 @@ class EndpointMap:
 
         versionmap = self._map.get(flag, {})
         # An exact match is easy:
+        if version == EndpointMap.DefaultView:
+            latest_version = sorted(versionmap.keys(), reverse=True)[0]
+            return versionmap[latest_version]
         if version in versionmap:
             return versionmap[version]
         # no exact match found, iterate over available versions
@@ -146,15 +194,16 @@ def _check_version_and_flag_types(version, flag):
     if not isinstance(flag, (str, type(None))):
         raise TypeError(
             "Flag must be a string or None, not %s" % type(flag).__name__)
-    if not isinstance(version, str):
-        raise TypeError(
-            "Version must be a string, not %s" % type(version).__name__)
-    try:
-        major, minor = version.split('.')
-    except ValueError:
-        raise ValueError("Version must be in the format <major>.<minor>")
-    else:
-        if not major.isdecimal():
-            raise ValueError("Major version number is not an integer.")
-        if not minor.isdecimal():
-            raise ValueError("Minor version number is not an integer.")
+    if version != EndpointMap.DefaultView:
+        if not isinstance(version, str):
+            raise TypeError(
+                "Version must be a string, not %s" % type(version).__name__)
+        try:
+            major, minor = version.split('.')
+        except ValueError:
+            raise ValueError("Version must be in the format <major>.<minor>")
+        else:
+            if not major.isdecimal():
+                raise ValueError("Major version number is not an integer.")
+            if not minor.isdecimal():
+                raise ValueError("Minor version number is not an integer.")

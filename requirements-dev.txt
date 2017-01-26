@@ -1,3 +1,4 @@
 coveralls
+fixtures
 testscenarios
 testtools

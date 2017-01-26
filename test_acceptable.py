@@ -4,13 +4,164 @@
 
 from operator import methodcaller
 
+from fixtures import Fixture
+from flask import Flask
 from testscenarios import TestWithScenarios
 from testtools import TestCase
+from testtools.matchers import (
+    Matcher,
+    Mismatch,
+)
 
 from acceptable import (
+    AcceptableService,
     EndpointMap,
     parse_accept_headers,
 )
+
+
+class AcceptableServiceTestCase(TestCase):
+
+    def test_raises_TypeError_on_construction(self):
+        self.assertRaisesRegex(
+            TypeError,
+            "vendor must be a string, not object",
+            AcceptableService,
+            object(), object()
+        )
+
+    def test_raises_ValueError_on_construction(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "vendor identifier must consist of alphanumeric "
+            "characters only.",
+            AcceptableService,
+            "vendor.foo", object()
+        )
+
+    def test_can_register_url_route(self):
+        def view():
+            return "test view", 200
+
+        app = Flask(__name__)
+        service = AcceptableService('vendor', app)
+        api = service.api('/foo')
+        api.register_view('1.0', None, view)
+
+        client = app.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
+    def test_can_register_url_route_with_two_phase_registration(self):
+        def view():
+            return "test view", 200
+
+        service = AcceptableService('vendor')
+        api = service.api('/foo')
+        api.register_view('1.0', None, view)
+
+        app = Flask(__name__)
+        service.initialise(app)
+
+        client = app.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
+
+class SimpleAPIServiceFixture(Fixture):
+    """A reusable fixture that sets up several API endpoints.
+
+    This fixture creates a simple set of API endpoints with a mix of different
+    version and API flag requirements. Tests can use this fixture instead of
+    having to do all this setup in every test.
+    """
+
+    def _setUp(self):
+        self.flask_app = Flask(__name__)
+        self.service = AcceptableService('vendor', self.flask_app)
+
+        # The /foo API is POST only, and contains three different versioned
+        # endpoints:
+        foo_api = self.service.api('/foo', methods=['POST'])
+        foo_api.register_view('1.0', None, self.foo_v10)
+        foo_api.register_view('1.1', None, self.foo_v11)
+        foo_api.register_view('1.3', None, self.foo_v13)
+        foo_api.register_view('1.5', None, self.foo_v15)
+
+        # The /flagged API is GET only, and has some API flags set:
+        flagged_api = self.service.api('/flagged', methods=['GET'])
+        flagged_api.register_view('1.3', None, self.flagged_v13)
+        flagged_api.register_view('1.4', 'feature1', self.flagged_v14_feature1)
+        flagged_api.register_view('1.4', 'feature2', self.flagged_v14_feature2)
+
+    def foo_v10(self):
+        return "Foo version 1.0", 200
+
+    def foo_v11(self):
+        return "Foo version 1.1", 200
+
+    def foo_v13(self):
+        return "Foo version 1.3", 200
+
+    def foo_v15(self):
+        return "Foo version 1.5", 200
+
+    def flagged_v13(self):
+        return "Flagged version 1.3", 200
+
+    def flagged_v14_feature1(self):
+        return "Flagged version 1.4 with feature1", 200
+
+    def flagged_v14_feature2(self):
+        return "Flagged version 1.4 with feature2", 200
+
+
+class AcceptableAPITestCase(TestCase):
+
+    def test_default_view_is_latest_version(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+        client = fixture.flask_app.test_client()
+        resp = client.post('/foo')
+
+        self.assertThat(resp, IsResponse("Foo version 1.5"))
+
+    def test_can_select_specific_version(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+        client = fixture.flask_app.test_client()
+        resp = client.post(
+            '/foo',
+            headers={'Accept': 'application/vnd.vendor.1.1'})
+
+        self.assertThat(resp, IsResponse("Foo version 1.1"))
+
+    def test_versions_are_upgraded(self):
+        # Ask for version 1.2, but since it doesn't exist we'll
+        # get the next latest version.
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+        client = fixture.flask_app.test_client()
+        resp = client.post(
+            '/foo',
+            headers={'Accept': 'application/vnd.vendor.1.2'})
+
+        self.assertThat(resp, IsResponse("Foo version 1.3"))
+
+    def test_get_unflagged_view_by_default(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+        client = fixture.flask_app.test_client()
+        resp = client.get('/flagged')
+
+        self.assertThat(resp, IsResponse("Flagged version 1.3"))
+
+    def test_can_select_flagged_view(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+        client = fixture.flask_app.test_client()
+        resp = client.get(
+            '/flagged',
+            headers={'Accept': 'application/vnd.vendor.1.4+feature1'})
+
+        self.assertThat(resp, IsResponse("Flagged version 1.4 with feature1"))
 
 
 class EndpointMapTestCase(TestCase):
@@ -182,3 +333,27 @@ class AcceptHeaderParseTests(TestWithScenarios):
     def test_header_parsing(self):
         observed = parse_accept_headers(self.vendor, self.headers)
         self.assertEqual(observed, self.expected)
+
+
+class IsResponse(Matcher):
+
+    def __init__(self, expected_content, expected_code=200):
+        self.expected_content = expected_content
+        self.expected_code = expected_code
+
+    def match(self, response):
+        if response.status_code != self.expected_code:
+            return Mismatch(
+                "Expected status code %d, got %d instead" % (
+                    self.expected_code, response.status_code))
+        data = response.data
+        if isinstance(self.expected_content, str):
+            data = data.decode(response.charset)
+        if data != self.expected_content:
+            return Mismatch(
+                "Expected content %r, got %r instead" % (
+                    self.expected_content, data))
+
+    def __str__(self):
+        return "IsResponse(%r, %r)" % (
+            self.expected_content, self.expected_code)
