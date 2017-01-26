@@ -69,6 +69,29 @@ class AcceptableServiceTestCase(TestCase):
 
         self.assertThat(resp, IsResponse('test view'))
 
+    def test_can_rebind_api_to_nsecond_flask_application(self):
+        def view():
+            return "test view", 200
+
+        service = AcceptableService('vendor')
+        api = service.api('/foo')
+        api.register_view('1.0', None, view)
+
+        app1 = Flask(__name__)
+        app2 = Flask(__name__)
+        service.initialise(app1)
+
+        client = app1.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
+        service.initialise(app2)
+        client = app2.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
 
 class SimpleAPIServiceFixture(Fixture):
     """A reusable fixture that sets up several API endpoints.
