@@ -9,6 +9,8 @@ from flask import Flask
 from testscenarios import TestWithScenarios
 from testtools import TestCase
 from testtools.matchers import (
+    Contains,
+    Equals,
     Matcher,
     Mismatch,
 )
@@ -65,6 +67,46 @@ class AcceptableServiceTestCase(TestCase):
         service.initialise(app)
 
         client = app.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
+    def test_can_rebind_api_to_nsecond_flask_application(self):
+        def view():
+            return "test view", 200
+
+        service = AcceptableService('vendor')
+        api = service.api('/foo')
+        api.register_view('1.0', None, view)
+
+        app1 = Flask(__name__)
+        app2 = Flask(__name__)
+        service.initialise(app1)
+
+        client = app1.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
+        service.initialise(app2)
+        client = app2.test_client()
+        resp = client.get('/foo')
+
+        self.assertThat(resp, IsResponse('test view'))
+
+    def test_rebinding_to_existing_application_is_a_noop(self):
+        def view():
+            return "test view", 200
+
+        service = AcceptableService('vendor')
+        api = service.api('/foo')
+        api.register_view('1.0', None, view)
+
+        app1 = Flask(__name__)
+        service.initialise(app1)
+        service.initialise(app1)
+
+        client = app1.test_client()
         resp = client.get('/foo')
 
         self.assertThat(resp, IsResponse('test view'))
@@ -163,6 +205,33 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertThat(resp, IsResponse("Flagged version 1.4 with feature1"))
 
+    def test_no_acceptable_version(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+        client = fixture.flask_app.test_client()
+        resp = client.get(
+            '/flagged',
+            headers={'Accept': 'application/vnd.vendor.1.0+foo'})
+
+        self.assertThat(
+            resp,
+            IsResponse(
+                Contains(
+                    "Could not find view for version '1.0' and flag 'foo'"),
+                406))
+
+    def test_view_decorator_works(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+
+        new_api = fixture.service.api('/new')
+
+        @new_api.view(introduced_at='1.0')
+        def new_view():
+            return "new view", 200
+
+        client = fixture.flask_app.test_client()
+        resp = client.get('/new')
+
+        self.assertThat(resp, IsResponse("new view"))
 
 class EndpointMapTestCase(TestCase):
 
@@ -337,22 +406,42 @@ class AcceptHeaderParseTests(TestWithScenarios):
 
 class IsResponse(Matcher):
 
-    def __init__(self, expected_content, expected_code=200):
+    def __init__(self, expected_content, expected_code=200, decode=None):
+        """Construct a new IsResponse matcher.
+
+        :param expected_content: The content you want to match against the
+            response body. This can either be a matcher, a string, or a
+            bytestring.
+
+        :param expected_code: Tht HTTP status code you want to match against.
+
+        :param decode: Whether to decode the response data according to the
+            response charset. This can either be set implicitly or explicitly.
+            If the 'expected_content' parameter is a string, this will
+            implicitly be set to True. If 'expected_content' is a bytestring,
+            this will be set to False. If 'expected_content' is a matcher,
+            this will be set to True. Setting this parameter to a value
+            explicitly disables this implicit behavior.
+        """
+        if isinstance(expected_content, str):
+            self._decode = True
+            expected_content = Equals(expected_content)
+        elif isinstance(expected_content, bytes):
+            self._decode = False
+            expected_content = Equals(expected_content)
+        else:
+            self._decode = decode or True
         self.expected_content = expected_content
-        self.expected_code = expected_code
+        self.expected_code = Equals(expected_code)
 
     def match(self, response):
-        if response.status_code != self.expected_code:
-            return Mismatch(
-                "Expected status code %d, got %d instead" % (
-                    self.expected_code, response.status_code))
+        mismatch = self.expected_code.match(response.status_code)
+        if mismatch:
+            return mismatch
         data = response.data
-        if isinstance(self.expected_content, str):
+        if self._decode:
             data = data.decode(response.charset)
-        if data != self.expected_content:
-            return Mismatch(
-                "Expected content %r, got %r instead" % (
-                    self.expected_content, data))
+        return self.expected_content.match(data)
 
     def __str__(self):
         return "IsResponse(%r, %r)" % (

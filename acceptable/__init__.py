@@ -40,6 +40,7 @@ class AcceptableService:
         self.vendor = vendor
         self._flask_app = flask_app
         self._late_registrations = []
+        self._completed_registrations = []
 
     def api(self, url, **options):
         """Add a URL endpoint.
@@ -54,25 +55,44 @@ class AcceptableService:
             self._late_registrations.append((url, name, api, options))
         else:
             self._flask_app.add_url_rule(url, name, view_func=api, **options)
+            self._completed_registrations.append((url, name, api, options))
         return api
 
     def initialise(self, flask_app):
         """Initialise the API.
 
-        This method initialises the API for the cases where no flask
-        application was passed to AcceptableService.__init__.
+        This method initialises the API (for the cases where no flask
+        application was passed to AcceptableService.__init__) or
+        re-initialises the API (for the case where you want to bind the API
+        to a new/different flask application). In the latter case the old
+        flask application will still be bound to the API views - it is the
+        callers responsibility to destroy it.
 
-        Calling this method after the service has already been initialised
-        (either by calling this method previously, or by passing a flask
-        application to the initialiser) will cause a ValueError to be raised.
         """
+        if flask_app == self._flask_app:
+            return  # already initialised to this flask application.
         if self._flask_app is not None:
-            raise ValueError(
-                "AcceptableService has already been initialised.")
+            # we're re-binding the API to a new flask app. Iterate over the
+            # already completed registrations for the current app. There should
+            # never be late registrations left at this point:
+            assert self._late_registrations == [], "Late registrations should \
+                not exist when rebinding API to a new flask application!"
+            api_views_to_register = self._completed_registrations
+        else:
+            # This is the first (late) initialisation, binding to a new flask
+            # applicaiton. Completed registrations should be empty at this
+            # point:
+            assert self._completed_registrations == [], "Completed \
+                registrations should be empty when binding to the first flask \
+                application!"
+            api_views_to_register = self._late_registrations
         self._flask_app = flask_app
-        while self._late_registrations:
-            url, name, api, options = self._late_registrations.pop()
+        completed_registrations = []
+        while api_views_to_register:
+            url, name, api, options = api_views_to_register.pop()
             self._flask_app.add_url_rule(url, name, view_func=api, **options)
+            completed_registrations.append((url, name, api, options))
+        self._completed_registrations = completed_registrations
 
 
 class AcceptableAPI:
@@ -91,9 +111,10 @@ class AcceptableAPI:
         if view:
             return view(*args, **kwargs)
         else:
-            raise NotAcceptable(
-                "Could not find view for version %s and tags %r" %
-                (version, flag))
+            description = "Could not find view for version '%s'" % version
+            if flag is not None:
+                description += " and flag '%s'" % flag
+            raise NotAcceptable(description)
 
     def view(self, introduced_at, flag=None):
         assert isinstance(introduced_at, str)
