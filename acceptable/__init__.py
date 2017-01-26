@@ -111,9 +111,10 @@ class AcceptableAPI:
         if view:
             return view(*args, **kwargs)
         else:
-            raise NotAcceptable(
-                "Could not find view for version %s and tags %r" %
-                (version, flag))
+            description = "Could not find view for version '%s'" % version
+            if flag is not None:
+                description += " and flag '%s'" % flag
+            raise NotAcceptable(description)
 
     def view(self, introduced_at, flag=None):
         assert isinstance(introduced_at, str)
