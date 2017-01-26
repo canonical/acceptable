@@ -27,7 +27,7 @@ setup(
     version=VERSION,
     description='API version negotiation for flask-based web services.',
     author='Canonical Online Services',
-    author_email='Online Services <online-services@lists.canonical.com>',
+    author_email='online-services@lists.canonical.com',
     license='LGPLv3',
     py_module=['acceptable'],
     install_requires=parse_requirements_file('requirements.txt'),
