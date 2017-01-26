@@ -45,8 +45,8 @@ numbers should be rarely updated. Minor version numbers indicate backwards
 compatible changes, and should be updated any time some new functionality
 is introduced to the API.
 
-Clients specify the minimum version number they support. If a client supports
-API version '1.3', any '1.x' version greater than, or equal to '1.3' may be
+Clients specify the preferred version number they support. If a client supports
+API version '1.3', any '1.x' version less than, or equal to '1.3' may be
 used to satisfy the client's request.
 
 ### API Flags
