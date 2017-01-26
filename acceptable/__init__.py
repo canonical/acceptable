@@ -178,8 +178,8 @@ class EndpointMap:
         # no exact match found, iterate over available versions
         # until a view is found that's lower than the requested
         # version.
-        for available_version in sorted(versionmap.keys()):
-            if available_version > version:
+        for available_version in sorted(versionmap.keys(), reverse=True):
+            if available_version < version:
                 return versionmap[available_version]
         # If we can't find a view with the flagt present, consider views
         # without the view as a fallback:

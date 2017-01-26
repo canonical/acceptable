@@ -136,16 +136,16 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertThat(resp, IsResponse("Foo version 1.1"))
 
-    def test_versions_are_upgraded(self):
+    def test_versions_are_downgraded(self):
         # Ask for version 1.2, but since it doesn't exist we'll
-        # get the next latest version.
+        # get the next oldest version instead.
         fixture = self.useFixture(SimpleAPIServiceFixture())
         client = fixture.flask_app.test_client()
         resp = client.post(
             '/foo',
             headers={'Accept': 'application/vnd.vendor.1.2'})
 
-        self.assertThat(resp, IsResponse("Foo version 1.3"))
+        self.assertThat(resp, IsResponse("Foo version 1.1"))
 
     def test_get_unflagged_view_by_default(self):
         fixture = self.useFixture(SimpleAPIServiceFixture())
@@ -175,15 +175,15 @@ class EndpointMapTestCase(TestCase):
 
         self.assertEqual(view, m.get_view('1.0'))
 
-    def test_version_upgrade(self):
-        # If we can't satisfy the version requirement we'll return a
-        # newer view.
+    def test_version_downgrade(self):
+        # If we can't satisfy the version requirement we'll return an
+        # older view.
         m = EndpointMap()
         view = object()
 
         m.add_view('1.2', None, view)
 
-        self.assertEqual(view, m.get_view('1.1'))
+        self.assertEqual(view, m.get_view('1.3'))
 
     def test_flagged_view(self):
         # Test an exact match with flags:
@@ -206,19 +206,19 @@ class EndpointMapTestCase(TestCase):
 
         self.assertEqual(normal_view, m.get_view('1.0', 'flag'))
 
-    def test_does_not_version_downgrade(self):
-        # if we can't satisfy the version request we won't downgrade to
+    def test_does_not_version_upgrade(self):
+        # if we can't satisfy the version request we won't upgrade to
         # an older version
         m = EndpointMap()
         view = object()
 
         m.add_view('1.2', None, view)
 
-        self.assertEqual(None, m.get_view('1.3'))
+        self.assertEqual(None, m.get_view('1.1'))
 
-    def test_version_upgrde_is_smallest_increment(self):
+    def test_version_downgrade_is_smallest_increment(self):
         # If we can't satisfy the exact version requested, give the
-        # client the smallest increment in version possible.
+        # client the smallest decrement in version possible.
         m = EndpointMap()
         view11 = object()
         view12 = object()
@@ -228,7 +228,7 @@ class EndpointMapTestCase(TestCase):
         m.add_view('1.2', None, view12)
         m.add_view('1.3', None, view13)
 
-        self.assertEqual(view11, m.get_view('1.0'))
+        self.assertEqual(view13, m.get_view('1.4'))
 
 
 class EndpointMapTypeCheckingTests(TestWithScenarios):
