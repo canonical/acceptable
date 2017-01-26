@@ -7,7 +7,7 @@ import pkg_resources
 from setuptools import setup
 
 
-VERSION = '0.2'
+VERSION = '0.3'
 
 
 def parse_requirements_file(path):
@@ -31,6 +31,6 @@ setup(
     license='LGPLv3',
     packages=['acceptable'],
     install_requires=parse_requirements_file('requirements.txt'),
-    test_suite='test_acceptable',
+    test_suite='acceptable.test_acceptable',
     tests_require=parse_requirements_file('requirements-dev.txt')
 )

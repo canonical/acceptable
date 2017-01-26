@@ -71,7 +71,7 @@ class AcceptableServiceTestCase(TestCase):
 
         self.assertThat(resp, IsResponse('test view'))
 
-    def test_can_rebind_api_to_nsecond_flask_application(self):
+    def test_can_rebind_api_to_second_flask_application(self):
         def view():
             return "test view", 200
 

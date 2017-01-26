@@ -80,7 +80,7 @@ class AcceptableService:
             api_views_to_register = self._completed_registrations
         else:
             # This is the first (late) initialisation, binding to a new flask
-            # applicaiton. Completed registrations should be empty at this
+            # application. Completed registrations should be empty at this
             # point:
             assert self._completed_registrations == [], "Completed \
                 registrations should be empty when binding to the first flask \
