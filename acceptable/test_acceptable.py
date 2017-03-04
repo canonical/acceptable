@@ -232,6 +232,19 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertThat(resp, IsResponse("new view"))
 
+    def test_can_still_call_view_directly(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+
+        new_api = fixture.service.api('/new')
+
+        @new_api.view(introduced_at='1.0')
+        def new_view():
+            return "new view", 200
+
+        content, status = new_view()
+        self.assertEqual(content, "new view")
+        self.assertEqual(status, 200)
+
     def test_can_reuse_url_with_different_method(self):
         fixture = self.useFixture(SimpleAPIServiceFixture())
 
@@ -243,7 +256,7 @@ class AcceptableAPITestCase(TestCase):
         def get_foo():
             return "Foo GET API"
 
-        client = fixture.app.test_client()
+        client = fixture.flask_app.test_client()
         resp_get = client.get('/foo')
 
         self.assertThat(resp_get, IsResponse("Foo GET API"))
