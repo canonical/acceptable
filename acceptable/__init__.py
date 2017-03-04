@@ -3,7 +3,7 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - version Flask views using the Accept header."""
-
+import functools
 import re
 
 from flask import request
@@ -123,6 +123,11 @@ class AcceptableAPI:
 
         def wrapper(fn):
             self.register_view(introduced_at, flag, fn)
+
+            @functools.wraps(fn)
+            def indirection(*args, **kwargs):
+                return self(*args, **kwargs)
+            return indirection
         return wrapper
 
     def register_view(self, introduced_at, flag, view_fn):
