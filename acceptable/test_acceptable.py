@@ -240,8 +240,8 @@ class AcceptableAPITestCase(TestCase):
         @new_api.view(introduced_at='1.0')
         def new_view():
             return "new view", 200
-
-        content, status = new_view()
+        with fixture.flask_app.test_request_context('/new'):
+            content, status = new_view()
         self.assertEqual(content, "new view")
         self.assertEqual(status, 200)
 
