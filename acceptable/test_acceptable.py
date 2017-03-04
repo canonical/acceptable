@@ -232,21 +232,34 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertThat(resp, IsResponse("new view"))
 
-        def test_can_reuse_url_with_different_method(self):
-            fixture = self.useFixture(SimpleAPIServiceFixture())
+    def test_can_still_call_view_directly(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
 
-            # /foo already exists as a POST endpoint, we should be able to
-            # create another /foo API with a GET endpoint.
-            foo_get_api = fixture.service.api('/foo', methods=['GET'])
+        new_api = fixture.service.api('/new')
 
-            @foo_get_api.view(introduced_at='1.0')
-            def get_foo():
-                return "Foo GET API"
+        @new_api.view(introduced_at='1.0')
+        def new_view():
+            return "new view", 200
+        with fixture.flask_app.test_request_context('/new'):
+            content, status = new_view()
+        self.assertEqual(content, "new view")
+        self.assertEqual(status, 200)
 
-            client = fixture.app.test_client()
-            resp_get = client.get('/foo')
+    def test_can_reuse_url_with_different_method(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
 
-            self.assertThat(resp_get, IsResponse("Foo GET API"))
+        # /foo already exists as a POST endpoint, we should be able to
+        # create another /foo API with a GET endpoint.
+        foo_get_api = fixture.service.api('/foo', methods=['GET'])
+
+        @foo_get_api.view(introduced_at='1.0')
+        def get_foo():
+            return "Foo GET API"
+
+        client = fixture.flask_app.test_client()
+        resp_get = client.get('/foo')
+
+        self.assertThat(resp_get, IsResponse("Foo GET API"))
 
 
 class EndpointMapTestCase(TestCase):
