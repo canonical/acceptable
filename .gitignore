@@ -1,0 +1,5 @@
+/env/
+/dev-db/
+/tmp/
+__pycache__/
+*.pyc
