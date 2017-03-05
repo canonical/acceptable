@@ -261,6 +261,22 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertThat(resp_get, IsResponse("Foo GET API"))
 
+    def test_view_attributes_are_preserved(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+
+        new_api = fixture.service.api('/new')
+
+        def my_decorator(fn):
+            fn.foo = 'bar'
+            return fn
+
+        @new_api.view(introduced_at='1.0')
+        @my_decorator
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(new_view.foo, 'bar')
+
 
 class EndpointMapTestCase(TestCase):
 
