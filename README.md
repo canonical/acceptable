@@ -2,27 +2,31 @@
 [![Coverage Status](https://coveralls.io/repos/github/canonical-ols/acceptable/badge.svg?branch=master)](https://coveralls.io/github/canonical-ols/acceptable?branch=master)
 # acceptable
 
-Acceptable combines API versioning and API flags to make developing a
-continuously-deployed API easier. This document contains the ideas behind the
-library as well as how it's intended to be used (both from a developer and a
-clients perspective).
+Acceptable builds on top of [flask](http://flask.pocoo.org/) and adds several
+opinionated features designed to make it easier to build a product from several
+small services.
 
 ## Design Goals:
 
-We believe that the following aspects are important to a well-operated SaaS
-deployment, with respect to the API it offers:
+Acceptable is designed to solve several common problems when building a product
+composed of several individual services. Specifically, the library contains the
+following high-level features:
 
- * Clients must be able to specify which version of the API the client wishes
-   to use. Clients must be able to rely on a version number mapping to a known
-   set of capabilities.
+ - API endpoints are versioned using the `Accept:` HTTP header. Acceptable
+   handles calling the correct view according to a simple version resolution
+   protocol.
 
- * Developers must be able to add experimental features, hidden behind a
-   'flag', thereby preventing clients that have not opted in to that
-   experimental feature from seeing the new experimental API.
+- Views can be tagged with 'API flags', providing a way to test
+  under-development views in a production environment. This opens the door to
+  a more regular, predictable feature development velcoty.
 
- * Developers must be able to indicate both backwards-compatible and
-   -incompatible changes to the API to clients.
+- View input and output is validated using
+  [jsonschema](http://json-schema.org/). This allows views to express their
+  inputs and outputs in a concise manner.
 
+  - These input and output definitions can be extracted from your various
+    services and compiled into a library of service doubles, which facilitates
+    easy inter-service interaction testing.
 
 ## Developer Perspective:
 
