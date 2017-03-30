@@ -1,0 +1,212 @@
+# Copyright 2017 Canonical Ltd.  This software is licensed under the
+# GNU Lesser General Public License version 3 (see the file LICENSE).
+import json
+
+from fixtures import Fixture
+from testtools import TestCase
+import jsonschema
+
+import flask
+
+from acceptable._validation import (
+    DataValidationError,
+    validate_body,
+    validate_output,
+)
+
+
+class FlaskValidateBodyFixture(Fixture):
+
+    def __init__(self, body_schema=None, output_schema=None, view_fn=None):
+        if not (body_schema or output_schema):
+            raise ValueError(
+                "Must specify at least one of body_schema or output_schema")
+        self.body_schema = body_schema
+        self.output_schema = output_schema
+        self.view = view_fn
+
+    def _setUp(self):
+        self.app = flask.Flask(__name__)
+        self.app.testing = True
+
+        def _default_view():
+            return "OK", 200
+
+        self.view = self.view or _default_view
+
+        if self.body_schema:
+            self.view = validate_body(self.body_schema)(self.view)
+        if self.output_schema:
+            self.view = validate_output(self.output_schema)(self.view)
+
+        self.app.route('/', methods=['POST'])(self.view)
+        self.client = self.app.test_client()
+
+    def post_json(self, json_payload):
+        return self.client.post(
+            '/',
+            data=json.dumps(json_payload),
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+
+
+class ValidateBodyTests(TestCase):
+
+    def test_raises_on_bad_schema(self):
+        def fn():
+            pass
+        self.assertRaises(
+            jsonschema.SchemaError,
+            validate_body({'required': 'bar'}),
+            fn
+        )
+
+    def test_passes_on_good_payload(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        resp = app.post_json(dict(foo='bar'))
+        self.assertEqual(200, resp.status_code)
+
+    def test_raises_on_bad_payload(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.post_json,
+            []
+        )
+        self.assertEqual(
+            ["[] is not of type 'object' at /"],
+            e.error_list
+        )
+
+
+class ValidateOutputTests(TestCase):
+
+    def test_raises_on_bad_schema(self):
+        def fn():
+            pass
+        self.assertRaises(
+            jsonschema.SchemaError,
+            validate_output({'required': 'bar'}),
+            fn
+        )
+
+    def test_raises_on_bad_payload(self):
+        def view():
+            return []
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+
+        e = self.assertRaises(
+            AssertionError,
+            app.post_json,
+            []
+        )
+        self.assertEqual(
+            'Response does not comply with output schema: %r.\n%s' % (
+                ["[] is not of type 'object' at /"],
+                []
+            ),
+            str(e)
+        )
+
+    def test_raises_on_unknown_response_type(self):
+        def view():
+            return object()
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+        e = self.assertRaises(
+            ValueError,
+            app.post_json,
+            {}
+        )
+        self.assertEqual(
+            "Unknown response type '<class \'object\'>'. "
+            "Supported types are list and dict.",
+            str(e))
+
+    def assertResponseJsonEqual(self, response, expected_json):
+        data = json.loads(response.data.decode(response.charset))
+        self.assertEqual(expected_json, data)
+
+    def test_passes_on_good_payload_single_return_parameter(self):
+        returned_payload = {'foo': 'bar'}
+
+        def view():
+            return returned_payload
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+        resp = app.post_json({})
+        self.assertEqual(200, resp.status_code)
+        self.assertResponseJsonEqual(resp, returned_payload)
+
+    def test_passes_on_good_payload_single_tuple_return_parameter(self):
+        returned_payload = ({'foo': 'bar'}, )
+
+        def view():
+            return returned_payload
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+        resp = app.post_json({})
+        self.assertEqual(200, resp.status_code)
+        self.assertResponseJsonEqual(resp, returned_payload[0])
+
+    def test_passes_on_good_payload_double_return_parameter(self):
+        returned_payload = {'foo': 'bar'}
+
+        def view():
+            return returned_payload, 201
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+        resp = app.post_json({})
+        self.assertEqual(201, resp.status_code)
+        self.assertResponseJsonEqual(resp, returned_payload)
+
+    def test_passes_on_good_payload_triple_return_parameter(self):
+        returned_payload = {'foo': 'bar'}
+
+        def view():
+            return returned_payload, 201, {'Custom-Header': 'Foo'}
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+        resp = app.post_json({})
+        self.assertEqual(201, resp.status_code)
+        self.assertResponseJsonEqual(resp, returned_payload)
+        self.assertEqual('Foo', resp.headers['Custom-Header'])
+
+
+class DeltaValidationErrorTests(TestCase):
+
+    def test_repr_and_str(self):
+        e = DataValidationError(["error one", "error two"])
+        self.assertEqual(
+            "DataValidationError: error one, error two",
+            str(e)
+        )
+        self.assertEqual(str(e), repr(e))
+

@@ -31,6 +31,6 @@ setup(
     license='LGPLv3',
     packages=['acceptable'],
     install_requires=parse_requirements_file('requirements.txt'),
-    test_suite='acceptable.test_acceptable',
+    test_suite='acceptable.tests',
     tests_require=parse_requirements_file('requirements-dev.txt')
 )
