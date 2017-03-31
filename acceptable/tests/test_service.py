@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
@@ -14,7 +13,7 @@ from testtools.matchers import (
     Matcher,
 )
 
-from acceptable import (
+from acceptable._service import (
     AcceptableService,
     EndpointMap,
     parse_accept_headers,

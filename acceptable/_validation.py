@@ -1,0 +1,167 @@
+# Copyright 2017 Canonical Ltd.  This software is licensed under the
+# GNU Lesser General Public License version 3 (see the file LICENSE).
+
+import functools
+
+import jsonschema
+from flask import request, jsonify
+
+
+class DataValidationError(Exception):
+    """Raises when a request body fails validation."""
+
+    def __init__(self, error_list):
+        self.error_list = error_list
+
+    def __repr__(self):
+        return "DataValidationError: %s" % ", ".join(self.error_list)
+
+    def __str__(self):
+        return repr(self)
+
+
+def validate_body(schema):
+    """Validate the body of incoming requests for a flask view.
+
+    An example usage might look like this::
+
+        from snapstore_schemas import validate_body
+
+
+        @validate_body({
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'snap_id': {'type': 'string'},
+                    'series': {'type': 'string'},
+                    'name': {'type': 'string'},
+                    'title': {'type': 'string'},
+                    'keywords': {
+                        'type': 'array',
+                        'items': {'type': 'string'}
+                    },
+                    'summary': {'type': 'string'},
+                    'description': {'type': 'string'},
+                    'created_at': {'type': 'string'},
+                },
+                'required': ['snap_id', 'series'],
+                'additionalProperties': False
+            }
+        })
+        def my_flask_view():
+            # view code here
+            return "Hello World", 200
+
+    All incoming request that have been routed to this view will be matched
+    against the specified schema. If the request body does not match the schema
+    an instance of `DataValidationError` will be raised.
+
+    By default this will cause the flask application to return a 500 response,
+    but this can be customised by telling flask how to handle these exceptions.
+    The exception instance has an 'error_list' attribute that contains a list
+    of all the errors encountered while processing the request body.
+    """
+    def decorator(fn):
+        validate_schema(schema)
+
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            payload = request.get_json(silent=True, cache=True)
+            error_list = validate(payload, schema)
+            if error_list:
+                raise DataValidationError(error_list)
+            return fn(*args, **kwargs)
+        wrapper.schema = schema
+        return wrapper
+    return decorator
+
+
+def validate_output(schema):
+    """Validate the body of a response from a flask view.
+
+    Like `validate_body`, this function compares a json document to a
+    jsonschema specification. However, this function applies the schema to the
+    view response.
+
+    Instead of the view returning a flask response object, it should instead
+    return a Python list or dictionary. For example::
+
+        from snapstore_schemas import validate_output
+
+        @validate_body({
+            'type': 'object',
+            'properties': {
+                'ok': {'type': 'boolean'},
+            },
+            'required': ['ok'],
+            'additionalProperties': False
+        }
+        def my_flask_view():
+            # view code here
+            return {'ok': True}
+
+    Every view response will be evaluated against the schema. Any that do not
+    comply with the schema will cause DataValidationError to be raised.
+    """
+    def decorator(fn):
+        validate_schema(schema)
+
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            result = fn(*args, **kwargs)
+            resp = code = headers = None
+            if isinstance(result, tuple):
+                if len(result) == 1:
+                    resp = result[0]
+                elif len(result) == 2:
+                    resp, code = result
+                elif len(result) == 3:
+                    resp, code, headers = result
+            else:
+                resp = result
+            if not isinstance(resp, (list, dict)):
+                raise ValueError(
+                    "Unknown response type '%s'. Supported types are list "
+                    "and dict." % type(resp))
+
+            error_list = validate(resp, schema)
+
+            assert not error_list,\
+                "Response does not comply with output schema: %r.\n%s"\
+                % (error_list, resp)
+
+            return_value = [jsonify(resp)]
+            if code is not None:
+                return_value.append(code)
+            if headers is not None:
+                return_value.append(headers)
+            return tuple(return_value)
+        return wrapper
+    return decorator
+
+
+def validate(payload, schema):
+    """Validate `payload` against `schema`, returning an error list.
+
+    jsonschema provides lots of information in it's errors, but it can be a bit
+    of work to extract all the information.
+    """
+    v = jsonschema.Draft4Validator(
+        schema, format_checker=jsonschema.FormatChecker())
+    error_list = []
+    for error in v.iter_errors(payload):
+        message = error.message
+        location = '/' + '/'.join([str(c) for c in error.absolute_path])
+        error_list.append(message + ' at ' + location)
+    return error_list
+
+
+def validate_schema(schema):
+    """Validate that 'schema' is correct.
+
+    This validates against the jsonschema v4 draft.
+
+    :raises jsonschema.SchemaError: if the schema is invalid.
+    """
+    jsonschema.Draft4Validator.check_schema(schema)
