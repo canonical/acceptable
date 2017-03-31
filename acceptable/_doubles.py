@@ -11,18 +11,29 @@ import urllib.parse
 import json
 
 from fixtures import Fixture
-import jsonschema
 import responses
 
 
-from snapstore_schemas.service_doubles import get_service_locations
-from snapstore_schemas._validation import validate
+from acceptable._validation import validate
 
 
 def service_mock(service, methods, url, input_schema, output_schema):
     return functools.partial(
         ServiceMock,
         service, methods, url, input_schema, output_schema)
+
+
+SERVICE_LOCATIONS = {}
+
+
+def set_service_locations(service_locations):
+    global SERVICE_LOCATIONS
+    SERVICE_LOCATIONS = service_locations
+
+
+def get_service_locations():
+    global SERVICE_LOCATIONS
+    return SERVICE_LOCATIONS
 
 
 class ServiceMock(Fixture):
@@ -39,6 +50,7 @@ class ServiceMock(Fixture):
 
     def __init__(self, service, methods, url, input_schema, output_schema,
                  output):
+        super().__init__()
         self._service = service
         self._methods = methods
         self._url = url
@@ -64,7 +76,7 @@ class ServiceMock(Fixture):
             raise AssertionError(
                 "A service mock for the '%s' service was requested, but the "
                 "mock has not been configured with a location for that "
-                "service. Ensure ServiceMock.set_service_locations has been "
+                "service. Ensure set_service_locations has been "
                 "called before the mock is required, and that the locations "
                 "dictionary contains a key for the '%s' service."
                 % (self._service, self._service)

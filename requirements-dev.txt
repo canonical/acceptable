@@ -2,3 +2,4 @@ coveralls
 fixtures
 testscenarios
 testtools
+responses
