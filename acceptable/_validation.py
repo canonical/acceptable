@@ -74,16 +74,15 @@ def validate_body(schema):
             # is not informative enough.
             if payload is None:
                 if not request.is_json:
-                    mimetype = request.headers.get('Content-Type') or \
-                        "Missing Content-Type"
+                    mimetype = request.headers.get('Content-Type')
                     raise DataValidationError([
-                        "Expected Json request body, but request has an "
-                        "unexpected Content-Type set: %s" % mimetype])
+                        "Expected JSON request body, but Content-Type is %s" %
+                        ('"{}"'.format(mimetype) if mimetype else "missing")])
                 try:
                     payload = json.loads(request.data.decode(request.charset))
                 except ValueError as e:
                     raise DataValidationError([
-                        "Error decoding json body: %s" % str(e)])
+                        "Error decoding JSON request body: %s" % str(e)])
             error_list = validate(payload, schema)
             if error_list:
                 raise DataValidationError(error_list)
