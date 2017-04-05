@@ -4,6 +4,7 @@ import json
 
 from fixtures import Fixture
 from testtools import TestCase
+from testtools.matchers import StartsWith
 import jsonschema
 
 import flask
@@ -98,10 +99,11 @@ class ValidateBodyTests(TestCase):
             data='invalid json',
             headers={'Content-Type': 'application/json'}
         )
-        self.assertEqual([
-            "Error decoding json body: Expecting value: "
-            "line 1 column 1 (char 0)"],
-            e.error_list
+        # Python 3.3 json decode errors have a different format from later
+        # versions, so this check isn't as explicit as I'd like.
+        self.assertThat(
+            e.error_list[0],
+            StartsWith("Error decoding json body: ")
         )
 
     def test_raises_on_wrong_mimetype(self):
