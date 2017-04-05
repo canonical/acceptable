@@ -45,7 +45,7 @@ class AcceptableServiceTestCase(TestCase):
 
         app = Flask(__name__)
         service = AcceptableService('vendor', app)
-        api = service.api('/foo')
+        api = service.api('/foo', 'foo_api')
         api.register_view('1.0', None, view)
 
         client = app.test_client()
@@ -58,7 +58,7 @@ class AcceptableServiceTestCase(TestCase):
             return "test view", 200
 
         service = AcceptableService('vendor')
-        api = service.api('/foo')
+        api = service.api('/foo', 'foo_api')
         api.register_view('1.0', None, view)
 
         app = Flask(__name__)
@@ -74,7 +74,7 @@ class AcceptableServiceTestCase(TestCase):
             return "test view", 200
 
         service = AcceptableService('vendor')
-        api = service.api('/foo')
+        api = service.api('/foo', 'foo_api')
         api.register_view('1.0', None, view)
 
         app1 = Flask(__name__)
@@ -97,7 +97,7 @@ class AcceptableServiceTestCase(TestCase):
             return "test view", 200
 
         service = AcceptableService('vendor')
-        api = service.api('/foo')
+        api = service.api('/foo', 'foo_api')
         api.register_view('1.0', None, view)
 
         app1 = Flask(__name__)
@@ -124,14 +124,14 @@ class SimpleAPIServiceFixture(Fixture):
 
         # The /foo API is POST only, and contains three different versioned
         # endpoints:
-        foo_api = self.service.api('/foo', methods=['POST'])
+        foo_api = self.service.api('/foo', 'foo_api', methods=['POST'])
         foo_api.register_view('1.0', None, self.foo_v10)
         foo_api.register_view('1.1', None, self.foo_v11)
         foo_api.register_view('1.3', None, self.foo_v13)
         foo_api.register_view('1.5', None, self.foo_v15)
 
         # The /flagged API is GET only, and has some API flags set:
-        flagged_api = self.service.api('/flagged', methods=['GET'])
+        flagged_api = self.service.api('/flagged', 'flagged', methods=['GET'])
         flagged_api.register_view('1.3', None, self.flagged_v13)
         flagged_api.register_view('1.4', 'feature1', self.flagged_v14_feature1)
         flagged_api.register_view('1.4', 'feature2', self.flagged_v14_feature2)
@@ -220,7 +220,7 @@ class AcceptableAPITestCase(TestCase):
     def test_view_decorator_works(self):
         fixture = self.useFixture(SimpleAPIServiceFixture())
 
-        new_api = fixture.service.api('/new')
+        new_api = fixture.service.api('/new', 'blah')
 
         @new_api.view(introduced_at='1.0')
         def new_view():
@@ -234,7 +234,7 @@ class AcceptableAPITestCase(TestCase):
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(SimpleAPIServiceFixture())
 
-        new_api = fixture.service.api('/new')
+        new_api = fixture.service.api('/new', 'namegoeshere')
 
         @new_api.view(introduced_at='1.0')
         def new_view():
@@ -249,7 +249,7 @@ class AcceptableAPITestCase(TestCase):
 
         # /foo already exists as a POST endpoint, we should be able to
         # create another /foo API with a GET endpoint.
-        foo_get_api = fixture.service.api('/foo', methods=['GET'])
+        foo_get_api = fixture.service.api('/foo', 'foo', methods=['GET'])
 
         @foo_get_api.view(introduced_at='1.0')
         def get_foo():
@@ -263,7 +263,7 @@ class AcceptableAPITestCase(TestCase):
     def test_view_attributes_are_preserved(self):
         fixture = self.useFixture(SimpleAPIServiceFixture())
 
-        new_api = fixture.service.api('/new')
+        new_api = fixture.service.api('/new', 'new')
 
         def my_decorator(fn):
             fn.foo = 'bar'
@@ -275,6 +275,20 @@ class AcceptableAPITestCase(TestCase):
             return "new view", 200
 
         self.assertEqual(new_view.foo, 'bar')
+
+    def test_cannot_duplicate_api_names(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+
+        fixture.service.api('/new', 'some name here')
+        e = self.assertRaises(
+            ValueError,
+            fixture.service.api,
+            '/another',
+            'some name here'
+        )
+        self.assertEqual(
+            "The name 'some name here' has already been registered for an "
+            "API.", str(e))
 
 
 class EndpointMapTestCase(TestCase):

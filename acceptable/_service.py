@@ -41,16 +41,26 @@ class AcceptableService:
         self._late_registrations = []
         self._completed_registrations = []
 
-    def api(self, url, **options):
-        """Add a URL endpoint.
+    def api(self, url, name, **options):
+        """Add an API to the service.
 
-        The 'url' parameter is passed to the Flask.add_url_rule method. Other
-        keyword arguments may be used, and they will be passed to the
-        underlying flask application.
+        :param url: This is the url that the API should be registered at.
+        :param name: This is the name the URL route should be registered in
+            flask with.
+
+        Other keyword arguments may be used, and they will be passed to the
+        underlying flask application. Of particular interest is the 'methods'
+        keyword argument, which can be used to specify the HTTP method the URL
+        will be added for.
         """
+        used_names = [
+            i[1] for i in
+            self._late_registrations + self._completed_registrations]
+        if name in used_names:
+            raise ValueError(
+                "The name '%s' has already been registered for an API."
+                % name)
         api = AcceptableAPI(self)
-        name = '%s.%s' % (self.vendor, url)
-        name += ','.join(options.get('methods', []))
         if self._flask_app is None:
             self._late_registrations.append((url, name, api, options))
         else:

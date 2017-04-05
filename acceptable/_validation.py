@@ -1,6 +1,6 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-
+import json
 import functools
 
 import jsonschema
@@ -68,6 +68,22 @@ def validate_body(schema):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
             payload = request.get_json(silent=True, cache=True)
+            # If flask can't parse the payload, we want to return a sensible
+            # error message, so we try and parse it ourselves. Setting silent
+            # to False above isn't good enough, as the generated error message
+            # is not informative enough.
+            if payload is None:
+                if not request.is_json:
+                    mimetype = request.headers.get('Content-Type') or \
+                        "Missing Content-Type"
+                    raise DataValidationError([
+                        "Expected Json request body, but request has an "
+                        "unexpected Content-Type set: %s" % mimetype])
+                try:
+                    payload = json.loads(request.data.decode(request.charset))
+                except ValueError as e:
+                    raise DataValidationError([
+                        "Error decoding json body: %s" % str(e)])
             error_list = validate(payload, schema)
             if error_list:
                 raise DataValidationError(error_list)

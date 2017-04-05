@@ -4,6 +4,7 @@ import json
 
 from fixtures import Fixture
 from testtools import TestCase
+from testtools.matchers import StartsWith
 import jsonschema
 
 import flask
@@ -83,6 +84,61 @@ class ValidateBodyTests(TestCase):
         )
         self.assertEqual(
             ["[] is not of type 'object' at /"],
+            e.error_list
+        )
+
+    def test_raises_on_invalid_json(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.client.post,
+            '/',
+            data='invalid json',
+            headers={'Content-Type': 'application/json'}
+        )
+        # Python 3.3 json decode errors have a different format from later
+        # versions, so this check isn't as explicit as I'd like.
+        self.assertThat(
+            e.error_list[0],
+            StartsWith("Error decoding json body: ")
+        )
+
+    def test_raises_on_wrong_mimetype(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.client.post,
+            '/',
+            data='{}',
+            headers={'Content-Type': 'text/plain'}
+        )
+        self.assertEqual([
+            "Expected Json request body, but request has an unexpected "
+            "Content-Type set: text/plain"],
+            e.error_list
+        )
+
+    def test_raises_on_missing_mimetype(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.client.post,
+            '/',
+            data='{}',
+            headers={}
+        )
+        self.assertEqual([
+            "Expected Json request body, but request has an unexpected "
+            "Content-Type set: Missing Content-Type"],
             e.error_list
         )
 
