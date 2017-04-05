@@ -103,7 +103,7 @@ class ValidateBodyTests(TestCase):
         # versions, so this check isn't as explicit as I'd like.
         self.assertThat(
             e.error_list[0],
-            StartsWith("Error decoding json body: ")
+            StartsWith("Error decoding JSON request body: ")
         )
 
     def test_raises_on_wrong_mimetype(self):
@@ -118,9 +118,8 @@ class ValidateBodyTests(TestCase):
             data='{}',
             headers={'Content-Type': 'text/plain'}
         )
-        self.assertEqual([
-            "Expected Json request body, but request has an unexpected "
-            "Content-Type set: text/plain"],
+        self.assertEqual(
+            ['Expected JSON request body, but Content-Type is "text/plain"'],
             e.error_list
         )
 
@@ -136,9 +135,8 @@ class ValidateBodyTests(TestCase):
             data='{}',
             headers={}
         )
-        self.assertEqual([
-            "Expected Json request body, but request has an unexpected "
-            "Content-Type set: Missing Content-Type"],
+        self.assertEqual(
+            ["Expected JSON request body, but Content-Type is missing"],
             e.error_list
         )
 
