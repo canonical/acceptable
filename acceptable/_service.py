@@ -53,6 +53,13 @@ class AcceptableService:
         keyword argument, which can be used to specify the HTTP method the URL
         will be added for.
         """
+        used_names = [
+            i[1] for i in
+            self._late_registrations + self._completed_registrations]
+        if name in used_names:
+            raise ValueError(
+                "The name '%s' has already been registered for an API."
+                % name)
         api = AcceptableAPI(self)
         if self._flask_app is None:
             self._late_registrations.append((url, name, api, options))

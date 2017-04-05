@@ -276,6 +276,20 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertEqual(new_view.foo, 'bar')
 
+    def test_cannot_duplicate_api_names(self):
+        fixture = self.useFixture(SimpleAPIServiceFixture())
+
+        fixture.service.api('/new', 'some name here')
+        e = self.assertRaises(
+            ValueError,
+            fixture.service.api,
+            '/another',
+            'some name here'
+        )
+        self.assertEqual(
+            "The name 'some name here' has already been registered for an "
+            "API.", str(e))
+
 
 class EndpointMapTestCase(TestCase):
 
