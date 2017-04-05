@@ -86,6 +86,60 @@ class ValidateBodyTests(TestCase):
             e.error_list
         )
 
+    def test_raises_on_invalid_json(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.client.post,
+            '/',
+            data='invalid json',
+            headers={'Content-Type': 'application/json'}
+        )
+        self.assertEqual([
+            "Error decoding json body: Expecting value: "
+            "line 1 column 1 (char 0)"],
+            e.error_list
+        )
+
+    def test_raises_on_wrong_mimetype(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.client.post,
+            '/',
+            data='{}',
+            headers={'Content-Type': 'text/plain'}
+        )
+        self.assertEqual([
+            "Expected Json request body, but request has an unexpected "
+            "Content-Type set: text/plain"],
+            e.error_list
+        )
+
+    def test_raises_on_missing_mimetype(self):
+        app = self.useFixture(FlaskValidateBodyFixture({
+            'type': 'object'
+        }))
+
+        e = self.assertRaises(
+            DataValidationError,
+            app.client.post,
+            '/',
+            data='{}',
+            headers={}
+        )
+        self.assertEqual([
+            "Expected Json request body, but request has an unexpected "
+            "Content-Type set: Missing Content-Type"],
+            e.error_list
+        )
+
 
 class ValidateOutputTests(TestCase):
 
