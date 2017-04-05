@@ -3,6 +3,7 @@
 
 from ._service import AcceptableService
 from ._validation import (
+    DataValidationError,
     validate_body,
     validate_output,
 )
@@ -10,6 +11,7 @@ from ._validation import (
 
 __all__ = [
     'AcceptableService',
+    'DataValidationError',
     'validate_body',
     'validate_output',
 ]
