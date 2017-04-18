@@ -46,7 +46,7 @@ def parse_args(arg_list=None, parser_class=None):
     scan_file_parser.set_defaults(func=scan_file)
 
     build_parser = subparser.add_parser(
-        'build', help='build service mocks.')
+        'build', help='build service doubles.')
     build_parser.add_argument('config_file', type=str)
     build_parser.set_defaults(func=build_service_doubles)
 
@@ -64,10 +64,10 @@ def build_service_doubles(args):
         target_root = os.path.dirname(args.config_file)
 
         for service in service_config['services']:
-            source_url = SERVICES[service]['git_source']
+            source_url = service['git_source']
             service_dir = fetch_service_source(workdir, service, source_url)
             service_schemas = []
-            for scan_path in SERVICES[service]['scan_paths']:
+            for scan_path in service['scan_paths']:
                 abs_path = os.path.join(service_dir, scan_path)
                 service_schemas.extend(extract_schemas_from_file(abs_path))
             rendered = render_service_double(service, service_schemas)
@@ -99,7 +99,7 @@ ViewSchema = collections.namedtuple(
         'view_name',      # The name of the view function.
         'version',        # The version the view was introduced at.
         'input_schema',   # The schema for requests to the service.
-        'output_schema',  # The  scheam for responses from the service
+        'output_schema',  # The schema for responses from the service
         'methods',        # The methods this view supports.
         'url',            # The URL this view is mounted at.
     ]
@@ -109,7 +109,7 @@ ViewSchema = collections.namedtuple(
 def extract_schemas_from_file(source_path):
     """Extract schemas from 'source_path'.
 
-    :returns: a list of ViewSchema objects on success, None if not schemas
+    :returns: a list of ViewSchema objects on success, None if no schemas
         could be extracted.
     """
     logging.info("Extracting schemas from %s", source_path)
@@ -134,7 +134,7 @@ def extract_schemas_from_file(source_path):
 def extract_schemas_from_source(source, filename='<unknown>'):
     """Extract schemas from 'source'.
 
-    The 'source' parameters must be a string, and should be valid python
+    The 'source' parameter must be a string, and should be valid python
     source.
 
     If 'source' is not valid python source, a SyntaxError will be raised.
@@ -206,8 +206,8 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                 decorator_name = decorator.func.id
                 if decorator_name == 'validate_body':
                     # TODO: Check that nothing in the tree below
-                    # # decorator.args[0] is an instance of 'ast.Name', and
-                    # # print a nice error message if it is.
+                    # decorator.args[0] is an instance of 'ast.Name', and
+                    # print a nice error message if it is.
                     input_schema = ast.literal_eval(decorator.args[0])
                 if decorator_name == 'validate_output':
                     output_schema = ast.literal_eval(decorator.args[0])
