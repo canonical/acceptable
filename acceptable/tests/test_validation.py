@@ -106,39 +106,29 @@ class ValidateBodyTests(TestCase):
             StartsWith("Error decoding JSON request body: ")
         )
 
-    def test_raises_on_wrong_mimetype(self):
+    def test_validates_even__on_wrong_mimetype(self):
         app = self.useFixture(FlaskValidateBodyFixture({
             'type': 'object'
         }))
 
-        e = self.assertRaises(
-            DataValidationError,
-            app.client.post,
+        resp = app.client.post(
             '/',
             data='{}',
             headers={'Content-Type': 'text/plain'}
         )
-        self.assertEqual(
-            ['Expected JSON request body, but Content-Type is "text/plain"'],
-            e.error_list
-        )
+        self.assertEqual(200, resp.status_code)
 
-    def test_raises_on_missing_mimetype(self):
+    def test_validates_even_on_missing_mimetype(self):
         app = self.useFixture(FlaskValidateBodyFixture({
             'type': 'object'
         }))
 
-        e = self.assertRaises(
-            DataValidationError,
-            app.client.post,
+        resp = app.client.post(
             '/',
             data='{}',
             headers={}
         )
-        self.assertEqual(
-            ["Expected JSON request body, but Content-Type is missing"],
-            e.error_list
-        )
+        self.assertEqual(200, resp.status_code)
 
 
 class ValidateOutputTests(TestCase):
