@@ -67,17 +67,12 @@ def validate_body(schema):
 
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
-            payload = request.get_json(silent=True, cache=True)
+            payload = request.get_json(silent=True, cache=True, force=True)
             # If flask can't parse the payload, we want to return a sensible
             # error message, so we try and parse it ourselves. Setting silent
             # to False above isn't good enough, as the generated error message
             # is not informative enough.
             if payload is None:
-                if not request.is_json:
-                    mimetype = request.headers.get('Content-Type')
-                    raise DataValidationError([
-                        "Expected JSON request body, but Content-Type is %s" %
-                        ('"{}"'.format(mimetype) if mimetype else "missing")])
                 try:
                     payload = json.loads(request.data.decode(request.charset))
                 except ValueError as e:
