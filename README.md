@@ -18,7 +18,7 @@ following high-level features:
 
 - Views can be tagged with 'API flags', providing a way to test
   under-development views in a production environment. This opens the door to
-  a more regular, predictable feature development velcoty.
+  a more regular, predictable feature development velocity.
 
 - View input and output is validated using
   [jsonschema](http://json-schema.org/). This allows views to express their
