@@ -32,5 +32,10 @@ setup(
     packages=['acceptable'],
     install_requires=parse_requirements_file('requirements.txt'),
     test_suite='acceptable.tests',
-    tests_require=parse_requirements_file('requirements-dev.txt')
+    tests_require=parse_requirements_file('requirements-dev.txt'),
+    entry_points={
+          'console_scripts': [
+              'build_service_doubles = acceptable._build_doubles:main'
+          ]
+      },
 )
