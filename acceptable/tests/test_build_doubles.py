@@ -47,9 +47,7 @@ class ExtractSchemasFromSourceTests(TestCase):
                 pass
             '''))
 
-        # TODO: This should be changed to be the view name, not the function
-        # name:
-        self.assertEqual('my_view', schema.view_name)
+        self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
@@ -70,9 +68,7 @@ class ExtractSchemasFromSourceTests(TestCase):
                 pass
             '''))
 
-        # TODO: This should be changed to be the view name, not the function
-        # name:
-        self.assertEqual('my_view', schema.view_name)
+        self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
@@ -93,9 +89,7 @@ class ExtractSchemasFromSourceTests(TestCase):
                 pass
             '''))
 
-        # TODO: This should be changed to be the view name, not the function
-        # name:
-        self.assertEqual('my_view', schema.view_name)
+        self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
@@ -115,9 +109,7 @@ class ExtractSchemasFromSourceTests(TestCase):
                 pass
             '''))
 
-        # TODO: This should be changed to be the view name, not the function
-        # name:
-        self.assertEqual('my_view', schema.view_name)
+        self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['POST', 'PUT'], schema.methods)
@@ -137,9 +129,7 @@ class ExtractSchemasFromSourceTests(TestCase):
                 pass
             '''))
 
-        # TODO: This should be changed to be the view name, not the function
-        # name:
-        self.assertEqual('my_view', schema.view_name)
+        self.assertEqual('root', schema.view_name)
         self.assertEqual('/foo', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
@@ -223,7 +213,7 @@ class ExtractSchemasFromFileTests(TestCase):
                 """))
         [schema] = _build_doubles.extract_schemas_from_file(good_path)
 
-        self.assertEqual('my_view', schema.view_name)
+        self.assertEqual('root', schema.view_name)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
         self.assertEqual(None, schema.input_schema)

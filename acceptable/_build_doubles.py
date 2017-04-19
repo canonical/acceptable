@@ -171,6 +171,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
             # this is a view. We need to extract the url and methods specified.
             # they may be specified positionally or via a keyword.
             url = None
+            name = None
             # methods has a default value:
             methods = ['GET']
 
@@ -178,16 +179,21 @@ def extract_schemas_from_source(source, filename='<unknown>'):
             args = assign.value.args
             if len(args) >= 1:
                 url = ast.literal_eval(args[0])
+            if len(args) >= 2:
+                name = ast.literal_eval(args[1])
             kwargs = assign.value.keywords
             for kwarg in kwargs:
                 if kwarg.arg == 'url':
                     url = ast.literal_eval(kwarg.value)
                 if kwarg.arg == 'methods':
                     methods = ast.literal_eval(kwarg.value)
-            if url:
+                if kwarg.arg == 'view_name':
+                    name = ast.literal_eval(kwarg.value)
+            if url and name:
                 for target in assign.targets:
                     acceptable_views[target.id] = {
                         'url': url,
+                        'name': name,
                         'methods': methods,
                     }
 
@@ -213,7 +219,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                     output_schema = ast.literal_eval(decorator.args[0])
         if api_options:
             schema = ViewSchema(
-                    view_name=function.name,
+                    view_name=api_options['name'],
                     version='1.0',
                     input_schema=input_schema,
                     output_schema=output_schema,
