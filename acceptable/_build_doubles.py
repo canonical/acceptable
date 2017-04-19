@@ -62,16 +62,17 @@ def build_service_doubles(args):
     with tempfile.TemporaryDirectory() as workdir:
         service_config = read_service_config_file(args.config_file)
         target_root = os.path.dirname(args.config_file)
-
-        for service in service_config['services']:
+        for service_name in service_config['services']:
+            service = service_config['services'][service_name]
             source_url = service['git_source']
-            service_dir = fetch_service_source(workdir, service, source_url)
+            service_dir = fetch_service_source(
+                workdir, service_name, source_url)
             service_schemas = []
             for scan_path in service['scan_paths']:
                 abs_path = os.path.join(service_dir, scan_path)
                 service_schemas.extend(extract_schemas_from_file(abs_path))
-            rendered = render_service_double(service, service_schemas)
-            write_service_double_file(target_root, service, rendered)
+            rendered = render_service_double(service_name, service_schemas)
+            write_service_double_file(target_root, service_name, rendered)
             print("Rendered schemas file for %s service: %d schemas" % (
                 service, len(service_schemas)))
 
