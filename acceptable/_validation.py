@@ -4,7 +4,7 @@ import json
 import functools
 
 import jsonschema
-from flask import request, jsonify
+from flask import current_app, request, jsonify
 
 
 class DataValidationError(Exception):
@@ -135,11 +135,12 @@ def validate_output(schema):
                     "Unknown response type '%s'. Supported types are list "
                     "and dict." % type(resp))
 
-            error_list = validate(resp, schema)
+            if current_app.config.get('ACCEPTABLE_VALIDATE_OUTPUT', True):
+                error_list = validate(resp, schema)
 
-            assert not error_list,\
-                "Response does not comply with output schema: %r.\n%s"\
-                % (error_list, resp)
+                assert not error_list,\
+                    "Response does not comply with output schema: %r.\n%s"\
+                    % (error_list, resp)
 
             return_value = [jsonify(resp)]
             if code is not None:

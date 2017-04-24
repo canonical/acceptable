@@ -182,6 +182,26 @@ class ValidateOutputTests(TestCase):
             "Supported types are list and dict.",
             str(e))
 
+    def test_skips_validation_if_disabled(self):
+        def view():
+            return []
+
+        app = self.useFixture(FlaskValidateBodyFixture(
+            output_schema={'type': 'object'},
+            view_fn=view
+        ))
+
+        # Output validation is enabled by default.
+        self.assertRaises(AssertionError, app.post_json, [])
+
+        # But if disabled then the app is trusted to return valid data.
+        app.app.config['ACCEPTABLE_VALIDATE_OUTPUT'] = False
+        self.assertEqual(b'[]\n', app.post_json([]).data)
+
+        # It can also be explicitly enabled.
+        app.app.config['ACCEPTABLE_VALIDATE_OUTPUT'] = True
+        self.assertRaises(AssertionError, app.post_json, [])
+
     def assertResponseJsonEqual(self, response, expected_json):
         data = json.loads(response.data.decode(response.charset))
         self.assertEqual(expected_json, data)
