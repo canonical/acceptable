@@ -1,4 +1,8 @@
-|Build Status| |Coverage Status| # acceptable
+|Build Status| |Coverage Status|
+
+==========
+acceptable
+==========
 
 Acceptable builds on top of `flask <http://flask.pocoo.org/>`__ and adds
 several opinionated features designed to make it easier to build a
@@ -23,9 +27,9 @@ library contains the following high-level features:
    `jsonschema <http://json-schema.org/>`__. This allows views to
    express their inputs and outputs in a concise manner.
 
--  These input and output definitions can be extracted from your various
-   services and compiled into a library of service doubles, which
-   facilitates easy inter-service interaction testing.
+   -  These input and output definitions can be extracted from your various
+      services and compiled into a library of service doubles, which
+      facilitates easy inter-service interaction testing.
 
 .. |Build Status| image:: https://travis-ci.org/canonical-ols/acceptable.svg?branch=master
    :target: https://travis-ci.org/canonical-ols/acceptable
