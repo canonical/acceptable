@@ -290,6 +290,26 @@ class AcceptableAPITestCase(TestCase):
             "The name 'some name here' has already been registered for an "
             "API.", str(e))
 
+    def test_can_expose_same_view_in_multiple_apis(self):
+        flask_app = Flask(__name__)
+        service = AcceptableService('vendor', flask_app)
+
+        api1 = service.api('/foo1', 'foo1')
+        api2 = service.api('/foo2', 'foo2')
+
+        @api1.view(introduced_at='1.0')
+        @api2.view(introduced_at='1.0')
+        def get_foo():
+            return "Foo API"
+
+        client = flask_app.test_client()
+
+        resp1 = client.get('/foo1')
+        resp2 = client.get('/foo2')
+
+        self.assertThat(resp1, IsResponse("Foo API"))
+        self.assertThat(resp2, IsResponse("Foo API"))
+
 
 class EndpointMapTestCase(TestCase):
 
