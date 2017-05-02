@@ -207,8 +207,19 @@ def extract_schemas_from_source(source, filename='<unknown>'):
         for decorator in function.decorator_list:
             if isinstance(decorator.func, ast.Attribute):
                 decorator_name = decorator.func.value.id
+                # extract version this view was introduced, which can be
+                # specified as an arg or a kwarg:
+                version = None
+                for kwarg in decorator.keywords:
+                    if kwarg.arg == 'introduced_at':
+                        version = ast.literal_eval(kwarg.value)
+                        break
+                if len(decorator.args) == 1:
+                    version = ast.literal_eval(decorator.args[0])
+
                 if decorator_name in acceptable_views:
                     api_options = acceptable_views[decorator_name]
+                    api_options['version'] = version
             else:
                 decorator_name = decorator.func.id
                 if decorator_name == 'validate_body':
@@ -221,7 +232,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
         if api_options:
             schema = ViewSchema(
                     view_name=api_options['name'],
-                    version='1.0',
+                    version=api_options['version'],
                     input_schema=input_schema,
                     output_schema=output_schema,
                     methods=api_options['methods'],
