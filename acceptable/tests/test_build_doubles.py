@@ -136,6 +136,61 @@ class ExtractSchemasFromSourceTests(TestCase):
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
+    def test_can_extract_version_with_kwarg(self):
+        [schema] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/foo', 'root')
+
+            @root_api.view(introduced_at='1.1')
+            def my_view():
+                pass
+            '''))
+
+        self.assertEqual('root', schema.view_name)
+        self.assertEqual('/foo', schema.url)
+        self.assertEqual('1.1', schema.version)
+        self.assertEqual(['GET'], schema.methods)
+        self.assertEqual(None, schema.input_schema)
+        self.assertEqual(None, schema.output_schema)
+
+    def test_can_extract_multiple_versioned_schemas(self):
+        [schema1, schema2] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/foo', 'root')
+
+            @root_api.view(introduced_at='1.1')
+            def my_view():
+                pass
+
+
+            @root_api.view(introduced_at='1.2')
+            def my_view():
+                pass
+            '''))
+
+        self.assertEqual('1.1', schema1.version)
+
+    def test_can_specify_version_as_arg(self):
+        [schema] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/foo', 'root')
+
+            @root_api.view('1.5')
+            def my_view():
+                pass
+            '''))
+
+        self.assertEqual('1.5', schema.version)
+
     def test_handles_other_assignments(self):
         self.assertEqual(
             [], _build_doubles.extract_schemas_from_source('foo = {}'))
