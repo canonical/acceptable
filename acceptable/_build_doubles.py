@@ -207,7 +207,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
         for decorator in function.decorator_list:
             if isinstance(decorator.func, ast.Attribute):
                 decorator_name = decorator.func.value.id
-                # extract version this view was introduced, which can be
+                # extract version this view was introduced at, which can be
                 # specified as an arg or a kwarg:
                 version = None
                 for kwarg in decorator.keywords:
