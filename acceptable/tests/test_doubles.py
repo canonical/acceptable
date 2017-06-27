@@ -210,6 +210,25 @@ class ServiceMockTests(TestCase):
             requests.patch("http://localhost:1234/foo", json={}).status_code
         )
 
+    def test_mock_output_status(self):
+        double = ServiceMock(
+            service='foo',
+            methods=['POST'],
+            url='/foo',
+            input_schema={'type': 'object'},
+            output_schema={'type': 'array'},
+            output=[],
+            output_status=201
+        )
+        set_service_locations(dict(foo="http://localhost:1234/"))
+
+        self.useFixture(double)
+
+        self.assertEqual(
+            201,
+            requests.post("http://localhost:1234/foo", json={}).status_code
+        )
+
     def test_service_mock(self):
         double_factory = service_mock(
             service='foo',
