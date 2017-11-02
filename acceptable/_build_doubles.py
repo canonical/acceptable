@@ -66,8 +66,9 @@ def build_service_doubles(args):
         for service_name in service_config['services']:
             service = service_config['services'][service_name]
             source_url = service['git_source']
+            branch = service.get('git_branch')
             service_dir = fetch_service_source(
-                workdir, service_name, source_url)
+                workdir, service_name, source_url, branch)
             service_schemas = []
             for scan_path in service['scan_paths']:
                 abs_path = os.path.join(service_dir, scan_path)
@@ -84,11 +85,15 @@ def read_service_config_file(config_path):
         return json.load(config_file)
 
 
-def fetch_service_source(workdir, service_name, source_url):
+def fetch_service_source(workdir, service_name, source_url, branch=None):
     print("Cloning source for %s service." % service_name)
     target_dir = os.path.join(workdir, service_name)
+    cmd = ['git', 'clone']
+    if branch is not None:
+        cmd.extend(['-b', branch])
+    cmd.extend([source_url, target_dir])
     subprocess.check_call(
-        ['git', 'clone', source_url, target_dir],
+        cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
