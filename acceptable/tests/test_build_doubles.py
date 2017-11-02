@@ -362,3 +362,28 @@ class RenderServiceDoubleTests(TestCase):
             "re-generate it by running '%s build config-file'" % (
                 os.path.basename(sys.argv[0])),
             source)
+
+    def test_input_and_output_schemas_are_sorted(self):
+        schema = _build_doubles.ViewSchema(
+            view_name='some_view',
+            version='1.3',
+            input_schema={
+                'type': 'object',
+                'properties': {'item': {'type': 'string'}},
+            },
+            output_schema={
+                'type': 'object',
+                'properties': {'item': {'type': 'string'}},
+            },
+            methods=['GET'],
+            url='/foo',
+        )
+        source = _build_doubles.render_service_double(
+            'foo', [schema], 'build config-file')
+        self.assertIsValidPython(source)
+        self.assertIn(
+            "input_schema={'properties': {'item': {'type': 'string'}}, "
+            "'type': 'object'}", source)
+        self.assertIn(
+            "output_schema={'properties': {'item': {'type': 'string'}}, "
+            "'type': 'object'}", source)
