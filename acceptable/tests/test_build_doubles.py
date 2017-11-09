@@ -329,6 +329,35 @@ class ParseArgsTests(TestCase):
         self.assertEqual(_build_doubles.build_service_doubles, args.func)
 
 
+class RenderValueTests(TestCase):
+
+    def test_plain(self):
+        self.assertEqual("'foo'", _build_doubles.render_value('foo'))
+
+    def test_list(self):
+        value = [{'type': 'object', 'properties': {}}, {'type': 'string'}]
+        rendered = "[{'properties': {}, 'type': 'object'}, {'type': 'string'}]"
+        self.assertEqual(rendered, _build_doubles.render_value(value))
+
+    def test_dict(self):
+        value = {
+            'type': 'object',
+            'properties': {
+                'foo': {'type': 'string'},
+                'bar': {'type': 'integer'},
+            },
+            'required': ['foo'],
+        }
+        rendered = (
+            "{"
+            "'properties': "
+            "{'bar': {'type': 'integer'}, 'foo': {'type': 'string'}}, "
+            "'required': ['foo'], "
+            "'type': 'object'"
+            "}")
+        self.assertEqual(rendered, _build_doubles.render_value(value))
+
+
 class RenderServiceDoubleTests(TestCase):
 
     def assertIsValidPython(self, source):
@@ -362,3 +391,28 @@ class RenderServiceDoubleTests(TestCase):
             "re-generate it by running '%s build config-file'" % (
                 os.path.basename(sys.argv[0])),
             source)
+
+    def test_input_and_output_schemas_are_sorted(self):
+        schema = _build_doubles.ViewSchema(
+            view_name='some_view',
+            version='1.3',
+            input_schema={
+                'type': 'object',
+                'properties': {'item': {'type': 'string'}},
+            },
+            output_schema={
+                'type': 'object',
+                'properties': {'item': {'type': 'string'}},
+            },
+            methods=['GET'],
+            url='/foo',
+        )
+        source = _build_doubles.render_service_double(
+            'foo', [schema], 'build config-file')
+        self.assertIsValidPython(source)
+        self.assertIn(
+            "input_schema={'properties': {'item': {'type': 'string'}}, "
+            "'type': 'object'}", source)
+        self.assertIn(
+            "output_schema={'properties': {'item': {'type': 'string'}}, "
+            "'type': 'object'}", source)
