@@ -99,7 +99,7 @@ def validate_output(schema):
 
         from snapstore_schemas import validate_output
 
-        @validate_body({
+        @validate_output({
             'type': 'object',
             'properties': {
                 'ok': {'type': 'boolean'},
