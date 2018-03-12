@@ -177,6 +177,37 @@ class ExtractSchemasFromSourceTests(TestCase):
 
         self.assertEqual('1.1', schema1.version)
 
+    def test_can_extract_multiple_names_for_one_view(self):
+        # This is helpful when in the process of renaming a view.
+        [schema1, schema2] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            service = AcceptableService('vendor')
+
+            old_api = service.api('/old', 'old')
+            new_api = service.api('/new', 'new')
+
+            @old_api.view(introduced_at='1.0')
+            @new_api.view(introduced_at='1.0')
+            @validate_body({'type': 'object'})
+            @validate_output({'type': 'array'})
+            def my_view():
+                pass
+            '''))
+
+        self.assertEqual('old', schema1.view_name)
+        self.assertEqual('/old', schema1.url)
+        self.assertEqual('1.0', schema1.version)
+        self.assertEqual(['GET'], schema1.methods)
+        self.assertEqual({'type': 'object'}, schema1.input_schema)
+        self.assertEqual({'type': 'array'}, schema1.output_schema)
+        self.assertEqual('new', schema2.view_name)
+        self.assertEqual('/new', schema2.url)
+        self.assertEqual('1.0', schema2.version)
+        self.assertEqual(['GET'], schema2.methods)
+        self.assertEqual({'type': 'object'}, schema2.input_schema)
+        self.assertEqual({'type': 'array'}, schema2.output_schema)
+
     def test_can_specify_version_as_arg(self):
         [schema] = _build_doubles.extract_schemas_from_source(
             dedent('''

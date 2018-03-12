@@ -210,7 +210,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
     for function in functions:
         input_schema = None
         output_schema = None
-        api_options = None
+        api_options_list = []
         for decorator in function.decorator_list:
             if isinstance(decorator.func, ast.Attribute):
                 decorator_name = decorator.func.value.id
@@ -227,6 +227,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                 if decorator_name in acceptable_views:
                     api_options = acceptable_views[decorator_name]
                     api_options['version'] = version
+                    api_options_list.append(api_options)
             else:
                 decorator_name = decorator.func.id
                 if decorator_name == 'validate_body':
@@ -236,7 +237,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                     input_schema = ast.literal_eval(decorator.args[0])
                 if decorator_name == 'validate_output':
                     output_schema = ast.literal_eval(decorator.args[0])
-        if api_options:
+        for api_options in api_options_list:
             schema = ViewSchema(
                     view_name=api_options['name'],
                     version=api_options['version'],
