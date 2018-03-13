@@ -7,7 +7,7 @@ import pkg_resources
 from setuptools import setup
 
 
-VERSION = '0.10'
+VERSION = '0.11'
 
 
 def parse_requirements_file(path):
