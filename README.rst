@@ -42,7 +42,6 @@ Documentation (beta)
 
 Acceptable can parse your code for acceptable metadata, and generate a json version of your api metadata::
 
-
     acceptable metadata path/to/files*.py > api.json
 
 Acceptable also includes a tool for generating markdown documentation from this metadata::
@@ -50,7 +49,9 @@ Acceptable also includes a tool for generating markdown documentation from this 
     acceptable render api.json --name 'My Service'
 
 This markdown is designed to rendered to html by
-`documentation-builder <https://docs.ubuntu.com/documentation-builder/en/>`.
+`documentation-builder <https://docs.ubuntu.com/documentation-builder/en/>`::
+
+    documentation-builder --base-directory docs
 
 You can do this in a single step::
 

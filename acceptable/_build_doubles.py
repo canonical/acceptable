@@ -113,7 +113,6 @@ ViewSchema = collections.namedtuple(
         'doc',            # The documentation for this url
         'function_name',  # The name of the actual python funtion that
                           # implements this api
-
     ]
 )
 
