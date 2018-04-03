@@ -110,6 +110,10 @@ ViewSchema = collections.namedtuple(
         'output_schema',  # The schema for responses from the service
         'methods',        # The methods this view supports.
         'url',            # The URL this view is mounted at.
+        'doc',            # The documentation for this url
+        'function_name',  # The name of the actual python funtion that
+                          # implements this api
+
     ]
 )
 
@@ -210,8 +214,11 @@ def extract_schemas_from_source(source, filename='<unknown>'):
     for function in functions:
         input_schema = None
         output_schema = None
+        doc = ast.get_docstring(function)
         api_options_list = []
         for decorator in function.decorator_list:
+            if not isinstance(decorator, ast.Call):
+                continue
             if isinstance(decorator.func, ast.Attribute):
                 decorator_name = decorator.func.value.id
                 # extract version this view was introduced at, which can be
@@ -227,6 +234,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                 if decorator_name in acceptable_views:
                     api_options = acceptable_views[decorator_name]
                     api_options['version'] = version
+                    api_options['function_name'] = function.name
                     api_options_list.append(api_options)
             else:
                 decorator_name = decorator.func.id
@@ -245,6 +253,8 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                     output_schema=output_schema,
                     methods=api_options['methods'],
                     url=api_options['url'],
+                    doc=doc,
+                    function_name=api_options['function_name'],
                 )
             schemas_found.append(schema)
     return schemas_found

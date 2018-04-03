@@ -410,6 +410,8 @@ class RenderServiceDoubleTests(TestCase):
             output_schema=None,
             methods=['GET'],
             url='/foo',
+            doc=None,
+            function_name=None,
         )
         source = _build_doubles.render_service_double(
             'foo', [schema], 'build config-file')
@@ -437,6 +439,8 @@ class RenderServiceDoubleTests(TestCase):
             },
             methods=['GET'],
             url='/foo',
+            doc=None,
+            function_name=None,
         )
         source = _build_doubles.render_service_double(
             'foo', [schema], 'build config-file')

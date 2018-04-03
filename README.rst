@@ -35,3 +35,23 @@ library contains the following high-level features:
    :target: https://travis-ci.org/canonical-ols/acceptable
 .. |Coverage Status| image:: https://coveralls.io/repos/github/canonical-ols/acceptable/badge.svg?branch=master
    :target: https://coveralls.io/github/canonical-ols/acceptable?branch=master
+
+
+Documentation (beta)
+--------------------
+
+Acceptable can parse your code for acceptable metadata, and generate a json version of your api metadata::
+
+
+    acceptable metadata path/to/files*.py > api.json
+
+Acceptable also includes a tool for generating markdown documentation from this metadata::
+
+    acceptable render api.json --name 'My Service'
+
+This markdown is designed to rendered to html by
+`documentation-builder <https://docs.ubuntu.com/documentation-builder/en/>`.
+
+You can do this in a single step::
+
+    acceptable metadata path/to/files*.py | acceptable render --name 'My Service'
