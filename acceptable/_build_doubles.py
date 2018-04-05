@@ -111,8 +111,6 @@ ViewSchema = collections.namedtuple(
         'methods',        # The methods this view supports.
         'url',            # The URL this view is mounted at.
         'doc',            # The documentation for this url
-        'function_name',  # The name of the actual python funtion that
-                          # implements this api
     ]
 )
 
@@ -233,7 +231,6 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                 if decorator_name in acceptable_views:
                     api_options = acceptable_views[decorator_name]
                     api_options['version'] = version
-                    api_options['function_name'] = function.name
                     api_options_list.append(api_options)
             else:
                 decorator_name = decorator.func.id
@@ -253,7 +250,6 @@ def extract_schemas_from_source(source, filename='<unknown>'):
                     methods=api_options['methods'],
                     url=api_options['url'],
                     doc=doc,
-                    function_name=api_options['function_name'],
                 )
             schemas_found.append(schema)
     return schemas_found

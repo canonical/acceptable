@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 import sys
 
-import yaml
 from jinja2 import Environment, PackageLoader
+import yaml
 
 from acceptable._build_doubles import extract_schemas_from_file
 
@@ -19,8 +19,15 @@ def main():
     sys.exit(cli_args.func(cli_args))
 
 
-def parse_args(cli_args=sys.argv[1:]):
-    parser = argparse.ArgumentParser(
+def parse_args(raw_args=None, parser_cls=None, stdin=None):
+    if raw_args is None:
+        raw_args = sys.argv[1:]
+    if parser_cls is None:
+        parser_cls = argparse.ArgumentParser
+    if stdin is None:
+        stdin = sys.stdin
+
+    parser = parser_cls(
         description='Tool for working with acceptable metadata',
     )
     subparser = parser.add_subparsers(dest='cmd')
@@ -29,7 +36,7 @@ def parse_args(cli_args=sys.argv[1:]):
     metadata_parser = subparser.add_parser(
         'metadata', help='Scan files and print extracted metadata in json')
     metadata_parser.add_argument('files', nargs='+')
-    metadata_parser.set_defaults(func=scan_metadata)
+    metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
         'render', help='Render markdown documentation for api metadata'
@@ -38,22 +45,28 @@ def parse_args(cli_args=sys.argv[1:]):
         'metadata',
         nargs='?',
         type=argparse.FileType('r'),
-        default=sys.stdin,
+        default=stdin,
     )
     render_parser.add_argument(
         '--name', '-n', required=True, help='Name of service')
     render_parser.add_argument(
         '--dir', '-d', default='docs', help='output directory')
-    render_parser.set_defaults(func=render_markdown)
+    render_parser.set_defaults(func=render_cmd)
 
-    return parser.parse_args(cli_args)
+    return parser.parse_args(raw_args)
 
 
-def scan_metadata(cli_args):
+def metadata_cmd(cli_args):
+    metadata = scan_metadata(cli_args.files)
+    print(json.dumps(metadata, indent=2, sort_keys=True))
+    return 0
+
+
+def scan_metadata(files):
     # This uses AST parsing for now. In future, we might just import code.
     schemas = []
     metadata = {}
-    for path in cli_args.files:
+    for path in files:
         schemas.extend(extract_schemas_from_file(path))
     for schema in schemas:
         metadata[schema.view_name] = {
@@ -64,39 +77,41 @@ def scan_metadata(cli_args):
             'request_schema': schema.input_schema,
             'response_schema': schema.output_schema,
             'doc': schema.doc,
-            'function_name': schema.function_name,
         }
-    print(json.dumps(metadata, indent=2, sort_keys=True))
-    return 0
+    return metadata
 
 
-def render_markdown(cli_args):
-    path = Path(cli_args.dir)
-    path.joinpath('en').mkdir(parents=True, exist_ok=True)
-    name = cli_args.name
+def render_cmd(cli_args):
+    root_dir = Path(cli_args.dir)
+    root_dir.joinpath('en').mkdir(parents=True, exist_ok=True)
     metadata = json.load(cli_args.metadata)
+
+    for path, content in render_markdown(metadata, cli_args.name):
+        root_dir.joinpath(path).write_text(content)
+
+
+def render_markdown(metadata, name):
     docs_metadata = {
         'navigation': [{'title': 'Index', 'location': 'index.md'}]
     }
     pages = []
+    en = Path('en')
     page = env.get_template('api_page.md.j2')
-    en = path / 'en'
     index = env.get_template('index.md.j2')
 
     for api_name, api in metadata.items():
         page_file = '{}.md'.format(api_name)
         pages.append({'title': api_name, 'location': page_file})
-        en.joinpath(page_file).write_text(page.render(name=api_name, **api))
+        yield en / page_file, page.render(name=api_name, **api)
 
     docs_metadata['navigation'].extend(
         sorted(pages, key=lambda k: k['title']))
 
-    en.joinpath('index.md').write_text(index.render(service_name=name))
-    en.joinpath('metadata.yaml').write_text(yaml.safe_dump(docs_metadata))
-    path.joinpath('metadata.yaml').write_text(
-        yaml.safe_dump({'site_title': name + ' Documentation'})
+    yield en / 'index.md', index.render(service_name=name)
+    yield en / 'metadata.yaml', yaml.safe_dump(docs_metadata)
+    yield Path('metadata.yaml'), yaml.safe_dump(
+        {'site_title': name + ' Documentation'}
     )
-    return 0
 
 
 if __name__ == '__main__':

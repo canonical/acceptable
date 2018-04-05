@@ -45,13 +45,14 @@ class ExtractSchemasFromSourceTests(TestCase):
 
             @root_api.view(introduced_at='1.0')
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
@@ -66,7 +67,7 @@ class ExtractSchemasFromSourceTests(TestCase):
             @root_api.view(introduced_at='1.0')
             @validate_body({'type': 'object'})
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('root', schema.view_name)
@@ -74,6 +75,7 @@ class ExtractSchemasFromSourceTests(TestCase):
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
         self.assertEqual({'type': 'object'}, schema.input_schema)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.output_schema)
 
     def test_can_extract_schema_with_output_schema(self):
@@ -87,13 +89,14 @@ class ExtractSchemasFromSourceTests(TestCase):
             @root_api.view(introduced_at='1.0')
             @validate_output({'type': 'object'})
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.input_schema)
         self.assertEqual({'type': 'object'}, schema.output_schema)
 
@@ -107,13 +110,14 @@ class ExtractSchemasFromSourceTests(TestCase):
 
             @root_api.view(introduced_at='1.0')
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('root', schema.view_name)
         self.assertEqual('/', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['POST', 'PUT'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
@@ -127,13 +131,14 @@ class ExtractSchemasFromSourceTests(TestCase):
 
             @root_api.view(introduced_at='1.0')
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('root', schema.view_name)
         self.assertEqual('/foo', schema.url)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
@@ -147,13 +152,14 @@ class ExtractSchemasFromSourceTests(TestCase):
 
             @root_api.view(introduced_at='1.1')
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('root', schema.view_name)
         self.assertEqual('/foo', schema.url)
         self.assertEqual('1.1', schema.version)
         self.assertEqual(['GET'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
@@ -167,12 +173,12 @@ class ExtractSchemasFromSourceTests(TestCase):
 
             @root_api.view(introduced_at='1.1')
             def my_view():
-                pass
+                """Documentation."""
 
 
             @root_api.view(introduced_at='1.2')
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('1.1', schema1.version)
@@ -192,19 +198,21 @@ class ExtractSchemasFromSourceTests(TestCase):
             @validate_body({'type': 'object'})
             @validate_output({'type': 'array'})
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('old', schema1.view_name)
         self.assertEqual('/old', schema1.url)
         self.assertEqual('1.0', schema1.version)
         self.assertEqual(['GET'], schema1.methods)
+        self.assertEqual('Documentation.', schema1.doc)
         self.assertEqual({'type': 'object'}, schema1.input_schema)
         self.assertEqual({'type': 'array'}, schema1.output_schema)
         self.assertEqual('new', schema2.view_name)
         self.assertEqual('/new', schema2.url)
         self.assertEqual('1.0', schema2.version)
         self.assertEqual(['GET'], schema2.methods)
+        self.assertEqual('Documentation.', schema2.doc)
         self.assertEqual({'type': 'object'}, schema2.input_schema)
         self.assertEqual({'type': 'array'}, schema2.output_schema)
 
@@ -218,7 +226,7 @@ class ExtractSchemasFromSourceTests(TestCase):
 
             @root_api.view('1.5')
             def my_view():
-                pass
+                """Documentation."""
             '''))
 
         self.assertEqual('1.5', schema.version)
@@ -289,20 +297,21 @@ class ExtractSchemasFromFileTests(TestCase):
         good_path = os.path.join(workdir.path, 'my.py')
         with open(good_path, 'w') as f:
             f.write(dedent(
-                """
+                '''
                 service = AcceptableService('vendor')
 
                 root_api = service.api('/', 'root')
 
                 @root_api.view(introduced_at='1.0')
                 def my_view():
-                    pass
-                """))
+                    """Documentation."""
+                '''))
         [schema] = _build_doubles.extract_schemas_from_file(good_path)
 
         self.assertEqual('root', schema.view_name)
         self.assertEqual('1.0', schema.version)
         self.assertEqual(['GET'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
@@ -411,7 +420,6 @@ class RenderServiceDoubleTests(TestCase):
             methods=['GET'],
             url='/foo',
             doc=None,
-            function_name=None,
         )
         source = _build_doubles.render_service_double(
             'foo', [schema], 'build config-file')
@@ -440,7 +448,6 @@ class RenderServiceDoubleTests(TestCase):
             methods=['GET'],
             url='/foo',
             doc=None,
-            function_name=None,
         )
         source = _build_doubles.render_service_double(
             'foo', [schema], 'build config-file')
