@@ -70,7 +70,7 @@ def scan_metadata(files):
         schemas.extend(extract_schemas_from_file(path))
     for schema in schemas:
         metadata[schema.view_name] = {
-            'view_name': schema.view_name,
+            'api_name': schema.view_name,
             'version': int(float(schema.version)),  # convert any '1.0' strings
             'methods': schema.methods,
             'url': schema.url,

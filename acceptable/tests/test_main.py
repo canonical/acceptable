@@ -87,7 +87,7 @@ class ScanMetadata(TestCase):
                 'response_schema': {'response_schema': 2},
                 'url': '/',
                 'version':  1,
-                'view_name': 'root',
+                'api_name': 'root',
             }},
             metadata,
         )
@@ -104,7 +104,7 @@ class RenderMarkdown(TestCase):
             'response_schema': {'response_schema': 2},
             'url': '/',
             'version':  1,
-            'view_name': 'api1',
+            'api_name': 'api1',
         }
         metadata['api2'] = {
             'doc': 'doc2',
@@ -113,7 +113,7 @@ class RenderMarkdown(TestCase):
             'response_schema': {'response_schema': 2},
             'url': '/',
             'version':  1,
-            'view_name': 'api1',
+            'api_name': 'api1',
         }
 
         markdown = OrderedDict((str(k), v) for k, v in
