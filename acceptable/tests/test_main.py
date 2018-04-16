@@ -2,6 +2,7 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import argparse
 from collections import OrderedDict
+from functools import partial
 import io
 import json
 import os
@@ -10,7 +11,7 @@ import tempfile
 import textwrap
 import yaml
 
-from testtools import TestCase
+import testtools
 import fixtures
 
 from acceptable import __main__ as main
@@ -24,7 +25,7 @@ class SaneArgumentParser(argparse.ArgumentParser):
         raise RuntimeError(message)
 
 
-class ParseArgsTests(TestCase):
+class ParseArgsTests(testtools.TestCase):
 
     def test_error_with_no_args(self):
         self.assertRaisesRegex(
@@ -66,7 +67,7 @@ class ParseArgsTests(TestCase):
         self.assertTrue('hi', args.metadata.read())
 
 
-class ScanMetadataTests(TestCase):
+class ScanMetadataTests(testtools.TestCase):
 
     def write_file(self, code):
         f = tempfile.NamedTemporaryFile('w')
@@ -102,7 +103,12 @@ class ScanMetadataTests(TestCase):
         )
 
 
-class RenderMarkdownTests(TestCase):
+def builder_installed():
+    ps = subprocess.run(['which', 'documentation-builder'])
+    return ps.returncode == 0
+
+
+class RenderMarkdownTests(testtools.TestCase):
 
     @property
     def metadata(self):
@@ -155,6 +161,8 @@ class RenderMarkdownTests(TestCase):
             md
         )
 
+    @testtools.skipIf(
+        not builder_installed(), 'documentation-builder not installed')
     def test_render_cmd_with_documentation_builder(self):
         # documentation-builder is a strict snap, can only work out of $HOME
         home = os.environ['HOME']
@@ -185,3 +193,7 @@ class RenderMarkdownTests(TestCase):
         )
 
         self.assertEqual(ps.returncode, 0, ps.stdout)
+        p = partial(os.path.join, html_dir.path)
+        self.assertTrue(os.path.exists(p('en/api1.html')))
+        self.assertTrue(os.path.exists(p('en/api2.html')))
+        self.assertTrue(os.path.exists(p('en/index.html')))
