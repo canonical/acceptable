@@ -1,3 +1,6 @@
+# Copyright 2017 Canonical Ltd.  This software is licensed under the
+# GNU Lesser General Public License version 3 (see the file LICENSE).
+
 import argparse
 import json
 from pathlib import Path
@@ -8,11 +11,6 @@ import yaml
 
 from acceptable._build_doubles import extract_schemas_from_file
 
-env = Environment(
-    loader=PackageLoader('acceptable', 'templates'),
-    autoescape=False,
-)
-
 
 def main():
     cli_args = parse_args()
@@ -20,8 +18,6 @@ def main():
 
 
 def parse_args(raw_args=None, parser_cls=None, stdin=None):
-    if raw_args is None:
-        raw_args = sys.argv[1:]
     if parser_cls is None:
         parser_cls = argparse.ArgumentParser
     if stdin is None:
@@ -85,12 +81,17 @@ def render_cmd(cli_args):
     root_dir = Path(cli_args.dir)
     root_dir.joinpath('en').mkdir(parents=True, exist_ok=True)
     metadata = json.load(cli_args.metadata)
+    cli_args.metadata.close()  # suppresses ResourceWarning
 
     for path, content in render_markdown(metadata, cli_args.name):
         root_dir.joinpath(path).write_text(content)
 
 
 def render_markdown(metadata, name):
+    env = Environment(
+        loader=PackageLoader('acceptable', 'templates'),
+        autoescape=False,
+    )
     docs_metadata = {
         'navigation': [{'title': 'Index', 'location': 'index.md'}]
     }
@@ -108,6 +109,8 @@ def render_markdown(metadata, name):
         sorted(pages, key=lambda k: k['title']))
 
     yield en / 'index.md', index.render(service_name=name)
+
+    # documentation-builder requires yaml metadata files in certain locations
     yield en / 'metadata.yaml', yaml.safe_dump(docs_metadata)
     yield Path('metadata.yaml'), yaml.safe_dump(
         {'site_title': name + ' Documentation'}

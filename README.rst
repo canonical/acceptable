@@ -40,19 +40,22 @@ library contains the following high-level features:
 Documentation (beta)
 --------------------
 
-Acceptable can parse your code for acceptable metadata, and generate a json version of your api metadata::
+One of the goals of acceptable to use the metadata about your api to build documentation.
+
+First, acceptable can parse your code for acceptable metadata, and generate a json version of your api metadata::
 
     acceptable metadata path/to/files*.py > api.json
 
-Acceptable also includes a tool for generating markdown documentation from this metadata::
+Next, acceptable can transform the previously saved metadata into markdown::
 
     acceptable render api.json --name 'My Service'
+
+You can do this in a single step::
+
+    acceptable metadata path/to/files*.py | acceptable render --name 'My Service'
 
 This markdown is designed to rendered to html by
 `documentation-builder <https://docs.ubuntu.com/documentation-builder/en/>`::
 
     documentation-builder --base-directory docs
 
-You can do this in a single step::
-
-    acceptable metadata path/to/files*.py | acceptable render --name 'My Service'

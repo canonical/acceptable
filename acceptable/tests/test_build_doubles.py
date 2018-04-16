@@ -56,6 +56,51 @@ class ExtractSchemasFromSourceTests(TestCase):
         self.assertEqual(None, schema.input_schema)
         self.assertEqual(None, schema.output_schema)
 
+    def test_can_extract_acceptable_view_no_docstring(self):
+        [schema] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/', 'root')
+
+            @root_api.view(introduced_at='1.0')
+            def my_view():
+                pass
+            '''))
+
+        self.assertEqual('root', schema.view_name)
+        self.assertEqual('/', schema.url)
+        self.assertEqual('1.0', schema.version)
+        self.assertEqual(['GET'], schema.methods)
+        self.assertEqual(None, schema.doc)
+        self.assertEqual(None, schema.input_schema)
+        self.assertEqual(None, schema.output_schema)
+
+    def test_can_extract_acceptable_view_multiline_docstring(self):
+        [schema] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/', 'root')
+
+            @root_api.view(introduced_at='1.0')
+            def my_view():
+                """Documentation.
+
+                More Documentation.
+                """
+            '''))
+
+        self.assertEqual('root', schema.view_name)
+        self.assertEqual('/', schema.url)
+        self.assertEqual('1.0', schema.version)
+        self.assertEqual(['GET'], schema.methods)
+        self.assertEqual("Documentation.\n\nMore Documentation.", schema.doc)
+        self.assertEqual(None, schema.input_schema)
+        self.assertEqual(None, schema.output_schema)
+
     def test_can_extract_schema_with_input_schema(self):
         [schema] = _build_doubles.extract_schemas_from_source(
             dedent('''
