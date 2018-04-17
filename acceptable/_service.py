@@ -60,7 +60,7 @@ class AcceptableService:
             raise ValueError(
                 "The name '%s' has already been registered for an API."
                 % name)
-        api = AcceptableAPI(self)
+        api = AcceptableAPI(self, name)
         if self._flask_app is None:
             self._late_registrations.append((url, name, api, options))
         else:
@@ -107,9 +107,12 @@ class AcceptableService:
 
 class AcceptableAPI:
 
-    def __init__(self, service):
+    def __init__(self, service, name):
         self.endpoint_map = EndpointMap()
         self.service = service
+        # make AcceptableAPI instance look more like a regular function, which
+        # some extentions expect
+        self.__name__ = name
 
     def __call__(self, *args, **kwargs):
         # find the correct version / tagged view and call it.
