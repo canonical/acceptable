@@ -110,8 +110,8 @@ class AcceptableAPI:
     def __init__(self, service, name):
         self.endpoint_map = EndpointMap()
         self.service = service
-        # make AcceptableAPI instance look more like a regular function, which
-        # some extentions expect
+        # make an AcceptableAPI instance look more like a regular function,
+        # which some extensions expect
         self.__name__ = name
 
     def __call__(self, *args, **kwargs):
