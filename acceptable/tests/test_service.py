@@ -230,6 +230,8 @@ class AcceptableAPITestCase(TestCase):
         resp = client.get('/new')
 
         self.assertThat(resp, IsResponse("new view"))
+        view = fixture.flask_app.view_functions['blah']
+        self.assertEqual(view.__name__, 'blah')
 
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(SimpleAPIServiceFixture())
@@ -309,6 +311,7 @@ class AcceptableAPITestCase(TestCase):
 
         self.assertThat(resp1, IsResponse("Foo API"))
         self.assertThat(resp2, IsResponse("Foo API"))
+
 
 
 class EndpointMapTestCase(TestCase):
