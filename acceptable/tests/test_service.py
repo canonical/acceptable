@@ -66,12 +66,23 @@ class ServiceFixture(Fixture):
 
 class AcceptableAPITestCase(TestCase):
 
-    def test_view_decorator_works(self):
+    def test_acceptable_api_declaration_works(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        api = fixture.service.api('/new', 'blah')
+
+        self.assertEqual(api.url, '/new')
+        self.assertEqual(api.options, {})
+        self.assertEqual(api.name, 'blah')
+
+        self.assertEqual(api, fixture.service.apis['blah'])
+
+    def test_view_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
 
         new_api = fixture.service.api('/new', 'blah')
 
-        @new_api.view(introduced_at='1.0')
+        @new_api.view(introduced_at=1)
         def new_view():
             return "new view", 200
 
@@ -84,12 +95,36 @@ class AcceptableAPITestCase(TestCase):
         view = app.view_functions['blah']
         self.assertEqual(view.__name__, 'new_view')
 
+    def test_view_introduced_at_string(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        new_api = fixture.service.api('/new', 'blah')
+        self.assertEqual(new_api.introduced_at, None)
+
+        @new_api.view(introduced_at='1')
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(new_api.introduced_at, 1)
+
+    def test_view_introduced_at_1_0_string(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        new_api = fixture.service.api('/new', 'blah')
+        self.assertEqual(new_api.introduced_at, None)
+
+        @new_api.view(introduced_at='1.0')
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(new_api.introduced_at, 1)
+
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(ServiceFixture())
 
         new_api = fixture.service.api('/new', 'namegoeshere')
 
-        @new_api.view(introduced_at='1.0')
+        @new_api.view(introduced_at=1)
         def new_view():
             return "new view", 200
 
@@ -125,7 +160,7 @@ class AcceptableAPITestCase(TestCase):
 
         alt_api = fixture.service.api('/foo', 'foo_alt', methods=['GET'])
 
-        @alt_api.view(introduced_at='1.0')
+        @alt_api.view(introduced_at=1)
         def foo_alt():
             return "alt foo", 200
 
