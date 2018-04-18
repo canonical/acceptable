@@ -68,6 +68,7 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(api.url, '/new')
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, 'blah')
+
         self.assertEqual(api, fixture.service.apis['blah'])
 
     def test_view_decorator_and_bind_works(self):
@@ -110,25 +111,6 @@ class AcceptableAPITestCase(TestCase):
             return "new view", 200
 
         self.assertEqual(new_api.introduced_at, 1)
-
-    def test_view_decorator_works(self):
-        fixture = self.useFixture(ServiceFixture())
-
-        new_api = fixture.service.api('/new', 'blah')
-        self.assertEqual(new_api.introduced_at, None)
-
-        @new_api.view(introduced_at='1.0')
-        def new_view():
-            return "new view", 200
-
-        app = fixture.bind()
-
-        client = app.test_client()
-        resp = client.get('/new')
-
-        self.assertThat(resp, IsResponse("new view"))
-        view = app.view_functions['blah']
-        self.assertEqual(view.__name__, 'new_view')
 
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(ServiceFixture())
