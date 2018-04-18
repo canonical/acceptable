@@ -42,12 +42,7 @@ class AcceptableServiceTestCase(TestCase):
 
 
 class ServiceFixture(Fixture):
-    """A reusable fixture that sets up several API endpoints.
-
-    This fixture creates a simple set of API endpoints with a mix of different
-    version and API flag requirements. Tests can use this fixture instead of
-    having to do all this setup in every test.
-    """
+    """A reusable fixture that sets up several API endpoints."""
 
     def _setUp(self):
         self.service = AcceptableService('service')
@@ -68,13 +63,11 @@ class AcceptableAPITestCase(TestCase):
 
     def test_acceptable_api_declaration_works(self):
         fixture = self.useFixture(ServiceFixture())
-
         api = fixture.service.api('/new', 'blah')
 
         self.assertEqual(api.url, '/new')
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, 'blah')
-
         self.assertEqual(api, fixture.service.apis['blah'])
 
     def test_view_decorator_and_bind_works(self):
@@ -109,7 +102,6 @@ class AcceptableAPITestCase(TestCase):
 
     def test_view_introduced_at_1_0_string(self):
         fixture = self.useFixture(ServiceFixture())
-
         new_api = fixture.service.api('/new', 'blah')
         self.assertEqual(new_api.introduced_at, None)
 
@@ -118,6 +110,25 @@ class AcceptableAPITestCase(TestCase):
             return "new view", 200
 
         self.assertEqual(new_api.introduced_at, 1)
+
+    def test_view_decorator_works(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        new_api = fixture.service.api('/new', 'blah')
+        self.assertEqual(new_api.introduced_at, None)
+
+        @new_api.view(introduced_at='1.0')
+        def new_view():
+            return "new view", 200
+
+        app = fixture.bind()
+
+        client = app.test_client()
+        resp = client.get('/new')
+
+        self.assertThat(resp, IsResponse("new view"))
+        view = app.view_functions['blah']
+        self.assertEqual(view.__name__, 'new_view')
 
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(ServiceFixture())

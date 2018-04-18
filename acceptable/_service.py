@@ -10,6 +10,8 @@ class AcceptableService:
     This class manages a set of API endpoints for a given service. An instance
     of this class is required to create an API endpoint.
     """
+    NAME_ALREADY = 'API {} is already registered in service {}'
+    URL_ALREADY = 'URL {} {} is already in service {}'
 
     def __init__(self, name):
         """Create an instance of AcceptableService.
