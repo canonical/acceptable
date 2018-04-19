@@ -11,12 +11,88 @@ from testtools.matchers import (
 
 from acceptable._service import (
     APIMetadata,
+    AcceptableAPI,
     AcceptableService,
+)
+from acceptable._validation import (
+    validate_body,
+    validate_output,
 )
 
 
 class APIMetadataTestCase(TestCase):
-    pass
+
+    def test_register_api_duplicate_name(self):
+        metadata = APIMetadata()
+        api1 = AcceptableAPI('api', '/api1', 1)
+        api2 = AcceptableAPI('api', '/api2', 1)
+        metadata.register_service('test', None)
+        metadata.register_api('test', None, api1)
+        self.assertRaises(
+            AssertionError,
+            metadata.register_api,
+            'other', None, api2,
+        )
+
+    def test_register_api_duplicate_url(self):
+        metadata = APIMetadata()
+        api1 = AcceptableAPI('api1', '/api', 1)
+        api2 = AcceptableAPI('api2', '/api', 1)
+        metadata.register_service('test', None)
+        metadata.register_service('other', None)
+        metadata.register_api('test', None, api1)
+        self.assertRaises(
+            AssertionError,
+            metadata.register_api,
+            'other', None, api2,
+        )
+
+    def test_register_api_allow_different_methods(self):
+        metadata = APIMetadata()
+        api1 = AcceptableAPI('api1', '/api', 1)
+        api2 = AcceptableAPI('api2', '/api', 1, options={'methods': ['POST']})
+        metadata.register_service('test', None)
+        metadata.register_service('other', None)
+        metadata.register_api('test', None, api1)
+        metadata.register_api('other', None, api2)
+
+    def test_register_service_handles_multiple(self):
+        metadata = APIMetadata()
+        api = AcceptableAPI('api', '/api', 1)
+
+        metadata.register_service('test', None)
+        self.assertEqual(
+            metadata.services['test', None], {})
+
+        metadata.register_api('test', None, api)
+        self.assertEqual(
+            metadata.services['test', None], {'api': api})
+
+        # register service again, shouldn't remove any apis
+        metadata.register_service('test', None)
+        self.assertEqual(
+            metadata.services['test', None], {'api': api})
+
+    def test_bind_works(self):
+        app = Flask(__name__)
+        metadata = APIMetadata()
+        metadata.register_service('test', None)
+        api1 = AcceptableAPI('api1', '/api1', 1)
+        api2 = AcceptableAPI('api2', '/api2', 1)
+        metadata.register_api('test', None, api1)
+        metadata.register_api('test', None, api2)
+
+        @api1.view(introduced_at=1)
+        def api1_impl():
+            return 'api1'
+
+        metadata.bind(app, 'test')
+
+        self.assertEquals(api1_impl, app.view_functions['api1'])
+        self.assertNotIn('api2', app.view_functions)
+
+        resp = app.test_client().get('/api1')
+        self.assertThat(resp, IsResponse('api1'))
 
 
 class AcceptableServiceTestCase(TestCase):
@@ -74,8 +150,8 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(api.url, '/new')
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, 'blah')
-
-        self.assertEqual(api, fixture.service.apis['blah'])
+        self.assertEqual(
+            api, fixture.metadata.services['service', None]['blah'])
 
     def test_view_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
@@ -168,6 +244,91 @@ class AcceptableAPITestCase(TestCase):
         resp = client.get('/foo')
 
         self.assertThat(resp, IsResponse("alt foo"))
+
+
+class LegacyAcceptableAPITestCase(TestCase):
+    def test_validate_body_records_metadata(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @new_api.view(introduced_at=1)
+        @validate_body(schema)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah']._request_schema,
+        )
+
+    def test_validate_body_records_metadata_reversed_order(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @validate_body(schema)
+        @new_api.view(introduced_at=1)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah']._request_schema,
+        )
+
+    def test_validate_output_records_metadata(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @new_api.view(introduced_at=1)
+        @validate_output(schema)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah']._response_schema,
+        )
+
+    def test_validate_output_records_metadata_reversed(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @validate_output(schema)
+        @new_api.view(introduced_at=1)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah']._response_schema,
+        )
+
+    def test_validate_both_records_metadata(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema1 = {'type': 'object'}
+        schema2 = {'type': 'array'}
+
+        @new_api.view(introduced_at=1)
+        @validate_body(schema1)
+        @validate_output(schema2)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema1,
+            fixture.service.apis['blah']._request_schema,
+        )
+        self.assertEqual(
+            schema2,
+            fixture.service.apis['blah']._response_schema,
+        )
+
+
 
 
 class IsResponse(Matcher):

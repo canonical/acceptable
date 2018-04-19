@@ -20,26 +20,23 @@ class APIMetadata:
         self.api_names = set()
         self.urls = set()
 
-    def register_service(self, svc):
-        if (svc.name, svc.group) not in self.services:
-            self.services[(svc.name, svc.group)] = {}
+    def register_service(self, name, group):
+        if (name, group) not in self.services:
+            self.services[name, group] = {}
 
-    def register_api(self, svc, api):
+    def register_api(self, name, group, api):
         assert api.name not in self.api_names, self.NAME_ALREADY.format(
-            api.name, svc.name)
+            api.name, name)
         url_key = (api.url, api.methods)
         assert url_key not in self.urls, self.URL_ALREADY.format(
-            '|'.join(api.methods), api.url, svc.name)
+            '|'.join(api.methods), api.url, name)
         self.api_names.add(api.name)
         self.urls.add((api.url, api.methods))
-        self.get_service(svc.name, svc.group)[api.name] = api
-
-    def get_service(self, name, group=None):
-        return self.services[(name, group)]
+        self.services[name, group][api.name] = api
 
     def bind(self, flask_app, name, group=None):
         """Bind the service API urls to a flask app."""
-        for name, api in self.get_service(name, group).items():
+        for name, api in self.services[name, group].items():
             # only bind APIs that have views associated with them
             if api.view_fn is None:
                 continue
@@ -48,7 +45,7 @@ class APIMetadata:
                     api.url, name, view_func=api.view_fn, **api.options)
 
     def bind_all(self, flask_app):
-        for (name, group) in self.services.items():
+        for name, group in self.services.items():
             self.bind(flask_app, name, group)
 
 
@@ -79,11 +76,11 @@ class AcceptableService:
         self.name = name
         self.group = group
         self.metadata = metadata
-        self.metadata.register_service(self)
+        self.metadata.register_service(name, group)
 
     @property
     def apis(self):
-        return self.metadata.get_service(self.name, self.group)
+        return self.metadata.services[self.name, self.group]
 
     def api(self, url, name, introduced_at=None, **options):
         """Add an API to the service.
@@ -108,7 +105,7 @@ class AcceptableService:
         )
 
         api = AcceptableAPI(name, url, introduced_at, options)
-        self.metadata.register_api(self, api)
+        self.metadata.register_api(self.name, self.group, api)
         return api
 
     def bind(self, flask_app):
@@ -122,7 +119,7 @@ class AcceptableService:
 class AcceptableAPI:
     """Metadata abount an api endpoint."""
 
-    def __init__(self, name, url, introduced_at, options):
+    def __init__(self, name, url, introduced_at, options={}):
         self.name = name
         self.url = url
         self.introduced_at = introduced_at

@@ -64,7 +64,7 @@ def validate_body(schema):
     """
     def decorator(fn):
         validate_schema(schema)
-        fn.request_schema = schema
+        fn._request_schema = schema
         if hasattr(fn, '_acceptable_metadata'):
             fn._acceptable_metadata.request_schema = schema
 
@@ -94,7 +94,7 @@ def validate_body(schema):
 
 def preserve_function_attrs(fn, wrapper):
     wrapper._request_schema = getattr(fn, '_request_schema', None)
-    wrapper._response_schema = getattr(fn, '_reponse_schema', None)
+    wrapper._response_schema = getattr(fn, '_response_schema', None)
     if hasattr(fn, '_acceptable_metadata'):
         wrapper._acceptable_metadata = fn._acceptable_metadata
 
