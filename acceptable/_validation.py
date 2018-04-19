@@ -64,6 +64,9 @@ def validate_body(schema):
     """
     def decorator(fn):
         validate_schema(schema)
+        fn.request_schema = schema
+        if hasattr(fn, '_acceptable_metadata'):
+            fn._acceptable_metadata.request_schema = schema
 
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
@@ -82,9 +85,18 @@ def validate_body(schema):
             if error_list:
                 raise DataValidationError(error_list)
             return fn(*args, **kwargs)
-        wrapper.schema = schema
+
+        preserve_function_attrs(fn, wrapper)
         return wrapper
+
     return decorator
+
+
+def preserve_function_attrs(fn, wrapper):
+    wrapper._request_schema = getattr(fn, '_request_schema', None)
+    wrapper._response_schema = getattr(fn, '_reponse_schema', None)
+    if hasattr(fn, '_acceptable_metadata'):
+        wrapper._acceptable_metadata = fn._acceptable_metadata
 
 
 def validate_output(schema):
@@ -116,6 +128,9 @@ def validate_output(schema):
     """
     def decorator(fn):
         validate_schema(schema)
+        fn._response_schema = schema
+        if hasattr(fn, '_acceptable_metadata'):
+            fn._acceptable_metadata.response_schema = schema
 
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
@@ -148,7 +163,10 @@ def validate_output(schema):
             if headers is not None:
                 return_value.append(headers)
             return tuple(return_value)
+
+        preserve_function_attrs(fn, wrapper)
         return wrapper
+
     return decorator
 
 

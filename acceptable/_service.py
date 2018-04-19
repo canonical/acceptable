@@ -2,21 +2,74 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
+from acceptable import _validation
 
 
-class AcceptableService:
-    """Main entry point for a service using acceptable to manage API versions.
+class APIMetadata:
+    """Global datastructure for all services.
 
-    This class manages a set of API endpoints for a given service. An instance
-    of this class is required to create an API endpoint.
+    Provides a single point to register apis against, so we can easily inspect
+    and verify uniqueness.
     """
+
     NAME_ALREADY = 'API {} is already registered in service {}'
     URL_ALREADY = 'URL {} {} is already in service {}'
 
-    def __init__(self, name):
+    def __init__(self):
+        self.services = {}
+        self.api_names = set()
+        self.urls = set()
+
+    def register_service(self, svc):
+        if (svc.name, svc.group) not in self.services:
+            self.services[(svc.name, svc.group)] = {}
+
+    def register_api(self, svc, api):
+        assert api.name not in self.api_names, self.NAME_ALREADY.format(
+            api.name, svc.name)
+        url_key = (api.url, api.methods)
+        assert url_key not in self.urls, self.URL_ALREADY.format(
+            '|'.join(api.methods), api.url, svc.name)
+        self.api_names.add(api.name)
+        self.urls.add((api.url, api.methods))
+        self.get_service(svc.name, svc.group)[api.name] = api
+
+    def get_service(self, name, group=None):
+        return self.services[(name, group)]
+
+    def bind(self, flask_app, name, group=None):
+        """Bind the service API urls to a flask app."""
+        for name, api in self.get_service(name, group).items():
+            # only bind APIs that have views associated with them
+            if api.view_fn is None:
+                continue
+            if name not in flask_app.view_functions:
+                flask_app.add_url_rule(
+                    api.url, name, view_func=api.view_fn, **api.options)
+
+    def bind_all(self, flask_app):
+        for (name, group) in self.services.items():
+            self.bind(flask_app, name, group)
+
+
+METADATA = APIMetadata()
+
+
+class AcceptableService:
+    """User facing API for a service using acceptable to manage API versions.
+
+    This provides a nicer interface to manage the global API metadata within
+    a single file.
+
+    It is just a proxy to the global metadata state, it does not store any
+    API state internally.
+    """
+
+    def __init__(self, name, group=None, metadata=METADATA):
         """Create an instance of AcceptableService.
 
         :param name: The service name.
+        :param name: An arbitrary API group within a service.
         :raises TypeError: If the name string is something other than a
             string.
         """
@@ -24,10 +77,15 @@ class AcceptableService:
             raise TypeError(
                 "name must be a string, not %s" % type(name).__name__)
         self.name = name
-        self.apis = {}
-        self.urls = set()
+        self.group = group
+        self.metadata = metadata
+        self.metadata.register_service(self)
 
-    def api(self, url, name, **options):
+    @property
+    def apis(self):
+        return self.metadata.get_service(self.name, self.group)
+
+    def api(self, url, name, introduced_at=None, **options):
         """Add an API to the service.
 
         :param url: This is the url that the API should be registered at.
@@ -49,20 +107,13 @@ class AcceptableService:
                 '|'.join(methods), url, self.name)
         )
 
-        api = AcceptableAPI(self, name, url, options)
-        self.apis[name] = api
-        self.urls.add((url, methods))
+        api = AcceptableAPI(name, url, introduced_at, options)
+        self.metadata.register_api(self, api)
         return api
 
     def bind(self, flask_app):
         """Bind the service API urls to a flask app."""
-        for name, api in self.apis.items():
-            # only bind APIs that have views associated with them
-            if api.view_fn is None:
-                continue
-            if name not in flask_app.view_functions:
-                flask_app.add_url_rule(
-                    api.url, name, view_func=api.view_fn, **api.options)
+        self.metadata.bind(flask_app, self.name, self.group)
 
     # b/w compat
     initialise = bind
@@ -71,26 +122,56 @@ class AcceptableService:
 class AcceptableAPI:
     """Metadata abount an api endpoint."""
 
-    def __init__(self, service, name, url, options):
-        self.service = service
+    def __init__(self, name, url, introduced_at, options):
         self.name = name
         self.url = url
+        self.introduced_at = introduced_at
         self.options = options
-        self.introduced_at = None
         self.view_fn = None
+
+    @property
+    def request_schema(self):
+        return self._request_schema
+
+    @request_schema.setter
+    def request_schema(self, schema):
+        if schema is not None:
+            _validation.validate_schema(schema)
+        self._request_schema = schema
+
+    @property
+    def response_schema(self):
+        return self._response_schema
+
+    @response_schema.setter
+    def response_schema(self, schema):
+        if schema is not None:
+            _validation.validate_schema(schema)
+        self._response_schema = schema
+
+    @property
+    def methods(self):
+        return tuple(self.options.get('methods', ('GET',)))
 
     def view(self, introduced_at):
         assert self.view_fn is None, 'api already has view registered'
 
-        def wrapper(fn):
-            self.register_view(introduced_at, fn)
+        def decorator(fn):
+            self.register_view(fn, introduced_at)
             return fn
-        return wrapper
+        return decorator
 
-    def register_view(self, introduced_at, view_fn):
+    def register_view(self, view_fn, introduced_at):
         # legacy support
         if introduced_at == '1.0':
             self.introduced_at = 1
-        else:
+        elif introduced_at is not None:
             self.introduced_at = int(introduced_at)
         self.view_fn = view_fn
+
+        # support for legacy @validate_{body,output} decorators
+        view_fn._acceptable_metadata = self
+        # schema on the function have already been validated, so bypass the
+        # validation here
+        self._request_schema = getattr(view_fn, '_request_schema', None)
+        self._response_schema = getattr(view_fn, '_response_schema', None)

@@ -10,8 +10,13 @@ from testtools.matchers import (
 )
 
 from acceptable._service import (
+    APIMetadata,
     AcceptableService,
 )
+
+
+class APIMetadataTestCase(TestCase):
+    pass
 
 
 class AcceptableServiceTestCase(TestCase):
@@ -28,9 +33,9 @@ class AcceptableServiceTestCase(TestCase):
         def view():
             return "test view", 200
 
-        service = AcceptableService('service')
+        service = AcceptableService('service', metadata=APIMetadata())
         api = service.api('/foo', 'foo_api')
-        api.register_view('1.0', view)
+        api.register_view(view, '1.0')
 
         app = Flask(__name__)
         service.bind(app)
@@ -45,18 +50,19 @@ class ServiceFixture(Fixture):
     """A reusable fixture that sets up several API endpoints."""
 
     def _setUp(self):
-        self.service = AcceptableService('service')
+        self.metadata = APIMetadata()
+        self.service = AcceptableService('service', metadata=self.metadata)
         foo_api = self.service.api('/foo', 'foo_api', methods=['POST'])
-        foo_api.register_view('1.0', self.foo)
+
+        @foo_api.view(introduced_at='1.0')
+        def foo():
+            return "foo", 200
 
     def bind(self, app=None):
         if app is None:
             app = Flask(__name__)
         self.service.bind(app)
         return app
-
-    def foo(self):
-        return "foo", 200
 
 
 class AcceptableAPITestCase(TestCase):
