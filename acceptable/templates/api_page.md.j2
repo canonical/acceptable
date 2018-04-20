@@ -1,0 +1,30 @@
+---
+title: {{name}}
+---
+# {{name}}
+
+*Introduced in version {{version}}*
+
+Summary: **{{methods|join('|')}} {{url}}**
+
+{% if doc %}
+{{doc}}
+{% else %}
+No documentation yet.
+{% endif %}
+
+{% if request_schema %}
+## Request JSON Schema
+
+```json
+{{request_schema|tojson(4)}}
+```
+{% endif %}
+
+{% if response_schema %}
+## Response JSON Schema
+
+```json
+{{response_schema|tojson(4)}}
+```
+{% endif %}
