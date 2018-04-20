@@ -80,7 +80,10 @@ def scan_metadata(files):
 def render_cmd(cli_args):
     root_dir = Path(cli_args.dir)
     root_dir.joinpath('en').mkdir(parents=True, exist_ok=True)
-    metadata = json.load(cli_args.metadata)
+    try:
+        metadata = json.load(cli_args.metadata)
+    except json.JSONDecodeError as e:
+        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
     cli_args.metadata.close()  # suppresses ResourceWarning
 
     for path, content in render_markdown(metadata, cli_args.name):

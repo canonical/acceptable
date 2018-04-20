@@ -40,7 +40,7 @@ library contains the following high-level features:
 Documentation (beta)
 --------------------
 
-One of the goals of acceptable to use the metadata about your api to build documentation.
+One of the goals of acceptable is to use the metadata about your api to build documentation.
 
 First, acceptable can parse your code for acceptable metadata, and generate a json version of your api metadata::
 
