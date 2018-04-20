@@ -34,9 +34,14 @@ setup(
     install_requires=parse_requirements_file('requirements.txt'),
     test_suite='acceptable.tests',
     tests_require=parse_requirements_file('requirements-dev.txt'),
+    include_package_data=True,
+    package_data={
+        'acceptable': ['templates/*'],
+    },
     entry_points={
           'console_scripts': [
-              'build_service_doubles = acceptable._build_doubles:main'
+              'build_service_doubles = acceptable._build_doubles:main',
+              'acceptable = acceptable.__main__:main',
           ]
       },
 )
