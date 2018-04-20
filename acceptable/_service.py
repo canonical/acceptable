@@ -12,9 +12,6 @@ class APIMetadata:
     and verify uniqueness.
     """
 
-    NAME_ALREADY = 'API {} is already registered in service {}'
-    URL_ALREADY = 'URL {} {} is already in service {}'
-
     def __init__(self):
         self.services = {}
         self.api_names = set()
@@ -25,11 +22,15 @@ class APIMetadata:
             self.services[name, group] = {}
 
     def register_api(self, name, group, api):
-        assert api.name not in self.api_names, self.NAME_ALREADY.format(
-            api.name, name)
+        assert api.name not in self.api_names, (
+            'API {} is already registered in service {}'.format(
+                api.name, name)
+        )
         url_key = (api.url, api.methods)
-        assert url_key not in self.urls, self.URL_ALREADY.format(
-            '|'.join(api.methods), api.url, name)
+        assert url_key not in self.urls, (
+            'URL {} {} is already in service {}'.format(
+                '|'.join(api.methods), api.url, name)
+        )
         self.api_names.add(api.name)
         self.urls.add((api.url, api.methods))
         self.services[name, group][api.name] = api
@@ -94,16 +95,6 @@ class AcceptableService:
         'methods' keyword argument, which can be used to specify the HTTP
         method the URL will be added for.
         """
-        assert name not in self.apis, (
-            'API {} is already registered in service {}'.format(
-                name, self.name)
-        )
-        methods = tuple(options.get('methods', ('GET',)))
-        assert (url, methods) not in self.urls, (
-            'URL {} {} is already in service {}'.format(
-                '|'.join(methods), url, self.name)
-        )
-
         api = AcceptableAPI(name, url, introduced_at, options)
         self.metadata.register_api(self.name, self.group, api)
         return api
