@@ -10,8 +10,6 @@ class AcceptableService:
     This class manages a set of API endpoints for a given service. An instance
     of this class is required to create an API endpoint.
     """
-    NAME_ALREADY = 'API {} is already registered in service {}'
-    URL_ALREADY = 'URL {} {} is already in service {}'
 
     def __init__(self, name):
         """Create an instance of AcceptableService.
@@ -39,10 +37,15 @@ class AcceptableService:
         'methods' keyword argument, which can be used to specify the HTTP
         method the URL will be added for.
         """
-        assert name not in self.apis, self.NAME_ALREADY.format(name, self.name)
+        assert name not in self.apis, (
+            'API {} is already registered in service {}'.format(
+                name, self.name)
+        )
         methods = tuple(options.get('methods', ('GET',)))
-        assert (url, methods) not in self.urls, self.URL_ALREADY.format(
-            '|'.join(methods), url, self.name)
+        assert (url, methods) not in self.urls, (
+            'URL {} {} is already in service {}'.format(
+                '|'.join(methods), url, self.name)
+        )
 
         api = AcceptableAPI(self, name, url, options)
         self.apis[name] = api
