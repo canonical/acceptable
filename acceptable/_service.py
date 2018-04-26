@@ -116,26 +116,8 @@ class AcceptableAPI:
         self.introduced_at = introduced_at
         self.options = options
         self.view_fn = None
-
-    @property
-    def request_schema(self):
-        return self._request_schema
-
-    @request_schema.setter
-    def request_schema(self, schema):
-        if schema is not None:
-            _validation.validate_schema(schema)
-        self._request_schema = schema
-
-    @property
-    def response_schema(self):
-        return self._response_schema
-
-    @response_schema.setter
-    def response_schema(self, schema):
-        if schema is not None:
-            _validation.validate_schema(schema)
-        self._response_schema = schema
+        self.request_schema = None
+        self.response_schema = None
 
     @property
     def methods(self):
@@ -158,8 +140,7 @@ class AcceptableAPI:
         self.view_fn = view_fn
 
         # support for legacy @validate_{body,output} decorators
+        # we don't know the order of decorators, so allow for both.
         view_fn._acceptable_metadata = self
-        # schema on the function have already been validated, so bypass the
-        # validation here
-        self._request_schema = getattr(view_fn, '_request_schema', None)
-        self._response_schema = getattr(view_fn, '_response_schema', None)
+        self.request_schema = getattr(view_fn, '_request_schema', None)
+        self.response_schema = getattr(view_fn, '_response_schema', None)

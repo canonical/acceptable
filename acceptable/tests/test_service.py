@@ -259,7 +259,7 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah']._request_schema,
+            fixture.service.apis['blah'].request_schema,
         )
 
     def test_validate_body_records_metadata_reversed_order(self):
@@ -274,7 +274,7 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah']._request_schema,
+            fixture.service.apis['blah'].request_schema,
         )
 
     def test_validate_output_records_metadata(self):
@@ -289,7 +289,7 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah']._response_schema,
+            fixture.service.apis['blah'].response_schema,
         )
 
     def test_validate_output_records_metadata_reversed(self):
@@ -304,7 +304,7 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah']._response_schema,
+            fixture.service.apis['blah'].response_schema,
         )
 
     def test_validate_both_records_metadata(self):
@@ -321,14 +321,12 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema1,
-            fixture.service.apis['blah']._request_schema,
+            fixture.service.apis['blah'].request_schema,
         )
         self.assertEqual(
             schema2,
-            fixture.service.apis['blah']._response_schema,
+            fixture.service.apis['blah'].response_schema,
         )
-
-
 
 
 class IsResponse(Matcher):
