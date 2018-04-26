@@ -59,8 +59,8 @@ class AcceptableService:
     This provides a nicer interface to manage the global API metadata within
     a single file.
 
-    It is just a proxy to the global metadata state, it does not store any
-    API state internally.
+    It is just a factory and proxy to the global metadata state, it does not
+    store any API state internally.
     """
 
     def __init__(self, name, group=None, metadata=METADATA):
