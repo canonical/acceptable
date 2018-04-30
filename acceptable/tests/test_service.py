@@ -13,6 +13,7 @@ from acceptable._service import (
     APIMetadata,
     AcceptableAPI,
     AcceptableService,
+    InvalidAPI,
 )
 from acceptable._validation import (
     validate_body,
@@ -29,7 +30,7 @@ class APIMetadataTestCase(TestCase):
         metadata.register_service('test', None)
         metadata.register_api('test', None, api1)
         self.assertRaises(
-            AssertionError,
+            InvalidAPI,
             metadata.register_api,
             'other', None, api2,
         )
@@ -42,7 +43,7 @@ class APIMetadataTestCase(TestCase):
         metadata.register_service('other', None)
         metadata.register_api('test', None, api1)
         self.assertRaises(
-            AssertionError,
+            InvalidAPI,
             metadata.register_api,
             'other', None, api2,
         )
@@ -88,7 +89,7 @@ class APIMetadataTestCase(TestCase):
 
         metadata.bind(app, 'test')
 
-        self.assertEquals(api1_impl, app.view_functions['api1'])
+        self.assertEqual(api1_impl, app.view_functions['api1'])
         self.assertNotIn('api2', app.view_functions)
 
         resp = app.test_client().get('/api1')
@@ -214,7 +215,7 @@ class AcceptableAPITestCase(TestCase):
         fixture = self.useFixture(ServiceFixture())
 
         self.assertRaises(
-            AssertionError,
+            InvalidAPI,
             fixture.service.api,
             '/bar',
             'foo_api',
@@ -223,7 +224,7 @@ class AcceptableAPITestCase(TestCase):
     def test_cannot_duplicate_url_and_method(self):
         fixture = self.useFixture(ServiceFixture())
         self.assertRaises(
-            AssertionError,
+            InvalidAPI,
             fixture.service.api,
             '/foo',
             'bar',

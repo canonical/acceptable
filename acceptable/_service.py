@@ -5,6 +5,10 @@
 from acceptable import _validation
 
 
+class InvalidAPI(Exception):
+    pass
+
+
 class APIMetadata:
     """Global datastructure for all services.
 
@@ -22,15 +26,17 @@ class APIMetadata:
             self.services[name, group] = {}
 
     def register_api(self, name, group, api):
-        assert api.name not in self.api_names, (
-            'API {} is already registered in service {}'.format(
-                api.name, name)
-        )
+        if api.name in self.api_names:
+            raise InvalidAPI(
+                'API {} is already registered in service {}'.format(
+                    api.name, name)
+            )
         url_key = (api.url, api.methods)
-        assert url_key not in self.urls, (
-            'URL {} {} is already in service {}'.format(
-                '|'.join(api.methods), api.url, name)
-        )
+        if url_key in self.urls:
+            raise InvalidAPI(
+                'URL {} {} is already in service {}'.format(
+                    '|'.join(api.methods), api.url, name)
+            )
         self.api_names.add(api.name)
         self.urls.add((api.url, api.methods))
         self.services[name, group][api.name] = api
@@ -50,7 +56,7 @@ class APIMetadata:
             self.bind(flask_app, name, group)
 
 
-METADATA = APIMetadata()
+Metadata = APIMetadata()
 
 
 class AcceptableService:
@@ -63,11 +69,11 @@ class AcceptableService:
     store any API state internally.
     """
 
-    def __init__(self, name, group=None, metadata=METADATA):
+    def __init__(self, name, group=None, metadata=Metadata):
         """Create an instance of AcceptableService.
 
         :param name: The service name.
-        :param name: An arbitrary API group within a service.
+        :param group: An arbitrary API group within a service.
         :raises TypeError: If the name string is something other than a
             string.
         """
@@ -124,7 +130,8 @@ class AcceptableAPI:
         return tuple(self.options.get('methods', ('GET',)))
 
     def view(self, introduced_at):
-        assert self.view_fn is None, 'api already has view registered'
+        if self.view_fn is not None:
+            raise InvalidAPI('api already has view registered')
 
         def decorator(fn):
             self.register_view(fn, introduced_at)
