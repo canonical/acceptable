@@ -151,8 +151,16 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(api.url, '/new')
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, 'blah')
+        self.assertEqual(api.methods, ['GET'])
         self.assertEqual(
             api, fixture.metadata.services['service', None]['blah'])
+
+    def test_acceptable_api_explicit_docs_works(self):
+        fixture = self.useFixture(ServiceFixture())
+        api = fixture.service.api('/docs', 'blah')
+        self.assertEqual(api.docs, None)
+        api.docs = 'Documentation.'
+        self.assertEqual(api.docs, 'Documentation.')
 
     def test_view_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
@@ -161,6 +169,7 @@ class AcceptableAPITestCase(TestCase):
 
         @new_api.view(introduced_at=1)
         def new_view():
+            """Documentation."""
             return "new view", 200
 
         app = fixture.bind()
@@ -171,6 +180,7 @@ class AcceptableAPITestCase(TestCase):
         self.assertThat(resp, IsResponse("new view"))
         view = app.view_functions['blah']
         self.assertEqual(view.__name__, 'new_view')
+        self.assertEqual(new_api.docs, 'Documentation.')
 
     def test_view_introduced_at_string(self):
         fixture = self.useFixture(ServiceFixture())

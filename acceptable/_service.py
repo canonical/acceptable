@@ -55,6 +55,11 @@ class APIMetadata:
         for name, group in self.services.items():
             self.bind(flask_app, name, group)
 
+    def clear(self):
+        self.services.clear()
+        self.api_names.clear()
+        self.urls.clear()
+
 
 Metadata = APIMetadata()
 
@@ -136,7 +141,12 @@ class AcceptableAPI:
         if self._docs is not None:
             return self._docs
         elif self.view_fn is not None:
-            return self.view_fn.__doc__
+            if self.view_fn.__doc__ is not None:
+                return self.view_fn.__doc__.strip()
+
+    @docs.setter
+    def docs(self, value):
+        self._docs = value
 
     def view(self, introduced_at):
         if self.view_fn is not None:

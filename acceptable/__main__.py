@@ -62,6 +62,7 @@ def metadata_cmd(cli_args):
 
 
 def import_metadata(module_paths):
+    """Import all the given modules, and then extract the parsed metadata."""
     for path in module_paths:
         import_module(path)
 

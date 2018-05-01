@@ -17,6 +17,7 @@ import testtools
 import fixtures
 
 from acceptable import __main__ as main
+from acceptable import _service
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -71,14 +72,21 @@ class ParseArgsTests(testtools.TestCase):
 
 @contextmanager
 def temporary_module(name, code):
-    old_sys_path = sys.path
+    """Setup a module that can be imported, and clean up afterwards."""
     tempdir = tempfile.mkdtemp()
     path = os.path.join(tempdir, '{}.py'.format(name))
     with open(path, 'w') as f:
         f.write(textwrap.dedent(code))
-    sys.path = [tempdir] + old_sys_path[:]
+
+    # preserve state
+    old_sys_path = sys.path
+    sys.path = [tempdir] + old_sys_path
     yield
+
+    # cleanup and restore
     sys.path = old_sys_path
+    sys.modules.pop(name)
+    _service.Metadata.clear()
 
 
 class MetadataTests(testtools.TestCase):
