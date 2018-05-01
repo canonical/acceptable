@@ -10,8 +10,90 @@ from testtools.matchers import (
 )
 
 from acceptable._service import (
+    APIMetadata,
+    AcceptableAPI,
     AcceptableService,
+    InvalidAPI,
 )
+from acceptable._validation import (
+    validate_body,
+    validate_output,
+)
+
+
+class APIMetadataTestCase(TestCase):
+
+    def test_register_api_duplicate_name(self):
+        metadata = APIMetadata()
+        api1 = AcceptableAPI('api', '/api1', 1)
+        api2 = AcceptableAPI('api', '/api2', 1)
+        metadata.register_service('test', None)
+        metadata.register_api('test', None, api1)
+        self.assertRaises(
+            InvalidAPI,
+            metadata.register_api,
+            'other', None, api2,
+        )
+
+    def test_register_api_duplicate_url(self):
+        metadata = APIMetadata()
+        api1 = AcceptableAPI('api1', '/api', 1)
+        api2 = AcceptableAPI('api2', '/api', 1)
+        metadata.register_service('test', None)
+        metadata.register_service('other', None)
+        metadata.register_api('test', None, api1)
+        self.assertRaises(
+            InvalidAPI,
+            metadata.register_api,
+            'other', None, api2,
+        )
+
+    def test_register_api_allow_different_methods(self):
+        metadata = APIMetadata()
+        api1 = AcceptableAPI('api1', '/api', 1)
+        api2 = AcceptableAPI('api2', '/api', 1, options={'methods': ['POST']})
+        metadata.register_service('test', None)
+        metadata.register_service('other', None)
+        metadata.register_api('test', None, api1)
+        metadata.register_api('other', None, api2)
+
+    def test_register_service_handles_multiple(self):
+        metadata = APIMetadata()
+        api = AcceptableAPI('api', '/api', 1)
+
+        metadata.register_service('test', None)
+        self.assertEqual(
+            metadata.services['test', None], {})
+
+        metadata.register_api('test', None, api)
+        self.assertEqual(
+            metadata.services['test', None], {'api': api})
+
+        # register service again, shouldn't remove any apis
+        metadata.register_service('test', None)
+        self.assertEqual(
+            metadata.services['test', None], {'api': api})
+
+    def test_bind_works(self):
+        app = Flask(__name__)
+        metadata = APIMetadata()
+        metadata.register_service('test', None)
+        api1 = AcceptableAPI('api1', '/api1', 1)
+        api2 = AcceptableAPI('api2', '/api2', 1)
+        metadata.register_api('test', None, api1)
+        metadata.register_api('test', None, api2)
+
+        @api1.view(introduced_at=1)
+        def api1_impl():
+            return 'api1'
+
+        metadata.bind(app, 'test')
+
+        self.assertEqual(api1_impl, app.view_functions['api1'])
+        self.assertNotIn('api2', app.view_functions)
+
+        resp = app.test_client().get('/api1')
+        self.assertThat(resp, IsResponse('api1'))
 
 
 class AcceptableServiceTestCase(TestCase):
@@ -28,9 +110,9 @@ class AcceptableServiceTestCase(TestCase):
         def view():
             return "test view", 200
 
-        service = AcceptableService('service')
+        service = AcceptableService('service', metadata=APIMetadata())
         api = service.api('/foo', 'foo_api')
-        api.register_view('1.0', view)
+        api.register_view(view, '1.0')
 
         app = Flask(__name__)
         service.bind(app)
@@ -42,17 +124,16 @@ class AcceptableServiceTestCase(TestCase):
 
 
 class ServiceFixture(Fixture):
-    """A reusable fixture that sets up several API endpoints.
-
-    This fixture creates a simple set of API endpoints with a mix of different
-    version and API flag requirements. Tests can use this fixture instead of
-    having to do all this setup in every test.
-    """
+    """A reusable fixture that sets up several API endpoints."""
 
     def _setUp(self):
-        self.service = AcceptableService('service')
+        self.metadata = APIMetadata()
+        self.service = AcceptableService('service', metadata=self.metadata)
         foo_api = self.service.api('/foo', 'foo_api', methods=['POST'])
-        foo_api.register_view('1.0', self.foo)
+
+        @foo_api.view(introduced_at='1.0')
+        def foo():
+            return "foo", 200
 
     def bind(self, app=None):
         if app is None:
@@ -60,22 +141,18 @@ class ServiceFixture(Fixture):
         self.service.bind(app)
         return app
 
-    def foo(self):
-        return "foo", 200
-
 
 class AcceptableAPITestCase(TestCase):
 
     def test_acceptable_api_declaration_works(self):
         fixture = self.useFixture(ServiceFixture())
-
         api = fixture.service.api('/new', 'blah')
 
         self.assertEqual(api.url, '/new')
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, 'blah')
-
-        self.assertEqual(api, fixture.service.apis['blah'])
+        self.assertEqual(
+            api, fixture.metadata.services['service', None]['blah'])
 
     def test_view_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
@@ -109,7 +186,6 @@ class AcceptableAPITestCase(TestCase):
 
     def test_view_introduced_at_1_0_string(self):
         fixture = self.useFixture(ServiceFixture())
-
         new_api = fixture.service.api('/new', 'blah')
         self.assertEqual(new_api.introduced_at, None)
 
@@ -139,7 +215,7 @@ class AcceptableAPITestCase(TestCase):
         fixture = self.useFixture(ServiceFixture())
 
         self.assertRaises(
-            AssertionError,
+            InvalidAPI,
             fixture.service.api,
             '/bar',
             'foo_api',
@@ -148,7 +224,7 @@ class AcceptableAPITestCase(TestCase):
     def test_cannot_duplicate_url_and_method(self):
         fixture = self.useFixture(ServiceFixture())
         self.assertRaises(
-            AssertionError,
+            InvalidAPI,
             fixture.service.api,
             '/foo',
             'bar',
@@ -169,6 +245,89 @@ class AcceptableAPITestCase(TestCase):
         resp = client.get('/foo')
 
         self.assertThat(resp, IsResponse("alt foo"))
+
+
+class LegacyAcceptableAPITestCase(TestCase):
+    def test_validate_body_records_metadata(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @new_api.view(introduced_at=1)
+        @validate_body(schema)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah'].request_schema,
+        )
+
+    def test_validate_body_records_metadata_reversed_order(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @validate_body(schema)
+        @new_api.view(introduced_at=1)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah'].request_schema,
+        )
+
+    def test_validate_output_records_metadata(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @new_api.view(introduced_at=1)
+        @validate_output(schema)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah'].response_schema,
+        )
+
+    def test_validate_output_records_metadata_reversed(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema = {'type': 'object'}
+
+        @validate_output(schema)
+        @new_api.view(introduced_at=1)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema,
+            fixture.service.apis['blah'].response_schema,
+        )
+
+    def test_validate_both_records_metadata(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        schema1 = {'type': 'object'}
+        schema2 = {'type': 'array'}
+
+        @new_api.view(introduced_at=1)
+        @validate_body(schema1)
+        @validate_output(schema2)
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(
+            schema1,
+            fixture.service.apis['blah'].request_schema,
+        )
+        self.assertEqual(
+            schema2,
+            fixture.service.apis['blah'].response_schema,
+        )
 
 
 class IsResponse(Matcher):
