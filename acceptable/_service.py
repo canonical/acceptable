@@ -31,14 +31,14 @@ class APIMetadata:
                 'API {} is already registered in service {}'.format(
                     api.name, name)
             )
-        url_key = (api.url, api.methods)
+        url_key = (api.url, tuple(api.methods))
         if url_key in self.urls:
             raise InvalidAPI(
                 'URL {} {} is already in service {}'.format(
                     '|'.join(api.methods), api.url, name)
             )
         self.api_names.add(api.name)
-        self.urls.add((api.url, api.methods))
+        self.urls.add(url_key)
         self.services[name, group][api.name] = api
 
     def bind(self, flask_app, name, group=None):
@@ -122,12 +122,21 @@ class AcceptableAPI:
         self.introduced_at = introduced_at
         self.options = options
         self.view_fn = None
-        self.request_schema = None
-        self.response_schema = None
+        self._request_schema = None
+        self._response_schema = None
+        self._docs = None
+        self._changelog = []
 
     @property
     def methods(self):
-        return tuple(self.options.get('methods', ('GET',)))
+        return self.options.get('methods', ['GET'])
+
+    @property
+    def docs(self):
+        if self._docs is not None:
+            return self._docs
+        elif self.view_fn is not None:
+            return self.view_fn.__doc__
 
     def view(self, introduced_at):
         if self.view_fn is not None:

@@ -2,7 +2,9 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 import argparse
+from importlib import import_module
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -10,6 +12,7 @@ from jinja2 import Environment, PackageLoader
 import yaml
 
 from acceptable._build_doubles import extract_schemas_from_file
+from acceptable._service import Metadata
 
 
 def main():
@@ -30,8 +33,8 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     subparser.required = True
 
     metadata_parser = subparser.add_parser(
-        'metadata', help='Scan files and print extracted metadata in json')
-    metadata_parser.add_argument('files', nargs='+')
+        'metadata', help='Import project and print extracted metadata in json')
+    metadata_parser.add_argument('modules', nargs='+')
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
@@ -53,27 +56,28 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 
 def metadata_cmd(cli_args):
-    metadata = scan_metadata(cli_args.files)
+    sys.path.insert(0, os.getcwd())
+    metadata = import_metadata(cli_args.modules)
     print(json.dumps(metadata, indent=2, sort_keys=True))
-    return 0
 
 
-def scan_metadata(files):
-    # This uses AST parsing for now. In future, we might just import code.
-    schemas = []
+def import_metadata(module_paths):
+    for path in module_paths:
+        import_module(path)
+
     metadata = {}
-    for path in files:
-        schemas.extend(extract_schemas_from_file(path))
-    for schema in schemas:
-        metadata[schema.view_name] = {
-            'api_name': schema.view_name,
-            'version': int(float(schema.version)),  # convert any '1.0' strings
-            'methods': schema.methods,
-            'url': schema.url,
-            'request_schema': schema.input_schema,
-            'response_schema': schema.output_schema,
-            'doc': schema.doc,
-        }
+    for (svc_name, group), apis in Metadata.services.items():
+        for name, api in apis.items():
+            metadata[name] = {
+                'api_name': api.name,
+                'version': api.introduced_at,
+                'methods': api.methods,
+                'url': api.url,
+                'request_schema': api.request_schema,
+                'response_schema': api.response_schema,
+                'doc': api.docs,
+            }
+
     return metadata
 
 

@@ -2,11 +2,13 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import argparse
 from collections import OrderedDict
+from contextlib import contextmanager
 from functools import partial
 import io
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import textwrap
 import yaml
@@ -47,7 +49,7 @@ class ParseArgsTests(testtools.TestCase):
 
     def test_metadata_parses_files(self):
         args = main.parse_args(['metadata', 'foo', 'bar'])
-        self.assertEqual(['foo', 'bar'], args.files)
+        self.assertEqual(['foo', 'bar'], args.modules)
         self.assertEqual(main.metadata_cmd, args.func)
 
     def test_render_parses_file(self):
@@ -67,16 +69,22 @@ class ParseArgsTests(testtools.TestCase):
         self.assertTrue('hi', args.metadata.read())
 
 
-class ScanMetadataTests(testtools.TestCase):
-
-    def write_file(self, code):
-        f = tempfile.NamedTemporaryFile('w')
+@contextmanager
+def temporary_module(name, code):
+    old_sys_path = sys.path
+    tempdir = tempfile.mkdtemp()
+    path = os.path.join(tempdir, '{}.py'.format(name))
+    with open(path, 'w') as f:
         f.write(textwrap.dedent(code))
-        f.flush()
-        return f
+    sys.path = [tempdir] + old_sys_path[:]
+    yield
+    sys.path = old_sys_path
 
-    def test_single_file(self):
-        code = self.write_file("""
+
+class MetadataTests(testtools.TestCase):
+    def test_legacy_api(self):
+        service = """
+            from acceptable import *
             service = AcceptableService('vendor')
 
             root_api = service.api('/', 'root')
@@ -86,9 +94,11 @@ class ScanMetadataTests(testtools.TestCase):
             @validate_output({'response_schema': 2})
             def my_view():
                 "Documentation."
-            """)
+        """
 
-        metadata = main.scan_metadata([code.name])
+        with temporary_module('service', service):
+            metadata = main.import_metadata(['service'])
+
         self.assertEqual({
             'root': {
                 'api_name': 'root',
@@ -97,7 +107,7 @@ class ScanMetadataTests(testtools.TestCase):
                 'doc': "Documentation.",
                 'request_schema': {'request_schema': 1},
                 'response_schema': {'response_schema': 2},
-                'version':  1,
+                    'version':  1,
             }},
             metadata,
         )
