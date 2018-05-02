@@ -76,6 +76,7 @@ class TemporaryModuleFixture(fixtures.Fixture):
         self.name = name
         self.code = textwrap.dedent(code)
 
+
     def _setUp(self):
         tempdir = self.useFixture(fixtures.TempDir()).path
         path = os.path.join(tempdir, '{}.py'.format(self.name))
@@ -85,6 +86,7 @@ class TemporaryModuleFixture(fixtures.Fixture):
         # preserve state
         old_sys_path = sys.path
         sys.path = [tempdir] + old_sys_path
+        _service.Metadata.clear()
 
         self.addCleanup(setattr, sys, 'path', old_sys_path)
         self.addCleanup(sys.modules.pop, self.name)
@@ -92,16 +94,17 @@ class TemporaryModuleFixture(fixtures.Fixture):
 
 
 class MetadataTests(testtools.TestCase):
-    def test_legacy_api(self):
+    def test_importing_api_metadata_works(self):
         service = """
             from acceptable import *
-            service = AcceptableService('vendor')
+            service = AcceptableService('myservice', 'group')
 
-            root_api = service.api('/', 'root')
+            root_api = service.api('/', 'root', introduced_at=1)
+            root_api.request_schema = {'type': 'object'}
+            root_api.response_schema = {'type': 'object'}
+            root_api.changelog(4, "changelog")
 
-            @root_api.view(introduced_at='1.0')
-            @validate_body({'request_schema': 1})
-            @validate_output({'response_schema': 2})
+            @root_api
             def my_view():
                 "Documentation."
         """
@@ -115,9 +118,43 @@ class MetadataTests(testtools.TestCase):
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
-                'request_schema': {'request_schema': 1},
-                'response_schema': {'response_schema': 2},
-                'version':  1,
+                'changelog': [(4, 'changelog')],
+                'request_schema': {'type': 'object'},
+                'response_schema': {'type': 'object'},
+                'introduced_at':  1,
+            }},
+            metadata,
+        )
+
+
+    def test_legacy_api_still_works(self):
+        service = """
+            from acceptable import *
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/', 'root')
+            root_api.changelog(4, "changelog")
+
+            @root_api.view(introduced_at='1.0')
+            @validate_body({'type': 'object'})
+            @validate_output({'type': 'object'})
+            def my_view():
+                "Documentation."
+        """
+        self.useFixture(TemporaryModuleFixture('service', service))
+
+        metadata = main.import_metadata(['service'])
+
+        self.assertEqual({
+            'root': {
+                'api_name': 'root',
+                'methods': ['GET'],
+                'url': '/',
+                'doc': "Documentation.",
+                'changelog': [(4, 'changelog')],
+                'request_schema': {'type': 'object'},
+                'response_schema': {'type': 'object'},
+                'introduced_at':  1,
             }},
             metadata,
         )
@@ -138,18 +175,20 @@ class RenderMarkdownTests(testtools.TestCase):
             'methods': ['GET'],
             'url': '/',
             'doc': 'doc1',
+            'changelog': [],
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
-            'version':  1,
+            'introduced_at':  1,
         }
         metadata['api2'] = {
             'api_name': 'api1',
             'methods': ['GET'],
             'url': '/',
             'doc': 'doc2',
+            'changelog': [],
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
-            'version':  1,
+            'introduced_at':  1,
         }
         return metadata
 

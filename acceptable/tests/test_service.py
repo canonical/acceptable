@@ -1,6 +1,9 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
+import json
+
+import jsonschema.exceptions
 from fixtures import Fixture
 from flask import Flask
 from testtools import TestCase
@@ -18,6 +21,7 @@ from acceptable._service import (
 from acceptable._validation import (
     validate_body,
     validate_output,
+    DataValidationError,
 )
 
 
@@ -162,12 +166,44 @@ class AcceptableAPITestCase(TestCase):
         api.docs = 'Documentation.'
         self.assertEqual(api.docs, 'Documentation.')
 
-    def test_view_decorator_and_bind_works(self):
+    def test_acceptable_api_schemas_are_validated(self):
+        fixture = self.useFixture(ServiceFixture())
+        api = fixture.service.api('/api', 'blah')
+        self.assertRaises(
+            jsonschema.exceptions.SchemaError,
+            setattr, api, 'request_schema', ""
+        )
+        self.assertRaises(
+            jsonschema.exceptions.SchemaError,
+            setattr, api, 'response_schema', ""
+        )
+        schema = {'type': 'object'}
+        api.request_schema = schema
+        api.response_schema = schema
+        self.assertEqual(api.request_schema, schema)
+        self.assertEqual(api.response_schema, schema)
+
+    def test_acceptable_api_changelog_is_recorded(self):
+        fixture = self.useFixture(ServiceFixture())
+        api = fixture.service.api('/api', 'blah')
+        api.changelog(5, """
+            Changelog for version 5
+        """)
+        api.changelog(4, "Changelog for version 4")
+
+        self.assertEqual([
+                (5, 'Changelog for version 5'),
+                (4, 'Changelog for version 4'),
+            ],
+            api._changelog,
+        )
+
+    def test_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
 
         new_api = fixture.service.api('/new', 'blah')
 
-        @new_api.view(introduced_at=1)
+        @new_api
         def new_view():
             """Documentation."""
             return "new view", 200
@@ -182,35 +218,47 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(view.__name__, 'new_view')
         self.assertEqual(new_api.docs, 'Documentation.')
 
-    def test_view_introduced_at_string(self):
+    def test_decorator_validates_bad_request(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'blah')
-        self.assertEqual(new_api.introduced_at, None)
+        new_api = fixture.service.api('/new', 'new', methods=['POST'])
+        new_api.request_schema = {'type': 'object'}
 
-        @new_api.view(introduced_at='1')
+        @new_api
         def new_view():
             return "new view", 200
 
-        self.assertEqual(new_api.introduced_at, 1)
+        app = fixture.bind()
 
-    def test_view_introduced_at_1_0_string(self):
+        payload = dict(
+            data=json.dumps([]),
+            headers={'Content-Type': 'application/json'},
+        )
+
+        with app.test_request_context('/new', **payload):
+            self.assertRaises(DataValidationError, new_view)
+
+    def test_decorator_validates_bad_response(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
-        self.assertEqual(new_api.introduced_at, None)
 
-        @new_api.view(introduced_at='1.0')
+        new_api = fixture.service.api('/new', 'new')
+        new_api.response_schema = {'type': 'object'}
+
+        @new_api
         def new_view():
-            return "new view", 200
+            return []
 
-        self.assertEqual(new_api.introduced_at, 1)
+        app = fixture.bind()
+
+        with app.test_request_context('/new'):
+            self.assertRaises(AssertionError, new_view)
 
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(ServiceFixture())
 
         new_api = fixture.service.api('/new', 'namegoeshere')
 
-        @new_api.view(introduced_at=1)
+        @new_api
         def new_view():
             return "new view", 200
 
@@ -258,6 +306,51 @@ class AcceptableAPITestCase(TestCase):
 
 
 class LegacyAcceptableAPITestCase(TestCase):
+    def test_view_decorator_and_bind_works(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        new_api = fixture.service.api('/new', 'blah')
+
+        @new_api.view(introduced_at=1)
+        def new_view():
+            """Documentation."""
+            return "new view", 200
+
+        app = fixture.bind()
+
+        client = app.test_client()
+        resp = client.get('/new')
+
+        self.assertThat(resp, IsResponse("new view"))
+        view = app.view_functions['blah']
+        self.assertEqual(view.__name__, 'new_view')
+        self.assertEqual(new_api.docs, 'Documentation.')
+
+
+    def test_view_introduced_at_string(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        new_api = fixture.service.api('/new', 'blah')
+        self.assertEqual(new_api.introduced_at, None)
+
+        @new_api.view(introduced_at='1')
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(new_api.introduced_at, 1)
+
+    def test_view_introduced_at_1_0_string(self):
+        fixture = self.useFixture(ServiceFixture())
+        new_api = fixture.service.api('/new', 'blah')
+        self.assertEqual(new_api.introduced_at, None)
+
+        @new_api.view(introduced_at='1.0')
+        def new_view():
+            return "new view", 200
+
+        self.assertEqual(new_api.introduced_at, 1)
+
+
     def test_validate_body_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())
         new_api = fixture.service.api('/new', 'blah')
