@@ -127,8 +127,8 @@ class AcceptableAPI:
         self.introduced_at = introduced_at
         self.options = options
         self.view_fn = None
-        self._request_schema = None
-        self._response_schema = None
+        self.request_schema = None
+        self.response_schema = None
         self._docs = None
         self._changelog = []
 
