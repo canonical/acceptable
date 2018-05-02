@@ -2,7 +2,6 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
-from acceptable import _validation
 
 
 class InvalidAPI(Exception):
@@ -31,14 +30,14 @@ class APIMetadata:
                 'API {} is already registered in service {}'.format(
                     api.name, name)
             )
-        url_key = (api.url, api.methods)
+        url_key = (api.url, tuple(api.methods))
         if url_key in self.urls:
             raise InvalidAPI(
                 'URL {} {} is already in service {}'.format(
                     '|'.join(api.methods), api.url, name)
             )
         self.api_names.add(api.name)
-        self.urls.add((api.url, api.methods))
+        self.urls.add(url_key)
         self.services[name, group][api.name] = api
 
     def bind(self, flask_app, name, group=None):
@@ -54,6 +53,11 @@ class APIMetadata:
     def bind_all(self, flask_app):
         for name, group in self.services.items():
             self.bind(flask_app, name, group)
+
+    def clear(self):
+        self.services.clear()
+        self.api_names.clear()
+        self.urls.clear()
 
 
 Metadata = APIMetadata()
@@ -124,10 +128,24 @@ class AcceptableAPI:
         self.view_fn = None
         self.request_schema = None
         self.response_schema = None
+        self._docs = None
+        self._changelog = []
 
     @property
     def methods(self):
-        return tuple(self.options.get('methods', ('GET',)))
+        return self.options.get('methods', ['GET'])
+
+    @property
+    def docs(self):
+        if self._docs is not None:
+            return self._docs
+        elif self.view_fn is not None:
+            if self.view_fn.__doc__ is not None:
+                return self.view_fn.__doc__.strip()
+
+    @docs.setter
+    def docs(self, value):
+        self._docs = value
 
     def view(self, introduced_at):
         if self.view_fn is not None:

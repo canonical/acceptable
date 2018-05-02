@@ -7,6 +7,7 @@ import io
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import textwrap
 import yaml
@@ -15,6 +16,7 @@ import testtools
 import fixtures
 
 from acceptable import __main__ as main
+from acceptable import _service
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -47,7 +49,7 @@ class ParseArgsTests(testtools.TestCase):
 
     def test_metadata_parses_files(self):
         args = main.parse_args(['metadata', 'foo', 'bar'])
-        self.assertEqual(['foo', 'bar'], args.files)
+        self.assertEqual(['foo', 'bar'], args.modules)
         self.assertEqual(main.metadata_cmd, args.func)
 
     def test_render_parses_file(self):
@@ -67,16 +69,32 @@ class ParseArgsTests(testtools.TestCase):
         self.assertTrue('hi', args.metadata.read())
 
 
-class ScanMetadataTests(testtools.TestCase):
+class TemporaryModuleFixture(fixtures.Fixture):
+    """Setup a module that can be imported, and clean up afterwards."""
 
-    def write_file(self, code):
-        f = tempfile.NamedTemporaryFile('w')
-        f.write(textwrap.dedent(code))
-        f.flush()
-        return f
+    def __init__(self, name, code):
+        self.name = name
+        self.code = textwrap.dedent(code)
 
-    def test_single_file(self):
-        code = self.write_file("""
+    def _setUp(self):
+        tempdir = self.useFixture(fixtures.TempDir()).path
+        path = os.path.join(tempdir, '{}.py'.format(self.name))
+        with open(path, 'w') as f:
+            f.write(self.code)
+
+        # preserve state
+        old_sys_path = sys.path
+        sys.path = [tempdir] + old_sys_path
+
+        self.addCleanup(setattr, sys, 'path', old_sys_path)
+        self.addCleanup(sys.modules.pop, self.name)
+        self.addCleanup(_service.Metadata.clear)
+
+
+class MetadataTests(testtools.TestCase):
+    def test_legacy_api(self):
+        service = """
+            from acceptable import *
             service = AcceptableService('vendor')
 
             root_api = service.api('/', 'root')
@@ -86,9 +104,11 @@ class ScanMetadataTests(testtools.TestCase):
             @validate_output({'response_schema': 2})
             def my_view():
                 "Documentation."
-            """)
+        """
+        self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.scan_metadata([code.name])
+        metadata = main.import_metadata(['service'])
+
         self.assertEqual({
             'root': {
                 'api_name': 'root',
