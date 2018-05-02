@@ -2,7 +2,6 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
-from acceptable import _validation
 
 
 class InvalidAPI(Exception):

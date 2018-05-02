@@ -273,4 +273,3 @@ class DeltaValidationErrorTests(TestCase):
             str(e)
         )
         self.assertEqual(str(e), repr(e))
-

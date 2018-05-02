@@ -2,7 +2,6 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import argparse
 from collections import OrderedDict
-from contextlib import contextmanager
 from functools import partial
 import io
 import json
@@ -70,23 +69,26 @@ class ParseArgsTests(testtools.TestCase):
         self.assertTrue('hi', args.metadata.read())
 
 
-@contextmanager
-def temporary_module(name, code):
+class TemporaryModuleFixture(fixtures.Fixture):
     """Setup a module that can be imported, and clean up afterwards."""
-    tempdir = tempfile.mkdtemp()
-    path = os.path.join(tempdir, '{}.py'.format(name))
-    with open(path, 'w') as f:
-        f.write(textwrap.dedent(code))
 
-    # preserve state
-    old_sys_path = sys.path
-    sys.path = [tempdir] + old_sys_path
-    yield
+    def __init__(self, name, code):
+        self.name = name
+        self.code = textwrap.dedent(code)
 
-    # cleanup and restore
-    sys.path = old_sys_path
-    sys.modules.pop(name)
-    _service.Metadata.clear()
+    def _setUp(self):
+        tempdir = self.useFixture(fixtures.TempDir()).path
+        path = os.path.join(tempdir, '{}.py'.format(self.name))
+        with open(path, 'w') as f:
+            f.write(self.code)
+
+        # preserve state
+        old_sys_path = sys.path
+        sys.path = [tempdir] + old_sys_path
+
+        self.addCleanup(setattr, sys, 'path', old_sys_path)
+        self.addCleanup(sys.modules.pop, self.name)
+        self.addCleanup(_service.Metadata.clear)
 
 
 class MetadataTests(testtools.TestCase):
@@ -103,9 +105,9 @@ class MetadataTests(testtools.TestCase):
             def my_view():
                 "Documentation."
         """
+        self.useFixture(TemporaryModuleFixture('service', service))
 
-        with temporary_module('service', service):
-            metadata = main.import_metadata(['service'])
+        metadata = main.import_metadata(['service'])
 
         self.assertEqual({
             'root': {
@@ -115,7 +117,7 @@ class MetadataTests(testtools.TestCase):
                 'doc': "Documentation.",
                 'request_schema': {'request_schema': 1},
                 'response_schema': {'response_schema': 2},
-                    'version':  1,
+                'version':  1,
             }},
             metadata,
         )

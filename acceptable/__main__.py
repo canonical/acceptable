@@ -11,7 +11,6 @@ import sys
 from jinja2 import Environment, PackageLoader
 import yaml
 
-from acceptable._build_doubles import extract_schemas_from_file
 from acceptable._service import Metadata
 
 
