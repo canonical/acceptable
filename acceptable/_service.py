@@ -2,6 +2,8 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
+import textwrap
+from acceptable import _validation
 
 
 class InvalidAPI(Exception):
@@ -126,9 +128,9 @@ class AcceptableAPI:
         self.introduced_at = introduced_at
         self.options = options
         self.view_fn = None
-        self.request_schema = None
-        self.response_schema = None
-        self._docs = None
+        self.docs = None
+        self._request_schema = None
+        self._response_schema = None
         self._changelog = []
 
     @property
@@ -136,36 +138,71 @@ class AcceptableAPI:
         return self.options.get('methods', ['GET'])
 
     @property
-    def docs(self):
-        if self._docs is not None:
-            return self._docs
-        elif self.view_fn is not None:
-            if self.view_fn.__doc__ is not None:
-                return self.view_fn.__doc__.strip()
+    def request_schema(self):
+        return self._request_schema
 
-    @docs.setter
-    def docs(self, value):
-        self._docs = value
+    @request_schema.setter
+    def request_schema(self, schema):
+        if schema is not None:
+            _validation.validate_schema(schema)
+        self._request_schema = schema
 
-    def view(self, introduced_at):
+    @property
+    def response_schema(self):
+        return self._response_schema
+
+    @response_schema.setter
+    def response_schema(self, schema):
+        if schema is not None:
+            _validation.validate_schema(schema)
+        self._response_schema = schema
+
+    def changelog(self, api_version, doc):
+        """Add a changelog entry for this api."""
+        doc = textwrap.dedent(doc).strip()
+        self._changelog.append((api_version, doc))
+
+    def __call__(self, fn):
+        wrapped = fn
+        if self.response_schema:
+            wrapped = _validation.wrap_response(wrapped, self.response_schema)
+        if self.request_schema:
+            wrapped = _validation.wrap_request(wrapped, self.request_schema)
+
+        self.register_view(wrapped)
+        return wrapped
+
+    def register_view(self, view_fn, introduced_at=None):
         if self.view_fn is not None:
             raise InvalidAPI('api already has view registered')
+        self.view_fn = view_fn
+        if self.introduced_at is None:
+            self.introduced_at = introduced_at
+        if self.docs is None and self.view_fn.__doc__ is not None:
+            self.docs = self.view_fn.__doc__.strip()
+
+    # legacy view decorator
+    def view(self, introduced_at):
 
         def decorator(fn):
+            # convert older style version strings
+            if introduced_at == '1.0':
+                self.introduced_at = 1
+            elif introduced_at is not None:
+                self.introduced_at = int(introduced_at)
+
             self.register_view(fn, introduced_at)
+
+            # support for legacy @validate_{body,output} decorators
+            # we don't know the order of decorators, so allow for both.
+            # Note that if these schemas come from the @validate decorators,
+            # they are already validated, so we set directly.
+            fn._acceptable_metadata = self
+            if self._request_schema is None:
+                self.request_schema = getattr(fn, '_request_schema', None)
+            if self._response_schema is None:
+                self.response_schema = getattr(fn, '_response_schema', None)
+
             return fn
+
         return decorator
-
-    def register_view(self, view_fn, introduced_at):
-        # legacy support
-        if introduced_at == '1.0':
-            self.introduced_at = 1
-        elif introduced_at is not None:
-            self.introduced_at = int(introduced_at)
-        self.view_fn = view_fn
-
-        # support for legacy @validate_{body,output} decorators
-        # we don't know the order of decorators, so allow for both.
-        view_fn._acceptable_metadata = self
-        self.request_schema = getattr(view_fn, '_request_schema', None)
-        self.response_schema = getattr(view_fn, '_response_schema', None)

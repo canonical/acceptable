@@ -3,7 +3,7 @@ title: {{name}}
 ---
 # {{name}}
 
-*Introduced in version {{version}}*
+*Introduced in version {{introduced_at}}*
 
 Summary: **{{methods|join('|')}} {{url}}**
 
@@ -11,6 +11,15 @@ Summary: **{{methods|join('|')}} {{url}}**
 {{doc}}
 {% else %}
 No documentation yet.
+{% endif %}
+
+{% if changelog %}
+## Changelog
+
+{% for (version, doc) in changelog %}
+ * Version {{ version }}: {{ doc }}
+{% endfor %}
+
 {% endif %}
 
 {% if request_schema %}
