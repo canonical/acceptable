@@ -12,6 +12,7 @@ from jinja2 import Environment, PackageLoader
 import yaml
 
 from acceptable._service import Metadata
+from acceptable import lint
 
 
 def main():
@@ -56,6 +57,29 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     render_parser.add_argument(
         '--dir', '-d', default='docs', help='output directory')
     render_parser.set_defaults(func=render_cmd)
+
+    lint_parser = subparser.add_parser(
+        'lint', help='Compare current metadata against file metadata')
+    lint_parser.add_argument(
+        'metadata',
+        nargs='?',
+        type=argparse.FileType('r'),
+    )
+    lint_parser.add_argument('modules', nargs='+')
+    lint_parser.add_argument(
+        '-q', '--quiet',
+        action='store_true',
+        default=False,
+        help='Do not emit warnings',
+    )
+    lint_parser.add_argument(
+        '--strict', '--pedantic', '--overhead',
+        action='store_true',
+        default=False,
+        help='Even warnings count as failure',
+    )
+
+    lint_parser.set_defaults(func=lint_cmd)
 
     return parser.parse_args(raw_args)
 
@@ -110,7 +134,8 @@ def render_cmd(cli_args):
         metadata = json.load(cli_args.metadata)
     except json.JSONDecodeError as e:
         return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
-    cli_args.metadata.close()  # suppresses ResourceWarning
+    finally:
+        cli_args.metadata.close()
 
     for path, content in render_markdown(metadata, cli_args.name):
         root_dir.joinpath(path).write_text(content)
@@ -144,6 +169,28 @@ def render_markdown(metadata, name):
     yield Path('metadata.yaml'), yaml.safe_dump(
         {'site_title': name + ' Documentation'}
     )
+
+
+def lint_cmd(cli_args, stream=sys.stdout):
+    sys.path.insert(0, os.getcwd())
+    current = import_metadata(cli_args.modules, locations=True)
+    try:
+        reference = json.load(cli_args.metadata)
+    except json.JSONDecodeError as e:
+        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
+    finally:
+        cli_args.metadata.close()
+
+    error = False
+    for message in lint.metadata_lint(reference, current):
+        is_warning = isinstance(message, lint.Warning)
+        if not error:
+            error = True if cli_args.strict else not is_warning
+
+        if not is_warning or not cli_args.quiet:
+            stream.write('{}\n'.format(message))
+
+    return 1 if error else 0
 
 
 if __name__ == '__main__':

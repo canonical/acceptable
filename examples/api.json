@@ -1,0 +1,33 @@
+{
+  "foo": {
+    "api_name": "foo",
+    "changelog": [],
+    "doc": "Documentation goes here.",
+    "introduced_at": 2,
+    "methods": [
+      "GET"
+    ],
+    "request_schema": {
+      "properties": {
+        "foo": {
+          "doc": "The foo thing.",
+          "type": "string"
+        },
+        "baz": {
+          "type": "object"
+        }
+      },
+      "required": ["foo"],
+      "type": "object"
+    },
+    "response_schema": {
+      "properties": {
+        "foo_result": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "url": "/foo"
+  }
+}

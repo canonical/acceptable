@@ -65,7 +65,18 @@ class ParseArgsTests(testtools.TestCase):
     def test_render_parses_stdin_with_no_metadata(self):
         stdin = io.StringIO('hi')
         args = main.parse_args(['render', '--name=name'], stdin=stdin)
-        self.assertTrue('hi', args.metadata.read())
+        self.assertEqual('hi', args.metadata.read())
+
+    def test_lint_reads_file(self):
+        with tempfile.NamedTemporaryFile('w') as api:
+            api.write('hi')
+            api.flush()
+            args = main.parse_args(['lint', api.name, 'foo', 'bar'])
+
+        self.assertEqual('hi', args.metadata.read())
+        self.assertEqual(args.modules, ['foo', 'bar'])
+
+        args.metadata.close()  # suppresses ResourceWarning
 
 
 class MetadataTests(testtools.TestCase):
@@ -260,3 +271,28 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertTrue(os.path.exists(p('en/api1.html')))
         self.assertTrue(os.path.exists(p('en/api2.html')))
         self.assertTrue(os.path.exists(p('en/index.html')))
+
+
+EXPECTED_LINT_OUTPUT = [
+    'examples/api.py:22: foo: request_schema.required',
+    'examples/api.py:22: foo: request_schema.foo.doc',
+    'examples/api.py:22: foo: request_schema.foo.introduced_at',
+    'examples/api.py:36: foo: response_schema.foo_result.doc',
+    'examples/api.py:36: foo: response_schema.foo_result.introduced_at'
+]
+
+
+class LintTests(testtools.TestCase):
+
+    def test_basic_api_changes(self):
+        args = main.parse_args(
+            ['lint', 'examples/api.json', 'examples.api'],
+        )
+
+        output = io.StringIO()
+        result = main.lint_cmd(args, stream=output)
+        self.assertEqual(1, result) == 1
+        lines = output.getvalue().splitlines()
+
+        for actual, expected in zip(lines, EXPECTED_LINT_OUTPUT):
+            self.assertIn(expected, actual)
