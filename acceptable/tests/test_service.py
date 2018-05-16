@@ -191,12 +191,8 @@ class AcceptableAPITestCase(TestCase):
         """)
         api.changelog(4, "Changelog for version 4")
 
-        self.assertEqual([
-                (5, 'Changelog for version 5'),
-                (4, 'Changelog for version 4'),
-            ],
-            api._changelog,
-        )
+        self.assertEqual('Changelog for version 5', api._changelog[5]['doc'])
+        self.assertEqual('Changelog for version 4', api._changelog[4]['doc'])
 
     def test_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())

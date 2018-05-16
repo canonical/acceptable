@@ -70,15 +70,17 @@ def import_metadata(module_paths):
         for name, api in apis.items():
             metadata[name] = {
                 'api_name': api.name,
+                'location': api.location,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
                 'url': api.url,
                 'request_schema': api.request_schema,
+                'request_schema_location': api._request_schema_location,
                 'response_schema': api.response_schema,
+                'response_schema_location': api._response_schema_location,
                 'doc': api.docs,
                 'changelog': api._changelog,
             }
-
 
     return metadata
 

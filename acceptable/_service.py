@@ -2,8 +2,11 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
+from collections import OrderedDict
 import textwrap
+
 from acceptable import _validation
+from acceptable.util import get_callsite_location
 
 
 class InvalidAPI(Exception):
@@ -90,6 +93,7 @@ class AcceptableService:
         self.group = group
         self.metadata = metadata
         self.metadata.register_service(name, group)
+        self.location = get_callsite_location()
 
     @property
     def apis(self):
@@ -107,7 +111,9 @@ class AcceptableService:
         'methods' keyword argument, which can be used to specify the HTTP
         method the URL will be added for.
         """
-        api = AcceptableAPI(name, url, introduced_at, options)
+        location = get_callsite_location()
+        api = AcceptableAPI(
+            name, url, introduced_at, options, location=location)
         self.metadata.register_api(self.name, self.group, api)
         return api
 
@@ -122,7 +128,7 @@ class AcceptableService:
 class AcceptableAPI:
     """Metadata abount an api endpoint."""
 
-    def __init__(self, name, url, introduced_at, options={}):
+    def __init__(self, name, url, introduced_at, options={}, location=None):
         self.name = name
         self.url = url
         self.introduced_at = introduced_at
@@ -130,8 +136,14 @@ class AcceptableAPI:
         self.view_fn = None
         self.docs = None
         self._request_schema = None
+        self._request_schema_location = None
         self._response_schema = None
-        self._changelog = []
+        self._response_schema_location = None
+        self._changelog = OrderedDict()
+        if location is None:
+            self.location = get_callsite_location()
+        else:
+            self.location = location
 
     @property
     def methods(self):
@@ -146,6 +158,8 @@ class AcceptableAPI:
         if schema is not None:
             _validation.validate_schema(schema)
         self._request_schema = schema
+        # this location is the last item in the dict, sadly
+        self._request_schema_location = get_callsite_location()
 
     @property
     def response_schema(self):
@@ -156,11 +170,15 @@ class AcceptableAPI:
         if schema is not None:
             _validation.validate_schema(schema)
         self._response_schema = schema
+        # this location is the last item in the dict, sadly
+        self._response_schema_location = get_callsite_location()
 
     def changelog(self, api_version, doc):
         """Add a changelog entry for this api."""
         doc = textwrap.dedent(doc).strip()
-        self._changelog.append((api_version, doc))
+        log = get_callsite_location()
+        log['doc'] = doc
+        self._changelog[api_version] = log
 
     def __call__(self, fn):
         wrapped = fn
@@ -169,13 +187,15 @@ class AcceptableAPI:
         if self.request_schema:
             wrapped = _validation.wrap_request(wrapped, self.request_schema)
 
-        self.register_view(wrapped)
+        location = get_callsite_location()
+        self.register_view(wrapped, location)
         return wrapped
 
-    def register_view(self, view_fn, introduced_at=None):
+    def register_view(self, view_fn, location=None, introduced_at=None):
         if self.view_fn is not None:
             raise InvalidAPI('api already has view registered')
         self.view_fn = view_fn
+        self.view_fn_location = location
         if self.introduced_at is None:
             self.introduced_at = introduced_at
         if self.docs is None and self.view_fn.__doc__ is not None:
@@ -183,6 +203,7 @@ class AcceptableAPI:
 
     # legacy view decorator
     def view(self, introduced_at):
+        location = get_callsite_location()
 
         def decorator(fn):
             # convert older style version strings
@@ -191,7 +212,7 @@ class AcceptableAPI:
             elif introduced_at is not None:
                 self.introduced_at = int(introduced_at)
 
-            self.register_view(fn, introduced_at)
+            self.register_view(fn, location, introduced_at)
 
             # support for legacy @validate_{body,output} decorators
             # we don't know the order of decorators, so allow for both.
@@ -199,9 +220,13 @@ class AcceptableAPI:
             # they are already validated, so we set directly.
             fn._acceptable_metadata = self
             if self._request_schema is None:
-                self.request_schema = getattr(fn, '_request_schema', None)
+                self._request_schema = getattr(fn, '_request_schema', None)
+                self._request_schema_location = getattr(
+                    fn, '_request_schema_location', None)
             if self._response_schema is None:
-                self.response_schema = getattr(fn, '_response_schema', None)
+                self._response_schema = getattr(fn, '_response_schema', None)
+                self._response_schema_location = getattr(
+                    fn, '_response_schema_location', None)
 
             return fn
 

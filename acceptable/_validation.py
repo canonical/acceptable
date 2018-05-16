@@ -6,6 +6,8 @@ import functools
 import jsonschema
 from flask import current_app, request, jsonify
 
+from acceptable.util import get_callsite_location
+
 
 class DataValidationError(Exception):
     """Raises when a request body fails validation."""
@@ -62,10 +64,12 @@ def validate_body(schema):
     The exception instance has an 'error_list' attribute that contains a list
     of all the errors encountered while processing the request body.
     """
+    location = get_callsite_location()
+
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_request(fn, schema)
-        record_schemas(fn, wrapper, request_schema=schema)
+        record_schemas(fn, wrapper, location, request_schema=schema)
         return wrapper
 
     return decorator
@@ -93,22 +97,27 @@ def wrap_request(fn, schema):
     return wrapper
 
 
-def record_schemas(fn, wrapper, request_schema=None, response_schema=None):
+def record_schemas(
+        fn, wrapper, location, request_schema=None, response_schema=None):
     """Support extracting the schema from the decorated function."""
     # have we already been decorated by an acceptable api call?
     has_acceptable = hasattr(fn, '_acceptable_metadata')
 
     if request_schema is not None:
         # preserve schema for later use
-        fn._request_schema = wrapper._request_schema = request_schema
+        wrapper._request_schema = wrapper._request_schema = request_schema
+        wrapper._request_schema_location = location
         if has_acceptable:
             fn._acceptable_metadata._request_schema = request_schema
+            fn._acceptable_metadata._request_schema_location = location
 
     if response_schema is not None:
         # preserve schema for later use
-        fn._response_schema = wrapper._response_schema = response_schema
+        wrapper._response_schema = wrapper._response_schema = response_schema
+        wrapper._response_schema_location = location
         if has_acceptable:
             fn._acceptable_metadata._response_schema = response_schema
+            fn._acceptable_metadata._response_schema_location = location
 
 
 def validate_output(schema):
@@ -138,10 +147,12 @@ def validate_output(schema):
     Every view response will be evaluated against the schema. Any that do not
     comply with the schema will cause DataValidationError to be raised.
     """
+    location = get_callsite_location()
+
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_response(fn, schema)
-        record_schemas(fn, wrapper, response_schema=schema)
+        record_schemas(fn, wrapper, location, response_schema=schema)
         return wrapper
 
     return decorator
