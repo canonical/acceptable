@@ -7,16 +7,15 @@ import io
 import json
 import os
 import subprocess
-import sys
 import tempfile
-import textwrap
 import yaml
 
 import testtools
 import fixtures
 
 from acceptable import __main__ as main
-from acceptable import _service
+
+from acceptable.tests.fixtures import TemporaryModuleFixture
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -69,30 +68,6 @@ class ParseArgsTests(testtools.TestCase):
         self.assertTrue('hi', args.metadata.read())
 
 
-class TemporaryModuleFixture(fixtures.Fixture):
-    """Setup a module that can be imported, and clean up afterwards."""
-
-    def __init__(self, name, code):
-        self.name = name
-        self.code = textwrap.dedent(code)
-
-
-    def _setUp(self):
-        tempdir = self.useFixture(fixtures.TempDir()).path
-        path = os.path.join(tempdir, '{}.py'.format(self.name))
-        with open(path, 'w') as f:
-            f.write(self.code)
-
-        # preserve state
-        old_sys_path = sys.path
-        sys.path = [tempdir] + old_sys_path
-        _service.Metadata.clear()
-
-        self.addCleanup(setattr, sys, 'path', old_sys_path)
-        self.addCleanup(sys.modules.pop, self.name)
-        self.addCleanup(_service.Metadata.clear)
-
-
 class MetadataTests(testtools.TestCase):
     def test_importing_api_metadata_works(self):
         service = """
@@ -108,24 +83,38 @@ class MetadataTests(testtools.TestCase):
             def my_view():
                 "Documentation."
         """
-        self.useFixture(TemporaryModuleFixture('service', service))
+        fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'])
+        metadata = main.import_metadata(['service'], locations=True)
 
         self.assertEqual({
             'root': {
+                'location': {'filename': fixture.path, 'lineno': 4},
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
-                'changelog': [(4, 'changelog')],
+                'changelog': {
+                    4:  {
+                        'doc': 'changelog',
+                        'filename': fixture.path,
+                        'lineno': 7,
+                    },
+                },
                 'request_schema': {'type': 'object'},
+                'request_schema_location': {
+                    'filename': fixture.path,
+                    'lineno': 5,
+                },
                 'response_schema': {'type': 'object'},
+                'response_schema_location': {
+                    'filename': fixture.path,
+                    'lineno': 6,
+                },
                 'introduced_at':  1,
             }},
             metadata,
         )
-
 
     def test_legacy_api_still_works(self):
         service = """
@@ -141,19 +130,34 @@ class MetadataTests(testtools.TestCase):
             def my_view():
                 "Documentation."
         """
-        self.useFixture(TemporaryModuleFixture('service', service))
+        fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'])
+        metadata = main.import_metadata(['service'], locations=True)
 
         self.assertEqual({
             'root': {
+                'location': {'filename': fixture.path, 'lineno': 4},
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
-                'changelog': [(4, 'changelog')],
+                'changelog': {
+                    4:  {
+                        'doc': 'changelog',
+                        'filename': fixture.path,
+                        'lineno': 5,
+                    },
+                },
                 'request_schema': {'type': 'object'},
+                'request_schema_location': {
+                    'filename': fixture.path,
+                    'lineno': 8,
+                },
                 'response_schema': {'type': 'object'},
+                'response_schema_location': {
+                    'filename': fixture.path,
+                    'lineno': 9,
+                },
                 'introduced_at':  1,
             }},
             metadata,
