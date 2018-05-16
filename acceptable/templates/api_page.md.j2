@@ -16,8 +16,8 @@ No documentation yet.
 {% if changelog %}
 ## Changelog
 
-{% for (version, doc) in changelog %}
- * Version {{ version }}: {{ doc }}
+{% for version, info in changelog.items() %}
+ * Version {{ version }}: {{ info.doc }}
 {% endfor %}
 
 {% endif %}
