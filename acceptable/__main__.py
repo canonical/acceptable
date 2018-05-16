@@ -34,6 +34,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     metadata_parser = subparser.add_parser(
         'metadata', help='Import project and print extracted metadata in json')
     metadata_parser.add_argument('modules', nargs='+')
+    metadata_parser.add_argument(
+        '--locations',
+        action='store_true',
+        default=False,
+        help='Include file names and line numbers',
+    )
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
@@ -56,33 +62,45 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 def metadata_cmd(cli_args):
     sys.path.insert(0, os.getcwd())
-    metadata = import_metadata(cli_args.modules)
+    metadata = import_metadata(cli_args.modules, cli_args.locations)
     print(json.dumps(metadata, indent=2, sort_keys=True))
 
 
-def import_metadata(module_paths):
+def import_metadata(module_paths, locations=False):
     """Import all the given modules, and then extract the parsed metadata."""
     for path in module_paths:
         import_module(path)
 
-    metadata = {}
+    api_metadata = {}
     for (svc_name, group), apis in Metadata.services.items():
         for name, api in apis.items():
-            metadata[name] = {
+            metadata = {
                 'api_name': api.name,
-                'location': api.location,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
                 'url': api.url,
                 'request_schema': api.request_schema,
-                'request_schema_location': api._request_schema_location,
                 'response_schema': api.response_schema,
-                'response_schema_location': api._response_schema_location,
                 'doc': api.docs,
-                'changelog': api._changelog,
             }
 
-    return metadata
+            if not locations:
+                metadata['changelog'] = {
+                    k: {'doc', v['doc']} for k, v in api._changelog.items()
+                }
+            else:
+                metadata['changelog'] = api._changelog
+                metadata['location'] = api.location
+                metadata['response_schema_location'] = (
+                    api._response_schema_location
+                )
+                metadata['request_schema_location'] = (
+                    api._request_schema_location
+                )
+
+        api_metadata[name] = metadata
+
+    return api_metadata
 
 
 def render_cmd(cli_args):

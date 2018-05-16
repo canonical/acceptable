@@ -85,7 +85,7 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'])
+        metadata = main.import_metadata(['service'], locations=True)
 
         self.assertEqual({
             'root': {
@@ -132,7 +132,7 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'])
+        metadata = main.import_metadata(['service'], locations=True)
 
         self.assertEqual({
             'root': {
