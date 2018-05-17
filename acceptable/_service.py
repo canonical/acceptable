@@ -140,6 +140,7 @@ class AcceptableAPI:
         self._response_schema = None
         self._response_schema_location = None
         self._changelog = OrderedDict()
+        self._changelog_locations = OrderedDict()
         if location is None:
             self.location = get_callsite_location()
         else:
@@ -176,9 +177,8 @@ class AcceptableAPI:
     def changelog(self, api_version, doc):
         """Add a changelog entry for this api."""
         doc = textwrap.dedent(doc).strip()
-        log = get_callsite_location()
-        log['doc'] = doc
-        self._changelog[api_version] = log
+        self._changelog[api_version] = doc
+        self._changelog_locations[api_version] = get_callsite_location()
 
     def __call__(self, fn):
         wrapped = fn
@@ -188,6 +188,9 @@ class AcceptableAPI:
             wrapped = _validation.wrap_request(wrapped, self.request_schema)
 
         location = get_callsite_location()
+        # this will be the lineno of the last decorator, so we want one
+        # below it for the actual function
+        location['lineno'] += 1
         self.register_view(wrapped, location)
         return wrapped
 
@@ -203,9 +206,13 @@ class AcceptableAPI:
 
     # legacy view decorator
     def view(self, introduced_at):
-        location = get_callsite_location()
 
         def decorator(fn):
+            location = get_callsite_location()
+            # this will be the lineno of the last decorator, so we want one
+            # below it for the actual function
+            location['lineno'] += 1
+
             # convert older style version strings
             if introduced_at == '1.0':
                 self.introduced_at = 1

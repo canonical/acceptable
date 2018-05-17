@@ -54,26 +54,30 @@ def removed_items(items, target):
             yield item
 
 
-def metadata_lint(old, new):
+def metadata_lint(old, new, locations):
     """Run the linter over the new metadata, comparing to the old."""
     for removed in set(old) - set(new):
         yield Error('', 'api removed', api_name=removed)
 
     for name, api in new.items():
         old_api = old.get(name, {})
-        location = api['location']
-        for message in lint_api(name, old_api, api):
+        api_locations = locations[name]
+        for message in lint_api(name, old_api, api, api_locations):
             message.api_name = name
             if message.location is None:
-                message.location = location
+                message.location = api_locations['api']
             yield message
 
 
-def lint_api(api_name, old, new):
+def lint_api(api_name, old, new, locations):
     """Lint an acceptable api metadata."""
     is_new_api = not old
-    api_location = new['location']
+    api_location = locations['api']
     changelog = new.get('changelog', {})
+    changelog_location = api_location
+
+    if locations['changelog']:
+        changelog_location = list(locations['changelog'].values())[0]
 
     # apis must have documentation if they are new
     if not new.get('doc'):
@@ -82,7 +86,7 @@ def lint_api(api_name, old, new):
             'doc',
             'missing documentation',
             api_name=api_name,
-            location=api_location,
+            location=locations.get('view', api_location)
         )
 
     introduced_at = new.get('introduced_at')
@@ -130,7 +134,7 @@ def lint_api(api_name, old, new):
         if new_schema is None:
             continue
 
-        schema_location = new[schema + '_location']
+        schema_location = locations[schema]
         old_schema = old.get(schema, {})
 
         for message in walk_schema(
@@ -141,7 +145,7 @@ def lint_api(api_name, old, new):
                         message.name,
                         'No changelog entry for revision {}',
                         message.revision,
-                        location=schema_location,
+                        location=changelog_location,
                     )
             else:
                 # add in here, saves passing it down the recursive call

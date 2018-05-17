@@ -35,12 +35,6 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     metadata_parser = subparser.add_parser(
         'metadata', help='Import project and print extracted metadata in json')
     metadata_parser.add_argument('modules', nargs='+')
-    metadata_parser.add_argument(
-        '--locations',
-        action='store_true',
-        default=False,
-        help='Include file names and line numbers',
-    )
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
@@ -78,6 +72,18 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         default=False,
         help='Even warnings count as failure',
     )
+    lint_parser.add_argument(
+        '--update',
+        action='store_true',
+        default=False,
+        help='Update metadata file to new metadata if lint passes',
+    )
+    lint_parser.add_argument(
+        '--force',
+        action='store_true',
+        default=False,
+        help='Update metadata even if linting fails',
+    )
 
     lint_parser.set_defaults(func=lint_cmd)
 
@@ -86,19 +92,20 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 def metadata_cmd(cli_args):
     sys.path.insert(0, os.getcwd())
-    metadata = import_metadata(cli_args.modules, cli_args.locations)
+    metadata, _ = import_metadata(cli_args.modules)
     print(json.dumps(metadata, indent=2, sort_keys=True))
 
 
-def import_metadata(module_paths, locations=False):
+def import_metadata(module_paths):
     """Import all the given modules, and then extract the parsed metadata."""
     for path in module_paths:
         import_module(path)
 
     api_metadata = {}
+    locations = {}
     for (svc_name, group), apis in Metadata.services.items():
         for name, api in apis.items():
-            metadata = {
+            api_metadata[name] = {
                 'api_name': api.name,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
@@ -106,25 +113,18 @@ def import_metadata(module_paths, locations=False):
                 'request_schema': api.request_schema,
                 'response_schema': api.response_schema,
                 'doc': api.docs,
+                'changelog': api._changelog,
             }
 
-            if not locations:
-                metadata['changelog'] = {
-                    k: {'doc', v['doc']} for k, v in api._changelog.items()
-                }
-            else:
-                metadata['changelog'] = api._changelog
-                metadata['location'] = api.location
-                metadata['response_schema_location'] = (
-                    api._response_schema_location
-                )
-                metadata['request_schema_location'] = (
-                    api._request_schema_location
-                )
+            locations[name] = {
+                'api': api.location,
+                'request_schema': api._request_schema_location,
+                'response_schema': api._response_schema_location,
+                'changelog': api._changelog_locations,
+                'view': api.view_fn_location,
+            }
 
-        api_metadata[name] = metadata
-
-    return api_metadata
+    return api_metadata, locations
 
 
 def render_cmd(cli_args):
@@ -173,22 +173,27 @@ def render_markdown(metadata, name):
 
 def lint_cmd(cli_args, stream=sys.stdout):
     sys.path.insert(0, os.getcwd())
-    current = import_metadata(cli_args.modules, locations=True)
+    current, locations = import_metadata(cli_args.modules)
     try:
-        reference = json.load(cli_args.metadata)
+        metadata = json.load(cli_args.metadata)
     except json.JSONDecodeError as e:
         return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
     finally:
         cli_args.metadata.close()
 
     error = False
-    for message in lint.metadata_lint(reference, current):
+    for message in lint.metadata_lint(metadata, current, locations):
         is_warning = isinstance(message, lint.Warning)
         if not error:
             error = True if cli_args.strict else not is_warning
 
         if not is_warning or not cli_args.quiet:
             stream.write('{}\n'.format(message))
+
+    if cli_args.update:
+        if not error or cli_args.force:
+            with open(cli_args.metadata.name, 'w') as f:
+                f.write(json.dumps(current, indent=2, sort_keys=True))
 
     return 1 if error else 0
 

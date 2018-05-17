@@ -96,35 +96,44 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'], locations=True)
+        metadata, locations = main.import_metadata(['service'])
 
         self.assertEqual({
             'root': {
-                'location': {'filename': fixture.path, 'lineno': 4},
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
                 'changelog': {
-                    4:  {
-                        'doc': 'changelog',
-                        'filename': fixture.path,
-                        'lineno': 7,
-                    },
+                    4: 'changelog',
                 },
                 'request_schema': {'type': 'object'},
-                'request_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 5,
-                },
                 'response_schema': {'type': 'object'},
-                'response_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 6,
-                },
                 'introduced_at':  1,
             }},
             metadata,
+        )
+
+        self.assertEqual({
+            'root': {
+                'api': {'filename': fixture.path, 'lineno': 4},
+                'changelog': {
+                    4: {'filename': fixture.path, 'lineno': 7},
+                },
+                'request_schema': {
+                    'filename': fixture.path,
+                    'lineno': 5,
+                },
+                'response_schema': {
+                    'filename': fixture.path,
+                    'lineno': 6,
+                },
+                'view': {
+                    'filename': fixture.path,
+                    'lineno': 10,
+                },
+            }},
+            locations,
         )
 
     def test_legacy_api_still_works(self):
@@ -143,35 +152,44 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'], locations=True)
+        metadata, locations = main.import_metadata(['service'])
 
         self.assertEqual({
             'root': {
-                'location': {'filename': fixture.path, 'lineno': 4},
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
                 'changelog': {
-                    4:  {
-                        'doc': 'changelog',
-                        'filename': fixture.path,
-                        'lineno': 5,
-                    },
+                    4: 'changelog',
                 },
                 'request_schema': {'type': 'object'},
-                'request_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 8,
-                },
                 'response_schema': {'type': 'object'},
-                'response_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 9,
-                },
                 'introduced_at':  1,
             }},
             metadata,
+        )
+
+        self.assertEqual({
+            'root': {
+                'api': {'filename': fixture.path, 'lineno': 4},
+                'changelog': {
+                    4: {'filename': fixture.path, 'lineno': 5},
+                },
+                'request_schema': {
+                    'filename': fixture.path,
+                    'lineno': 8,
+                },
+                'response_schema': {
+                    'filename': fixture.path,
+                    'lineno': 9,
+                },
+                'view': {
+                    'filename': fixture.path,
+                    'lineno': 10,
+                },
+            }},
+            locations,
         )
 
 

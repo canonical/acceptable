@@ -11,13 +11,13 @@ class LintTestCase(testtools.TestCase):
 
     def get_metadata(self, code='', module='service', locations=True):
         fixture = self.useFixture(TemporaryModuleFixture(module, code))
-        metadata = import_metadata([module], locations=locations)
-        return metadata, fixture.path
+        metadata, locations = import_metadata([module])
+        return metadata, locations, fixture.path
 
 
 class LintTests(LintTestCase):
     def test_missing_api_documentation(self):
-        metadata, path = self.get_metadata("""
+        metadata, locations, path = self.get_metadata("""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -27,27 +27,27 @@ class LintTests(LintTestCase):
                 pass
         """)
 
-        msgs = list(lint.metadata_lint(metadata, metadata))
+        msgs = list(lint.metadata_lint(metadata, metadata, locations))
         self.assertIsInstance(msgs[0], lint.Warning)
         self.assertEqual('doc', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
         self.assertEqual(
-            {'filename': path, 'lineno': 3},
+            {'filename': path, 'lineno': 6},
             msgs[0].location,
         )
 
         # test with new api
-        msgs = list(lint.metadata_lint({}, metadata))
+        msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertIsInstance(msgs[0], lint.Error)
         self.assertEqual('doc', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
         self.assertEqual(
-            {'filename': path, 'lineno': 3},
+            {'filename': path, 'lineno': 6},
             msgs[0].location,
         )
 
     def test_missing_introduced_at(self):
-        metadata, path = self.get_metadata("""
+        metadata, locations, path = self.get_metadata("""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api')
@@ -57,7 +57,7 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        msgs = list(lint.metadata_lint({}, metadata))
+        msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertIsInstance(msgs[0], lint.Error)
         self.assertEqual('introduced_at', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
@@ -67,7 +67,7 @@ class LintTests(LintTestCase):
         )
 
     def test_changed_introduced_at(self):
-        old, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(module='old', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -77,7 +77,7 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        new, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(module='new', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=2)
@@ -87,17 +87,17 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        msgs = list(lint.metadata_lint(old, new))
+        msgs = list(lint.metadata_lint(old, new, locations))
         self.assertIsInstance(msgs[0], lint.Error)
         self.assertEqual('introduced_at', msgs[0].name)
         self.assertIn('changed from 1 to 2', msgs[0].msg)
 
         # new api shouldn't warn about introduced at
-        msgs = list(lint.metadata_lint({}, new))
+        msgs = list(lint.metadata_lint({}, new, locations))
         self.assertEqual(0, len(msgs))
 
     def test_method_added_is_ok(self):
-        old, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(module='old', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -107,7 +107,7 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        new, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(module='new', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api(
@@ -118,10 +118,10 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        self.assertEqual([], list(lint.metadata_lint(old, new)))
+        self.assertEqual([], list(lint.metadata_lint(old, new, locations)))
 
     def test_method_removed_is_error(self):
-        old, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(module='old', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -131,7 +131,7 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        new, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(module='new', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api(
@@ -142,13 +142,13 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        msgs = list(lint.metadata_lint(old, new))
+        msgs = list(lint.metadata_lint(old, new, locations))
         self.assertIsInstance(msgs[0], lint.Error)
         self.assertEqual('methods', msgs[0].name)
         self.assertIn('GET removed', msgs[0].msg)
 
     def test_url_changed_is_error(self):
-        old, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(module='old', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -158,7 +158,7 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        new, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(module='new', code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/other', 'api', introduced_at=1)
@@ -168,7 +168,7 @@ class LintTests(LintTestCase):
                 "Docs"
         """)
 
-        msgs = list(lint.metadata_lint(old, new))
+        msgs = list(lint.metadata_lint(old, new, locations))
         self.assertIsInstance(msgs[0], lint.Error)
         self.assertEqual('url', msgs[0].name)
         self.assertIn('/other', msgs[0].msg)
