@@ -1,10 +1,25 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from enum import IntEnum
 import os
+
+
+class LintTypes(IntEnum):
+    WARNING = 0
+    DOCUMENTATION = 1
+    ERROR = 2
+
+
+# shortcuts
+WARNING = LintTypes.WARNING
+DOCUMENTATION = LintTypes.DOCUMENTATION
+ERROR = LintTypes.ERROR
 
 
 class Message:
     """A linter message to the user."""
+    level = None
+
     def __init__(self, name, msg, *args, **kwargs):
         self.name = name
         self.location = kwargs.pop('location', None)
@@ -12,10 +27,10 @@ class Message:
         self.msg = msg.format(*args, **kwargs)
 
     def __str__(self):
-        output = '{}: {}: {} {}'.format(
+        output = '{}: API {} at {}: {}'.format(
+            self.level.name.title(),
             self.api_name,
             self.name,
-            self.__class__.__name__,
             self.msg,
         )
 
@@ -29,16 +44,16 @@ class Message:
             )
 
 
-class Error(Message):
-    pass
+class LintError(Message):
+    level = ERROR
 
 
-class Warning(Message):
-    pass
+class LintWarning(Message):
+    level = WARNING
 
 
-class Fixit(Message):
-    pass
+class LintFixit(Message):
+    level = DOCUMENTATION
 
 
 class CheckChangelog(Message):
@@ -57,7 +72,7 @@ def removed_items(items, target):
 def metadata_lint(old, new, locations):
     """Run the linter over the new metadata, comparing to the old."""
     for removed in set(old) - set(new):
-        yield Error('', 'api removed', api_name=removed)
+        yield LintError('', 'api removed', api_name=removed)
 
     for name, api in new.items():
         old_api = old.get(name, {})
@@ -81,7 +96,7 @@ def lint_api(api_name, old, new, locations):
 
     # apis must have documentation if they are new
     if not new.get('doc'):
-        msg_type = Error if is_new_api else Warning
+        msg_type = LintError if is_new_api else LintWarning
         yield msg_type(
             'doc',
             'missing documentation',
@@ -91,7 +106,7 @@ def lint_api(api_name, old, new, locations):
 
     introduced_at = new.get('introduced_at')
     if introduced_at is None:
-        yield Error(
+        yield LintError(
             'introduced_at', 'missing introduced_at', location=api_location)
 
     if not is_new_api:
@@ -99,7 +114,7 @@ def lint_api(api_name, old, new, locations):
         old_introduced_at = old.get('introduced_at')
         if old_introduced_at is not None:
             if old_introduced_at != introduced_at:
-                yield Error(
+                yield LintError(
                     'introduced_at',
                     'introduced_at changed from {} to {}',
                     old_introduced_at,
@@ -110,7 +125,7 @@ def lint_api(api_name, old, new, locations):
 
     # cannot change url
     if new['url'] != old.get('url', new['url']):
-        yield Error(
+        yield LintError(
             'url',
             'url changed from {} to {}',
             old['url'],
@@ -121,7 +136,7 @@ def lint_api(api_name, old, new, locations):
 
     # cannot add required fields
     for removed in removed_items(old.get('methods', []), new['methods']):
-        yield Error(
+        yield LintError(
             'methods',
             'HTTP method {} removed',
             removed,
@@ -141,7 +156,7 @@ def lint_api(api_name, old, new, locations):
                 schema, old_schema, new_schema, root=True, new_api=is_new_api):
             if isinstance(message, CheckChangelog):
                 if message.revision not in changelog:
-                    yield Fixit(
+                    yield LintFixit(
                         message.name,
                         'No changelog entry for revision {}',
                         message.revision,
@@ -169,12 +184,12 @@ def check_custom_attrs(name, old, new, new_api=False):
     # takes its doc from the function docstring and its introduced_at from
     # the api definition
     if not new.get('doc'):
-        yield Warning(name + '.doc', 'missing documentation')
+        yield LintWarning(name + '.doc', 'missing documentation')
 
     if not new_api:
         introduced_at = new.get('introduced_at')
         if introduced_at is None:
-            yield Warning(name + '.introduced_at', 'missing introduced_at')
+            yield LintFixit(name + '.introduced_at', 'missing introduced_at')
         else:
             introduced_at_changed = False
             old_introduced_at = old.get('introduced_at')
@@ -182,7 +197,7 @@ def check_custom_attrs(name, old, new, new_api=False):
                 introduced_at_changed = old_introduced_at != introduced_at
 
             if introduced_at_changed:
-                yield Error(
+                yield LintError(
                     name + '.introduced_at',
                     'introduced_at changed from {} to {}',
                     old_introduced_at,
@@ -201,7 +216,7 @@ def walk_schema(name, old, new, root=False, new_api=False):
     types = get_schema_types(new)
     old_types = get_schema_types(old)
     for removed in removed_items(old_types, types):
-        yield Error(
+        yield LintError(
             name + '.type',
             'cannot remove type {} from field',
             removed,
@@ -210,7 +225,7 @@ def walk_schema(name, old, new, root=False, new_api=False):
     # you cannot add new required fields
     old_required = old.get('required', [])
     for removed in removed_items(new.get('required', []), old_required):
-        yield Error(
+        yield LintError(
             name + '.required',
             'Cannot require new field {}',
             removed,
@@ -221,7 +236,7 @@ def walk_schema(name, old, new, root=False, new_api=False):
         old_properties = old.get('properties', {})
 
         for deleted in set(old_properties).difference(properties):
-            yield Error(
+            yield LintError(
                 name + '.' + deleted, 'cannot delete field {}', deleted)
 
         for prop, value in sorted(properties.items()):

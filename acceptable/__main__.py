@@ -181,21 +181,29 @@ def lint_cmd(cli_args, stream=sys.stdout):
     finally:
         cli_args.metadata.close()
 
-    error = False
-    for message in lint.metadata_lint(metadata, current, locations):
-        is_warning = isinstance(message, lint.Warning)
-        if not error:
-            error = True if cli_args.strict else not is_warning
+    has_errors = False
+    display_level = lint.WARNING
+    error_level = lint.DOCUMENTATION
 
-        if not is_warning or not cli_args.quiet:
+    if cli_args.strict:
+        display_level = lint.WARNING
+        error_level = lint.WARNING
+    elif cli_args.quiet:
+        display_level = lint.DOCUMENTATION
+
+    for message in lint.metadata_lint(metadata, current, locations):
+        if message.level >= display_level:
             stream.write('{}\n'.format(message))
 
+        if message.level >= error_level:
+            has_errors = True
+
     if cli_args.update:
-        if not error or cli_args.force:
+        if not has_errors or cli_args.force:
             with open(cli_args.metadata.name, 'w') as f:
                 f.write(json.dumps(current, indent=2, sort_keys=True))
 
-    return 1 if error else 0
+    return 1 if has_errors else 0
 
 
 if __name__ == '__main__':

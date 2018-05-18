@@ -28,7 +28,7 @@ class LintTests(LintTestCase):
         """)
 
         msgs = list(lint.metadata_lint(metadata, metadata, locations))
-        self.assertIsInstance(msgs[0], lint.Warning)
+        self.assertEqual(msgs[0].level, lint.WARNING)
         self.assertEqual('doc', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
         self.assertEqual(
@@ -38,7 +38,7 @@ class LintTests(LintTestCase):
 
         # test with new api
         msgs = list(lint.metadata_lint({}, metadata, locations))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('doc', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
         self.assertEqual(
@@ -58,7 +58,7 @@ class LintTests(LintTestCase):
         """)
 
         msgs = list(lint.metadata_lint({}, metadata, locations))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('introduced_at', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
         self.assertEqual(
@@ -88,7 +88,7 @@ class LintTests(LintTestCase):
         """)
 
         msgs = list(lint.metadata_lint(old, new, locations))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('introduced_at', msgs[0].name)
         self.assertIn('changed from 1 to 2', msgs[0].msg)
 
@@ -143,7 +143,7 @@ class LintTests(LintTestCase):
         """)
 
         msgs = list(lint.metadata_lint(old, new, locations))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('methods', msgs[0].name)
         self.assertIn('GET removed', msgs[0].msg)
 
@@ -169,7 +169,7 @@ class LintTests(LintTestCase):
         """)
 
         msgs = list(lint.metadata_lint(old, new, locations))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('url', msgs[0].name)
         self.assertIn('/other', msgs[0].msg)
 
@@ -182,7 +182,7 @@ class WalkSchemaTests(LintTestCase):
 
         msgs = list(lint.walk_schema('name', old, new, root=True))
         self.assertEqual(1, len(msgs))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('name.type', msgs[0].name)
         self.assertIn('remove type string', msgs[0].msg)
 
@@ -192,7 +192,7 @@ class WalkSchemaTests(LintTestCase):
 
         msgs = list(lint.walk_schema('name', old, new, root=True))
         self.assertEqual(1, len(msgs))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('name.type', msgs[0].name)
         self.assertIn('remove type string', msgs[0].msg)
 
@@ -238,7 +238,7 @@ class WalkSchemaTests(LintTestCase):
 
         msgs = list(lint.walk_schema('name', old, new, root=True))
         self.assertEqual(2, len(msgs))
-        self.assertIsInstance(msgs[0], lint.Error)
+        self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('name.bar', msgs[0].name)
 
         self.assertIsInstance(msgs[1], lint.CheckChangelog)
@@ -247,18 +247,18 @@ class WalkSchemaTests(LintTestCase):
         msgs = list(lint.walk_schema('name', {}, {}))
         self.assertEqual(2, len(msgs))
 
-        self.assertIsInstance(msgs[0], lint.Warning)
+        self.assertEqual(msgs[0].level, lint.WARNING)
         self.assertEqual('name.doc', msgs[0].name)
         self.assertIn('missing', msgs[0].msg)
 
-        self.assertIsInstance(msgs[1], lint.Warning)
+        self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
         self.assertEqual('name.introduced_at', msgs[1].name)
         self.assertIn('missing', msgs[1].msg)
 
     def test_missing_introduced_at_skipped_if_new_api(self):
         msgs = list(lint.walk_schema('name', {}, {}, new_api=True))
         self.assertEqual(1, len(msgs))
-        self.assertIsInstance(msgs[0], lint.Warning)
+        self.assertEqual(msgs[0].level, lint.WARNING)
         self.assertEqual('name.doc', msgs[0].name)
         self.assertIn('missing', msgs[0].msg)
 
@@ -305,17 +305,17 @@ class WalkSchemaTests(LintTestCase):
         msgs = list(lint.walk_schema('name', old, new, root=True))
         self.assertEqual(5, len(msgs))
 
-        self.assertIsInstance(msgs[0], lint.Warning)
+        self.assertEqual(msgs[0].level, lint.DOCUMENTATION)
         self.assertEqual('name.foo.introduced_at', msgs[0].name)
 
-        self.assertIsInstance(msgs[1], lint.Error)
+        self.assertEqual(msgs[1].level, lint.ERROR)
         self.assertEqual('name.foo.required', msgs[1].name)
 
-        self.assertIsInstance(msgs[2], lint.Warning)
+        self.assertEqual(msgs[2].level, lint.DOCUMENTATION)
         self.assertEqual('name.foo.bar.introduced_at', msgs[2].name)
 
-        self.assertIsInstance(msgs[3], lint.Error)
+        self.assertEqual(msgs[3].level, lint.ERROR)
         self.assertEqual('name.foo.bar.type', msgs[3].name)
 
-        self.assertIsInstance(msgs[4], lint.Error)
+        self.assertEqual(msgs[4].level, lint.ERROR)
         self.assertEqual('name.foo.baz.introduced_at', msgs[4].name)

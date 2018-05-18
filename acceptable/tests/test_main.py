@@ -292,11 +292,11 @@ class RenderMarkdownTests(testtools.TestCase):
 
 
 EXPECTED_LINT_OUTPUT = [
-    'examples/api.py:22: foo: request_schema.required',
-    'examples/api.py:22: foo: request_schema.foo.doc',
-    'examples/api.py:22: foo: request_schema.foo.introduced_at',
-    'examples/api.py:36: foo: response_schema.foo_result.doc',
-    'examples/api.py:36: foo: response_schema.foo_result.introduced_at'
+    'examples/api.py:22: Error: API foo at request_schema.required',
+    'examples/api.py:22: Warning: API foo at request_schema.foo.doc',
+    'examples/api.py:22: Documentation: API foo at request_schema.foo.introduced_at',  # noqa
+    'examples/api.py:36: Warning: API foo at response_schema.foo_result.doc', # noqa
+    'examples/api.py:36: Documentation: API foo at response_schema.foo_result.introduced_at'  # noqa
 ]
 
 
