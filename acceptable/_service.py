@@ -56,7 +56,7 @@ class APIMetadata:
                     api.url, name, view_func=api.view_fn, **api.options)
 
     def bind_all(self, flask_app):
-        for name, group in self.services.items():
+        for name, group in self.services:
             self.bind(flask_app, name, group)
 
     def clear(self):

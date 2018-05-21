@@ -243,23 +243,63 @@ class WalkSchemaTests(LintTestCase):
 
         self.assertIsInstance(msgs[1], lint.CheckChangelog)
 
-    def test_missing_doc_and_introduced_at_is_warning(self):
-        msgs = list(lint.walk_schema('name', {}, {}))
+    def test_missing_doc_and_introduced_when_adding_new_field(self):
+        old = {
+            'type': 'object',
+        }
+
+        new = {
+            'type': 'object',
+            'properties': {
+                'foo': {'type': 'object'},
+            },
+        }
+        msgs = list(lint.walk_schema('name', old, new, root=True))
         self.assertEqual(2, len(msgs))
 
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.doc', msgs[0].name)
+        self.assertEqual('name.foo.doc', msgs[0].name)
         self.assertIn('missing', msgs[0].msg)
 
         self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
-        self.assertEqual('name.introduced_at', msgs[1].name)
+        self.assertEqual('name.foo.introduced_at', msgs[1].name)
         self.assertIn('missing', msgs[1].msg)
 
+    def test_no_introduced_at_when_present_in_old(self):
+        old = {
+            'type': 'object',
+            'properties': {
+                'foo': {'type': 'object'},
+            },
+        }
+
+        new = {
+            'type': 'object',
+            'properties': {
+                'foo': {'type': 'object', 'doc': 'doc'},
+            },
+        }
+        msgs = list(lint.walk_schema('name', old, new, root=True))
+        self.assertEqual(0, len(msgs))
+
     def test_missing_introduced_at_skipped_if_new_api(self):
-        msgs = list(lint.walk_schema('name', {}, {}, new_api=True))
+        old = {
+            'type': 'object',
+        }
+
+        new = {
+            'type': 'object',
+            'properties': {
+                'foo': {'type': 'object'},
+            },
+        }
+
+        msgs = list(lint.walk_schema(
+            'name', old, new, root=True, new_api=True
+        ))
         self.assertEqual(1, len(msgs))
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.doc', msgs[0].name)
+        self.assertEqual('name.foo.doc', msgs[0].name)
         self.assertIn('missing', msgs[0].msg)
 
     def test_nested_objects(self):
@@ -283,14 +323,14 @@ class WalkSchemaTests(LintTestCase):
         new = {
             'type': 'object',
             'properties': {
-                'foo': {  # warning for no introduced_at
+                'foo': {
                     'doc': 'doc',
                     'type': 'object',
                     'required': ['bar', 'foo'],  # error for required change
                     'properties': {
                         'bar': {
                             'type': 'object',  # type changed
-                            'doc': 'doc',  # introduced_at warning
+                            'doc': 'doc'
                         },
                         'baz': {
                             'type': 'string',
@@ -303,19 +343,46 @@ class WalkSchemaTests(LintTestCase):
         }
 
         msgs = list(lint.walk_schema('name', old, new, root=True))
-        self.assertEqual(5, len(msgs))
+        self.assertEqual(3, len(msgs))
 
-        self.assertEqual(msgs[0].level, lint.DOCUMENTATION)
-        self.assertEqual('name.foo.introduced_at', msgs[0].name)
+        self.assertEqual(msgs[0].level, lint.ERROR)
+        self.assertEqual('name.foo.required', msgs[0].name)
 
         self.assertEqual(msgs[1].level, lint.ERROR)
-        self.assertEqual('name.foo.required', msgs[1].name)
+        self.assertEqual('name.foo.bar.type', msgs[1].name)
 
-        self.assertEqual(msgs[2].level, lint.DOCUMENTATION)
-        self.assertEqual('name.foo.bar.introduced_at', msgs[2].name)
+        self.assertEqual(msgs[2].level, lint.ERROR)
+        self.assertEqual('name.foo.baz.introduced_at', msgs[2].name)
 
-        self.assertEqual(msgs[3].level, lint.ERROR)
-        self.assertEqual('name.foo.bar.type', msgs[3].name)
+    def test_arrays(self):
+        old = {
+            'type': 'array',
+            'items': {
+                'doc': 'doc',
+                'type': 'object',
+                'properties': {
+                    'foo': {'type': 'object', 'doc': 'doc'},
+                },
+            },
+        }
+        new = {
+            'type': 'array',
+            'items': {
+                'doc': 'doc',
+                'type': 'object',
+                'properties': {
+                    'foo': {'type': 'object', 'doc': 'doc'},
+                    'bar': {'type': 'object'},
+                },
+            },
+        }
 
-        self.assertEqual(msgs[4].level, lint.ERROR)
-        self.assertEqual('name.foo.baz.introduced_at', msgs[4].name)
+        msgs = list(lint.walk_schema('name', old, new, root=True))
+
+        self.assertEqual(2, len(msgs))
+
+        self.assertEqual(msgs[0].level, lint.WARNING)
+        self.assertEqual('name.items.bar.doc', msgs[0].name)
+
+        self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
+        self.assertEqual('name.items.bar.introduced_at', msgs[1].name)

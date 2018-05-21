@@ -183,13 +183,15 @@ def check_custom_attrs(name, old, new, new_api=False):
     # standard, and we don't need them on the root schema object, as that
     # takes its doc from the function docstring and its introduced_at from
     # the api definition
-    if not new.get('doc'):
+    if 'doc' not in new:
         yield LintWarning(name + '.doc', 'missing documentation')
 
     if not new_api:
         introduced_at = new.get('introduced_at')
         if introduced_at is None:
-            yield LintFixit(name + '.introduced_at', 'missing introduced_at')
+            if not old:  # new field
+                yield LintFixit(
+                    name + '.introduced_at', 'missing introduced_at')
         else:
             introduced_at_changed = False
             old_introduced_at = old.get('introduced_at')
@@ -246,3 +248,11 @@ def walk_schema(name, old, new, root=False, new_api=False):
                 value,
                 new_api=new_api,
             )
+
+    if 'array' in types and 'items' in new:
+        yield from walk_schema(
+                name + '.items',
+                old.get('items', {}),
+                new['items'],
+                new_api=new_api
+        )
