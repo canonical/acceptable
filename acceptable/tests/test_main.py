@@ -65,7 +65,30 @@ class ParseArgsTests(testtools.TestCase):
     def test_render_parses_stdin_with_no_metadata(self):
         stdin = io.StringIO('hi')
         args = main.parse_args(['render', '--name=name'], stdin=stdin)
-        self.assertTrue('hi', args.metadata.read())
+        self.assertEqual('hi', args.metadata.read())
+
+    def test_lint_reads_file(self):
+        with tempfile.NamedTemporaryFile('w') as api:
+            api.write('hi')
+            api.flush()
+            args = main.parse_args(['lint', api.name, 'foo', 'bar'])
+
+        self.assertEqual('hi', args.metadata.read())
+        self.assertEqual(args.modules, ['foo', 'bar'])
+
+        args.metadata.close()  # suppresses ResourceWarning
+
+    def test_lint_force_without_update(self):
+        with tempfile.NamedTemporaryFile('w') as api:
+            api.write('hi')
+            api.flush()
+            self.assertRaisesRegex(
+                RuntimeError,
+                '--force can only be used with --update',
+                main.parse_args,
+                ['lint', api.name, 'foo', '--force'],
+                parser_cls=SaneArgumentParser,
+            )
 
 
 class MetadataTests(testtools.TestCase):
@@ -85,35 +108,44 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'], locations=True)
+        metadata, locations = main.import_metadata(['service'])
 
         self.assertEqual({
             'root': {
-                'location': {'filename': fixture.path, 'lineno': 4},
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
                 'changelog': {
-                    4:  {
-                        'doc': 'changelog',
-                        'filename': fixture.path,
-                        'lineno': 7,
-                    },
+                    4: 'changelog',
                 },
                 'request_schema': {'type': 'object'},
-                'request_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 5,
-                },
                 'response_schema': {'type': 'object'},
-                'response_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 6,
-                },
                 'introduced_at':  1,
             }},
             metadata,
+        )
+
+        self.assertEqual({
+            'root': {
+                'api': {'filename': fixture.path, 'lineno': 4},
+                'changelog': {
+                    4: {'filename': fixture.path, 'lineno': 7},
+                },
+                'request_schema': {
+                    'filename': fixture.path,
+                    'lineno': 5,
+                },
+                'response_schema': {
+                    'filename': fixture.path,
+                    'lineno': 6,
+                },
+                'view': {
+                    'filename': fixture.path,
+                    'lineno': 10,
+                },
+            }},
+            locations,
         )
 
     def test_legacy_api_still_works(self):
@@ -132,35 +164,44 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata = main.import_metadata(['service'], locations=True)
+        metadata, locations = main.import_metadata(['service'])
 
         self.assertEqual({
             'root': {
-                'location': {'filename': fixture.path, 'lineno': 4},
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
                 'doc': "Documentation.",
                 'changelog': {
-                    4:  {
-                        'doc': 'changelog',
-                        'filename': fixture.path,
-                        'lineno': 5,
-                    },
+                    4: 'changelog',
                 },
                 'request_schema': {'type': 'object'},
-                'request_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 8,
-                },
                 'response_schema': {'type': 'object'},
-                'response_schema_location': {
-                    'filename': fixture.path,
-                    'lineno': 9,
-                },
                 'introduced_at':  1,
             }},
             metadata,
+        )
+
+        self.assertEqual({
+            'root': {
+                'api': {'filename': fixture.path, 'lineno': 4},
+                'changelog': {
+                    4: {'filename': fixture.path, 'lineno': 5},
+                },
+                'request_schema': {
+                    'filename': fixture.path,
+                    'lineno': 8,
+                },
+                'response_schema': {
+                    'filename': fixture.path,
+                    'lineno': 9,
+                },
+                'view': {
+                    'filename': fixture.path,
+                    'lineno': 10,
+                },
+            }},
+            locations,
         )
 
 
@@ -260,3 +301,27 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertTrue(os.path.exists(p('en/api1.html')))
         self.assertTrue(os.path.exists(p('en/api2.html')))
         self.assertTrue(os.path.exists(p('en/index.html')))
+
+
+EXPECTED_LINT_OUTPUT = [
+    'examples/api.py:22: Error: API foo at request_schema.required',
+    'examples/api.py:22: Warning: API foo at request_schema.foo.doc',
+    'examples/api.py:36: Warning: API foo at response_schema.foo_result.doc', # noqa
+    'examples/api.py:36: Documentation: API foo at response_schema.foo_result.introduced_at'  # noqa
+]
+
+
+class LintTests(testtools.TestCase):
+
+    def test_basic_api_changes(self):
+        args = main.parse_args(
+            ['lint', 'examples/api.json', 'examples.api'],
+        )
+
+        output = io.StringIO()
+        result = main.lint_cmd(args, stream=output)
+        self.assertEqual(1, result) == 1
+        lines = output.getvalue().splitlines()
+
+        for actual, expected in zip(lines, EXPECTED_LINT_OUTPUT):
+            self.assertIn(expected, actual)

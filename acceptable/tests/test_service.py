@@ -191,8 +191,8 @@ class AcceptableAPITestCase(TestCase):
         """)
         api.changelog(4, "Changelog for version 4")
 
-        self.assertEqual('Changelog for version 5', api._changelog[5]['doc'])
-        self.assertEqual('Changelog for version 4', api._changelog[4]['doc'])
+        self.assertEqual('Changelog for version 5', api._changelog[5])
+        self.assertEqual('Changelog for version 4', api._changelog[4])
 
     def test_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
@@ -322,7 +322,6 @@ class LegacyAcceptableAPITestCase(TestCase):
         self.assertEqual(view.__name__, 'new_view')
         self.assertEqual(new_api.docs, 'Documentation.')
 
-
     def test_view_introduced_at_string(self):
         fixture = self.useFixture(ServiceFixture())
 
@@ -345,7 +344,6 @@ class LegacyAcceptableAPITestCase(TestCase):
             return "new view", 200
 
         self.assertEqual(new_api.introduced_at, 1)
-
 
     def test_validate_body_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())

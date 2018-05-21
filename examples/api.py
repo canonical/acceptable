@@ -6,15 +6,22 @@ foo_api = service.api('/foo', 'foo', introduced_at=2)
 
 foo_api.request_schema = {
     "type": "object",
+    "required": ['foo', 'baz'],
     "properties": {
         "foo": {
             "type": "string",
-            "doc": "The foo thing.",
         },
         "baz": {
-            "type": "string",
+            "type": "object",
             "doc": "Bar the door.",
             "introduced_at": 4,
+            "properties": {
+                "bar": {
+                    "type": "string",
+                    "introduced_at": 5,
+                    "doc": "asdf"
+                }
+            },
         },
     }
 }

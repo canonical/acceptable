@@ -12,6 +12,7 @@ from jinja2 import Environment, PackageLoader
 import yaml
 
 from acceptable._service import Metadata
+from acceptable import lint
 
 
 def main():
@@ -34,12 +35,6 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     metadata_parser = subparser.add_parser(
         'metadata', help='Import project and print extracted metadata in json')
     metadata_parser.add_argument('modules', nargs='+')
-    metadata_parser.add_argument(
-        '--locations',
-        action='store_true',
-        default=False,
-        help='Include file names and line numbers',
-    )
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
@@ -57,24 +52,68 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         '--dir', '-d', default='docs', help='output directory')
     render_parser.set_defaults(func=render_cmd)
 
+    class ForceAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if not namespace.update:
+                parser.error('--force can only be used with --update')
+            else:
+                namespace.force = True
+
+    lint_parser = subparser.add_parser(
+        'lint', help='Compare current metadata against file metadata')
+    lint_parser.add_argument(
+        'metadata',
+        nargs='?',
+        type=argparse.FileType('r'),
+    )
+    lint_parser.add_argument('modules', nargs='+')
+    lint_parser.add_argument(
+        '-q', '--quiet',
+        action='store_true',
+        default=False,
+        help='Do not emit warnings',
+    )
+    lint_parser.add_argument(
+        '--strict', '--pedantic', '--overhead',
+        action='store_true',
+        default=False,
+        help='Even warnings count as failure',
+    )
+    lint_parser.add_argument(
+        '--update',
+        action='store_true',
+        default=False,
+        help='Update metadata file to new metadata if lint passes',
+    )
+    lint_parser.add_argument(
+        '--force',
+        action=ForceAction,
+        nargs=0,
+        default=False,
+        help='Update metadata even if linting fails',
+    )
+
+    lint_parser.set_defaults(func=lint_cmd)
+
     return parser.parse_args(raw_args)
 
 
 def metadata_cmd(cli_args):
     sys.path.insert(0, os.getcwd())
-    metadata = import_metadata(cli_args.modules, cli_args.locations)
+    metadata, _ = import_metadata(cli_args.modules)
     print(json.dumps(metadata, indent=2, sort_keys=True))
 
 
-def import_metadata(module_paths, locations=False):
+def import_metadata(module_paths):
     """Import all the given modules, and then extract the parsed metadata."""
     for path in module_paths:
         import_module(path)
 
     api_metadata = {}
+    locations = {}
     for (svc_name, group), apis in Metadata.services.items():
         for name, api in apis.items():
-            metadata = {
+            api_metadata[name] = {
                 'api_name': api.name,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
@@ -82,25 +121,18 @@ def import_metadata(module_paths, locations=False):
                 'request_schema': api.request_schema,
                 'response_schema': api.response_schema,
                 'doc': api.docs,
+                'changelog': api._changelog,
             }
 
-            if not locations:
-                metadata['changelog'] = {
-                    k: {'doc', v['doc']} for k, v in api._changelog.items()
-                }
-            else:
-                metadata['changelog'] = api._changelog
-                metadata['location'] = api.location
-                metadata['response_schema_location'] = (
-                    api._response_schema_location
-                )
-                metadata['request_schema_location'] = (
-                    api._request_schema_location
-                )
+            locations[name] = {
+                'api': api.location,
+                'request_schema': api._request_schema_location,
+                'response_schema': api._response_schema_location,
+                'changelog': api._changelog_locations,
+                'view': api.view_fn_location,
+            }
 
-        api_metadata[name] = metadata
-
-    return api_metadata
+    return api_metadata, locations
 
 
 def render_cmd(cli_args):
@@ -110,7 +142,8 @@ def render_cmd(cli_args):
         metadata = json.load(cli_args.metadata)
     except json.JSONDecodeError as e:
         return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
-    cli_args.metadata.close()  # suppresses ResourceWarning
+    finally:
+        cli_args.metadata.close()
 
     for path, content in render_markdown(metadata, cli_args.name):
         root_dir.joinpath(path).write_text(content)
@@ -144,6 +177,41 @@ def render_markdown(metadata, name):
     yield Path('metadata.yaml'), yaml.safe_dump(
         {'site_title': name + ' Documentation'}
     )
+
+
+def lint_cmd(cli_args, stream=sys.stdout):
+    sys.path.insert(0, os.getcwd())
+    current, locations = import_metadata(cli_args.modules)
+    try:
+        metadata = json.load(cli_args.metadata)
+    except json.JSONDecodeError as e:
+        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
+    finally:
+        cli_args.metadata.close()
+
+    has_errors = False
+    display_level = lint.WARNING
+    error_level = lint.DOCUMENTATION
+
+    if cli_args.strict:
+        display_level = lint.WARNING
+        error_level = lint.WARNING
+    elif cli_args.quiet:
+        display_level = lint.DOCUMENTATION
+
+    for message in lint.metadata_lint(metadata, current, locations):
+        if message.level >= display_level:
+            stream.write('{}\n'.format(message))
+
+        if message.level >= error_level:
+            has_errors = True
+
+    if cli_args.update:
+        if not has_errors or cli_args.force:
+            with open(cli_args.metadata.name, 'w') as f:
+                json.dump(current, f, indent=2, sort_keys=True)
+
+    return 1 if has_errors else 0
 
 
 if __name__ == '__main__':
