@@ -131,7 +131,7 @@ def lint_api(api_name, old, new, locations):
         )
 
     # cannot add required fields
-    for removed in set(old.get('methods')) - set(new['methods']):
+    for removed in set(old.get('methods', [])) - set(new['methods']):
         yield LintError(
             'methods',
             'HTTP method {} removed',
@@ -179,8 +179,6 @@ def check_custom_attrs(name, old, new, new_api=False):
     # standard, and we don't need them on the root schema object, as that
     # takes its doc from the function docstring and its introduced_at from
     # the api definition
-    if 'doc' not in new:
-        yield LintWarning(name + '.doc', 'missing documentation')
     if 'doc' not in new:
         yield LintWarning(name + '.doc', 'missing doc field')
 
