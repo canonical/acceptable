@@ -62,13 +62,6 @@ class CheckChangelog(Message):
         self.revision = revision
 
 
-def removed_items(items, target):
-    """Iterate through any item in items that is removed from target."""
-    for item in items:
-        if item not in target:
-            yield item
-
-
 def metadata_lint(old, new, locations):
     """Run the linter over the new metadata, comparing to the old."""
     for removed in set(old) - set(new):
@@ -99,7 +92,7 @@ def lint_api(api_name, old, new, locations):
         msg_type = LintError if is_new_api else LintWarning
         yield msg_type(
             'doc',
-            'missing documentation',
+            'missing docstring documentation',
             api_name=api_name,
             location=locations.get('view', api_location)
         )
@@ -107,7 +100,10 @@ def lint_api(api_name, old, new, locations):
     introduced_at = new.get('introduced_at')
     if introduced_at is None:
         yield LintError(
-            'introduced_at', 'missing introduced_at', location=api_location)
+            'introduced_at',
+            'missing introduced_at field',
+            location=api_location,
+        )
 
     if not is_new_api:
         # cannot change introduced_at if we already have it
@@ -135,7 +131,7 @@ def lint_api(api_name, old, new, locations):
         )
 
     # cannot add required fields
-    for removed in removed_items(old.get('methods', []), new['methods']):
+    for removed in set(old.get('methods')) - set(new['methods']):
         yield LintError(
             'methods',
             'HTTP method {} removed',
@@ -185,13 +181,15 @@ def check_custom_attrs(name, old, new, new_api=False):
     # the api definition
     if 'doc' not in new:
         yield LintWarning(name + '.doc', 'missing documentation')
+    if 'doc' not in new:
+        yield LintWarning(name + '.doc', 'missing doc field')
 
     if not new_api:
         introduced_at = new.get('introduced_at')
         if introduced_at is None:
             if not old:  # new field
                 yield LintFixit(
-                    name + '.introduced_at', 'missing introduced_at')
+                    name + '.introduced_at', 'missing introduced_at field')
         else:
             introduced_at_changed = False
             old_introduced_at = old.get('introduced_at')
@@ -217,7 +215,7 @@ def walk_schema(name, old, new, root=False, new_api=False):
 
     types = get_schema_types(new)
     old_types = get_schema_types(old)
-    for removed in removed_items(old_types, types):
+    for removed in set(old_types) - set(types):
         yield LintError(
             name + '.type',
             'cannot remove type {} from field',
@@ -226,7 +224,7 @@ def walk_schema(name, old, new, root=False, new_api=False):
 
     # you cannot add new required fields
     old_required = old.get('required', [])
-    for removed in removed_items(new.get('required', []), old_required):
+    for removed in set(new.get('required', [])) - set(old_required):
         yield LintError(
             name + '.required',
             'Cannot require new field {}',
