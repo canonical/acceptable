@@ -235,7 +235,7 @@ def walk_schema(name, old, new, root=False, new_api=False):
         properties = new.get('properties', {})
         old_properties = old.get('properties', {})
 
-        for deleted in set(old_properties).difference(properties):
+        for deleted in set(old_properties) - set(properties):
             yield LintError(
                 name + '.' + deleted, 'cannot delete field {}', deleted)
 

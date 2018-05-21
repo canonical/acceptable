@@ -78,6 +78,18 @@ class ParseArgsTests(testtools.TestCase):
 
         args.metadata.close()  # suppresses ResourceWarning
 
+    def test_lint_force_without_update(self):
+        with tempfile.NamedTemporaryFile('w') as api:
+            api.write('hi')
+            api.flush()
+            self.assertRaisesRegex(
+                RuntimeError,
+                '--force can only be used with --update',
+                main.parse_args,
+                ['lint', api.name, 'foo', '--force'],
+                parser_cls=SaneArgumentParser,
+            )
+
 
 class MetadataTests(testtools.TestCase):
     def test_importing_api_metadata_works(self):

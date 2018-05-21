@@ -52,6 +52,13 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         '--dir', '-d', default='docs', help='output directory')
     render_parser.set_defaults(func=render_cmd)
 
+    class ForceAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            if not namespace.update:
+                parser.error('--force can only be used with --update')
+            else:
+                namespace.force = True
+
     lint_parser = subparser.add_parser(
         'lint', help='Compare current metadata against file metadata')
     lint_parser.add_argument(
@@ -80,7 +87,8 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     )
     lint_parser.add_argument(
         '--force',
-        action='store_true',
+        action=ForceAction,
+        nargs=0,
         default=False,
         help='Update metadata even if linting fails',
     )
@@ -201,7 +209,7 @@ def lint_cmd(cli_args, stream=sys.stdout):
     if cli_args.update:
         if not has_errors or cli_args.force:
             with open(cli_args.metadata.name, 'w') as f:
-                f.write(json.dumps(current, indent=2, sort_keys=True))
+                json.dump(current, f, indent=2, sort_keys=True)
 
     return 1 if has_errors else 0
 
