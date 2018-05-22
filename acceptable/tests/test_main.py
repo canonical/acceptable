@@ -14,8 +14,11 @@ import testtools
 import fixtures
 
 from acceptable import __main__ as main
-
-from acceptable.tests.fixtures import TemporaryModuleFixture
+from acceptable._service import Metadata
+from acceptable.tests.fixtures import (
+    CleanUpModuleImport,
+    TemporaryModuleFixture,
+)
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -108,7 +111,8 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata, locations = main.import_metadata(['service'])
+        main.import_metadata(['service'])
+        metadata, locations = main.parse(Metadata)
 
         self.assertEqual({
             'root': {
@@ -164,7 +168,8 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        metadata, locations = main.import_metadata(['service'])
+        main.import_metadata(['service'])
+        metadata, locations = main.parse(Metadata)
 
         self.assertEqual({
             'root': {
@@ -314,6 +319,8 @@ EXPECTED_LINT_OUTPUT = [
 class LintTests(testtools.TestCase):
 
     def test_basic_api_changes(self):
+        self.useFixture(CleanUpModuleImport('examples.api'))
+
         args = main.parse_args(
             ['lint', 'examples/api.json', 'examples.api'],
         )
@@ -325,3 +332,21 @@ class LintTests(testtools.TestCase):
 
         for actual, expected in zip(lines, EXPECTED_LINT_OUTPUT):
             self.assertIn(expected, actual)
+
+
+class VersionTests(testtools.TestCase):
+
+    def test_version(self):
+        self.useFixture(CleanUpModuleImport('examples.api'))
+
+        args = main.parse_args(
+            ['api-version', 'examples/api.json', 'examples.api'],
+        )
+
+        output = io.StringIO()
+        result = main.version_cmd(args, stream=output)
+        self.assertEqual(0, result) == 0
+        self.assertEqual(
+            'examples/api.json: 2\nexamples.api: 5\n',
+            output.getvalue(),
+        )

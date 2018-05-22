@@ -45,6 +45,19 @@ class APIMetadata:
         self.urls.add(url_key)
         self.services[name, group][api.name] = api
 
+    @property
+    def current_version(self):
+        versions = set()
+        for service in self.services.values():
+            for api in service.values():
+                versions.add(api.introduced_at)
+                if api._changelog:
+                    versions.add(max(api._changelog))
+        if versions:
+            return max(versions)
+        else:
+            return None
+
     def bind(self, flask_app, name, group=None):
         """Bind the service API urls to a flask app."""
         for name, api in self.services[name, group].items():

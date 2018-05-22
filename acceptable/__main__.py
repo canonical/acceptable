@@ -16,8 +16,11 @@ from acceptable import lint
 
 
 def main():
-    cli_args = parse_args()
-    sys.exit(cli_args.func(cli_args))
+    try:
+        cli_args = parse_args()
+        sys.exit(cli_args.func(cli_args))
+    except Exception as e:
+        sys.exit(str(e))
 
 
 def parse_args(raw_args=None, parser_cls=None, stdin=None):
@@ -55,6 +58,8 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     class ForceAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             if not namespace.update:
+                if namespace.metadata:
+                    namespace.metadata.close()  # supresses resource warning
                 parser.error('--force can only be used with --update')
             else:
                 namespace.force = True
@@ -95,23 +100,53 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
     lint_parser.set_defaults(func=lint_cmd)
 
+    version_parser = subparser.add_parser(
+        'api-version',
+        help='Get the current api version from json meta, and '
+             'optionally from current code also',
+    )
+    version_parser.add_argument(
+        'metadata',
+        nargs='?',
+        type=argparse.FileType('r'),
+        default=stdin,
+        help='The json metadata for the api',
+    )
+    version_parser.add_argument(
+        'modules',
+        nargs='*',
+        help='Option modules to import for current imported api',
+    )
+    version_parser.set_defaults(func=version_cmd)
+
     return parser.parse_args(raw_args)
 
 
 def metadata_cmd(cli_args):
     sys.path.insert(0, os.getcwd())
-    metadata, _ = import_metadata(cli_args.modules)
-    print(json.dumps(metadata, indent=2, sort_keys=True))
+    try:
+        import_metadata(cli_args.modules)
+    except ImportError as e:
+        return 1
+
+    current, _ = parse(Metadata)
+    print(json.dumps(current, indent=2, sort_keys=True))
 
 
 def import_metadata(module_paths):
     """Import all the given modules, and then extract the parsed metadata."""
-    for path in module_paths:
-        import_module(path)
+    try:
+        for path in module_paths:
+            import_module(path)
+    except ImportError as e:
+        raise Exception('Could not import {}: {}'.format(path, str(e))) from e
+
+
+def parse(metadata):
 
     api_metadata = {}
     locations = {}
-    for (svc_name, group), apis in Metadata.services.items():
+    for (svc_name, group), apis in metadata.services.items():
         for name, api in apis.items():
             api_metadata[name] = {
                 'api_name': api.name,
@@ -180,14 +215,20 @@ def render_markdown(metadata, name):
 
 
 def lint_cmd(cli_args, stream=sys.stdout):
-    sys.path.insert(0, os.getcwd())
-    current, locations = import_metadata(cli_args.modules)
     try:
         metadata = json.load(cli_args.metadata)
     except json.JSONDecodeError as e:
         return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
     finally:
         cli_args.metadata.close()
+
+    sys.path.insert(0, os.getcwd())
+    try:
+        import_metadata(cli_args.modules)
+    except Exception as e:
+        return str(e)
+
+    current, locations = parse(Metadata)
 
     has_errors = False
     display_level = lint.WARNING
@@ -212,6 +253,38 @@ def lint_cmd(cli_args, stream=sys.stdout):
                 json.dump(current, f, indent=2, sort_keys=True)
 
     return 1 if has_errors else 0
+
+
+def version_cmd(cli_args, stream=sys.stdout):
+    try:
+        metadata = json.load(cli_args.metadata)
+    except json.JSONDecodeError as e:
+        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
+    finally:
+        cli_args.metadata.close()
+
+    json_versions = set()
+    import_version = None
+
+    if cli_args.modules:
+        import_metadata(cli_args.modules)
+        import_version = Metadata.current_version
+
+    for name, api in metadata.items():
+        json_versions.add(api['introduced_at'])
+        changelog = api.get('changelog', [])
+        if changelog:
+            json_versions.add(max(changelog))
+
+    stream.write('{}: {}\n'.format(cli_args.metadata.name, max(json_versions)))
+    if import_version is not None:
+        if len(cli_args.modules) == 1:
+            name = cli_args.modules[0]
+        else:
+            name = 'Imported API'
+        stream.write('{}: {}\n'.format(name, import_version))
+
+    return 0
 
 
 if __name__ == '__main__':

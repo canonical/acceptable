@@ -9,6 +9,23 @@ import fixtures
 from acceptable import _service
 
 
+def clean_up_module(name, old_syspath=None):
+    sys.modules.pop(name)
+    _service.Metadata.clear()
+
+    if old_syspath is not None:
+        sys.path = old_syspath
+
+
+class CleanUpModuleImport(fixtures.Fixture):
+    def __init__(self, name):
+        self.name = name
+
+    def _setUp(self):
+        _service.Metadata.clear()
+        self.addCleanup(clean_up_module, self.name)
+
+
 class TemporaryModuleFixture(fixtures.Fixture):
     """Setup a module that can be imported, and clean up afterwards."""
 
@@ -28,6 +45,4 @@ class TemporaryModuleFixture(fixtures.Fixture):
         sys.path = [tempdir] + old_sys_path
         _service.Metadata.clear()
 
-        self.addCleanup(setattr, sys, 'path', old_sys_path)
-        self.addCleanup(sys.modules.pop, self.name)
-        self.addCleanup(_service.Metadata.clear)
+        self.addCleanup(clean_up_module, self.name, old_sys_path)
