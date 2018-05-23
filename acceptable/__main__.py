@@ -158,46 +158,46 @@ def render_markdown(metadata, name):
         loader=PackageLoader('acceptable', 'templates'),
         autoescape=False,
     )
-    docs_metadata = {
-        'navigation': [{'title': 'Index', 'location': 'index.md'}]
-    }
-    pages = []
+    navigation = [{'title': 'Index', 'location': 'index.md'}]
     en = Path('en')
     page_tmpl = env.get_template('api_page.md.j2')
     index_tmpl = env.get_template('index.md.j2')
-    groups = defaultdict(list)
+    api_groups = defaultdict(list)
     sort_key = itemgetter('title')
 
     for api_name, api in metadata.items():
         page_file = '{}.md'.format(api_name)
         page = {'title': api_name, 'location': page_file}
-        pages.append(page)
-        groups[api.get('api_group')].append(page)
+        api_groups[api.get('api_group')].append(page)
         yield en / page_file, page_tmpl.render(name=api_name, **api)
 
-    if len(groups) == 1:
+    if len(api_groups) == 1:
         # only one group, flat navigation
-        docs_metadata['navigation'].extend(
-            sorted(pages, key=sort_key)
+        navigation.extend(
+            sorted(list(api_groups.values())[0], key=sort_key)
         )
     else:
-        default_group = groups.pop(None, None)
+        default_group = api_groups.pop(None, None)
         if default_group is not None:
-            docs_metadata['navigation'].extend(
+            navigation.extend(
                 sorted(default_group, key=sort_key),
             )
-        for group in sorted(groups):
-            docs_metadata['navigation'].append({
+        for group in sorted(api_groups):
+            navigation.append({
                 'title': group,
-                'children': list(sorted(groups[group], key=sort_key)),
+                'children': list(sorted(api_groups[group], key=sort_key)),
             })
 
     yield en / 'index.md', index_tmpl.render(service_name=name)
 
     # documentation-builder requires yaml metadata files in certain locations
-    yield en / 'metadata.yaml', yaml.safe_dump(docs_metadata)
+    yield en / 'metadata.yaml', yaml.safe_dump(
+        {'navigation': navigation},
+        default_flow_style=False,
+    )
     yield Path('metadata.yaml'), yaml.safe_dump(
-        {'site_title': name + ' Documentation'}
+        {'site_title': name + ' Documentation'},
+        default_flow_style=False,
     )
 
 
