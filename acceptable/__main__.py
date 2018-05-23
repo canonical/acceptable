@@ -264,7 +264,6 @@ def version_cmd(cli_args, stream=sys.stdout):
     import_version = None
 
     if cli_args.modules:
-        sys.path.insert(0, os.getcwd())
         import_metadata(cli_args.modules)
         import_version = Metadata.current_version
 
