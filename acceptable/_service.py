@@ -77,6 +77,7 @@ class APIMetadata:
         self.services.clear()
         self.api_names.clear()
         self.urls.clear()
+        self._current_version = None
 
 
 Metadata = APIMetadata()

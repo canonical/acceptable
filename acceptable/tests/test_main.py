@@ -115,6 +115,7 @@ class MetadataTests(testtools.TestCase):
         metadata, locations = main.parse(Metadata)
 
         self.assertEqual({
+            '$version': 4,
             'root': {
                 'api_name': 'root',
                 'methods': ['GET'],
@@ -172,6 +173,7 @@ class MetadataTests(testtools.TestCase):
         metadata, locations = main.parse(Metadata)
 
         self.assertEqual({
+            '$version': 4,
             'root': {
                 'api_name': 'root',
                 'methods': ['GET'],
@@ -220,6 +222,7 @@ class RenderMarkdownTests(testtools.TestCase):
     @property
     def metadata(self):
         metadata = OrderedDict()
+        metadata['$version'] = 1
         metadata['api1'] = {
             'api_name': 'api1',
             'methods': ['GET'],
@@ -257,7 +260,10 @@ class RenderMarkdownTests(testtools.TestCase):
         )
 
         top_level_md = yaml.safe_load(output['metadata.yaml'])
-        self.assertEqual({'site_title': 'SERVICE Documentation'}, top_level_md)
+        self.assertEqual(
+            {'site_title': 'SERVICE Documentation: version 1'},
+            top_level_md,
+        )
 
         md = yaml.safe_load(output['en/metadata.yaml'])
         self.assertEqual({

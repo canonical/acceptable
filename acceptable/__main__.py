@@ -142,9 +142,23 @@ def import_metadata(module_paths):
         raise Exception('Could not import {}: {}'.format(path, str(e))) from e
 
 
+def load_metadata(stream):
+    try:
+        return json.load(stream)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(
+            'Error parsing {}: {}'.format(stream.name, e)
+        )
+    finally:
+        stream.close()
+
+
 def parse(metadata):
 
-    api_metadata = {}
+    api_metadata = {
+        # $ char makes this come first in sort ordering
+        '$version': Metadata.current_version,
+    }
     locations = {}
     for (svc_name, group), apis in metadata.services.items():
         for name, api in apis.items():
@@ -173,12 +187,7 @@ def parse(metadata):
 def render_cmd(cli_args):
     root_dir = Path(cli_args.dir)
     root_dir.joinpath('en').mkdir(parents=True, exist_ok=True)
-    try:
-        metadata = json.load(cli_args.metadata)
-    except json.JSONDecodeError as e:
-        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
-    finally:
-        cli_args.metadata.close()
+    metadata = load_metadata(cli_args.metadata)
 
     for path, content in render_markdown(metadata, cli_args.name):
         root_dir.joinpath(path).write_text(content)
@@ -196,6 +205,7 @@ def render_markdown(metadata, name):
     en = Path('en')
     page = env.get_template('api_page.md.j2')
     index = env.get_template('index.md.j2')
+    version = metadata.pop('$version', None)
 
     for api_name, api in metadata.items():
         page_file = '{}.md'.format(api_name)
@@ -205,12 +215,15 @@ def render_markdown(metadata, name):
     docs_metadata['navigation'].extend(
         sorted(pages, key=lambda k: k['title']))
 
-    yield en / 'index.md', index.render(service_name=name)
+    yield en / 'index.md', index.render(
+        service_name=name,
+        version=version,
+    )
 
     # documentation-builder requires yaml metadata files in certain locations
     yield en / 'metadata.yaml', yaml.safe_dump(docs_metadata)
     yield Path('metadata.yaml'), yaml.safe_dump(
-        {'site_title': name + ' Documentation'}
+        {'site_title': '{} Documentation: version {}'.format(name, version)}
     )
 
 
@@ -256,14 +269,8 @@ def lint_cmd(cli_args, stream=sys.stdout):
 
 
 def version_cmd(cli_args, stream=sys.stdout):
-    try:
-        metadata = json.load(cli_args.metadata)
-    except json.JSONDecodeError as e:
-        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
-    finally:
-        cli_args.metadata.close()
-
-    json_versions = set()
+    metadata = load_metadata(cli_args.metadata)
+    json_version = metadata['$version']
     import_version = None
 
     if cli_args.modules:
@@ -271,13 +278,8 @@ def version_cmd(cli_args, stream=sys.stdout):
         import_metadata(cli_args.modules)
         import_version = Metadata.current_version
 
-    for name, api in metadata.items():
-        json_versions.add(api['introduced_at'])
-        changelog = api.get('changelog', [])
-        if changelog:
-            json_versions.add(max(changelog))
+    stream.write('{}: {}\n'.format(cli_args.metadata.name, json_version))
 
-    stream.write('{}: {}\n'.format(cli_args.metadata.name, max(json_versions)))
     if import_version is not None:
         if len(cli_args.modules) == 1:
             name = cli_args.modules[0]
