@@ -117,6 +117,8 @@ class MetadataTests(testtools.TestCase):
         self.assertEqual({
             '$version': 4,
             'root': {
+                'service': 'myservice',
+                'api_group': 'group',
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
@@ -156,7 +158,7 @@ class MetadataTests(testtools.TestCase):
     def test_legacy_api_still_works(self):
         service = """
             from acceptable import *
-            service = AcceptableService('vendor')
+            service = AcceptableService('service')
 
             root_api = service.api('/', 'root')
             root_api.changelog(4, "changelog")
@@ -175,6 +177,8 @@ class MetadataTests(testtools.TestCase):
         self.assertEqual({
             '$version': 4,
             'root': {
+                'service': 'service',
+                'api_group': None,
                 'api_name': 'root',
                 'methods': ['GET'],
                 'url': '/',
@@ -224,6 +228,7 @@ class RenderMarkdownTests(testtools.TestCase):
         metadata = OrderedDict()
         metadata['$version'] = 1
         metadata['api1'] = {
+            'api_group': None,
             'api_name': 'api1',
             'methods': ['GET'],
             'url': '/',
@@ -234,6 +239,7 @@ class RenderMarkdownTests(testtools.TestCase):
             'introduced_at':  1,
         }
         metadata['api2'] = {
+            'api_group': None,
             'api_name': 'api1',
             'methods': ['GET'],
             'url': '/',
@@ -271,6 +277,41 @@ class RenderMarkdownTests(testtools.TestCase):
                     {'location': 'index.md', 'title': 'Index'},
                     {'location': 'api1.md',  'title': 'api1'},
                     {'location': 'api2.md',  'title': 'api2'},
+                ],
+            },
+            md
+        )
+
+    def test_render_markdown_multiple_groups(self):
+        metadata = self.metadata
+        metadata['api2']['api_group'] = 'group'
+        iterator = main.render_markdown(metadata, 'SERVICE')
+        output = OrderedDict((str(k), v) for k, v in iterator)
+
+        self.assertEqual(set([
+                'en/api1.md',
+                'en/api2.md',
+                'en/index.md',
+                'en/metadata.yaml',
+                'metadata.yaml',
+            ]),
+            set(output),
+        )
+
+        top_level_md = yaml.safe_load(output['metadata.yaml'])
+        self.assertEqual(
+            {'site_title': 'SERVICE Documentation: version 1'},
+            top_level_md,
+        )
+
+        md = yaml.safe_load(output['en/metadata.yaml'])
+        self.assertEqual({
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'api1.md',  'title': 'api1'},
+                    {'title': 'group', 'children': [
+                        {'location': 'api2.md',  'title': 'api2'}
+                    ]}
                 ],
             },
             md

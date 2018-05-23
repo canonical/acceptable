@@ -2,8 +2,10 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 import argparse
+from collections import defaultdict
 from importlib import import_module
 import json
+from operator import itemgetter
 import os
 from pathlib import Path
 import sys
@@ -164,6 +166,8 @@ def parse(metadata):
     for (svc_name, group), apis in metadata.services.items():
         for name, api in apis.items():
             api_metadata[name] = {
+                'service': svc_name,
+                'api_group': group,
                 'api_name': api.name,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
@@ -199,32 +203,47 @@ def render_markdown(metadata, name):
         loader=PackageLoader('acceptable', 'templates'),
         autoescape=False,
     )
-    docs_metadata = {
-        'navigation': [{'title': 'Index', 'location': 'index.md'}]
-    }
-    pages = []
+    navigation = [{'title': 'Index', 'location': 'index.md'}]
     en = Path('en')
-    page = env.get_template('api_page.md.j2')
-    index = env.get_template('index.md.j2')
+    page_tmpl = env.get_template('api_page.md.j2')
+    index_tmpl = env.get_template('index.md.j2')
+    api_groups = defaultdict(list)
+    sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
 
     for api_name, api in metadata.items():
         page_file = '{}.md'.format(api_name)
-        pages.append({'title': api_name, 'location': page_file})
-        yield en / page_file, page.render(name=api_name, **api)
+        page = {'title': api_name, 'location': page_file}
+        api_groups[api.get('api_group')].append(page)
+        yield en / page_file, page_tmpl.render(name=api_name, **api)
 
-    docs_metadata['navigation'].extend(
-        sorted(pages, key=lambda k: k['title']))
+    if len(api_groups) == 1:
+        # only one group, flat navigation
+        navigation.extend(
+            sorted(list(api_groups.values())[0], key=sort_key)
+        )
+    else:
+        default_group = api_groups.pop(None, None)
+        if default_group is not None:
+            navigation.extend(
+                sorted(default_group, key=sort_key),
+            )
+        for group in sorted(api_groups):
+            navigation.append({
+                'title': group,
+                'children': list(sorted(api_groups[group], key=sort_key)),
+            })
 
-    yield en / 'index.md', index.render(
-        service_name=name,
-        version=version,
-    )
+    yield en / 'index.md', index_tmpl.render(service_name=name)
 
     # documentation-builder requires yaml metadata files in certain locations
-    yield en / 'metadata.yaml', yaml.safe_dump(docs_metadata)
+    yield en / 'metadata.yaml', yaml.safe_dump(
+        {'navigation': navigation},
+        default_flow_style=False,
+    )
     yield Path('metadata.yaml'), yaml.safe_dump(
-        {'site_title': '{} Documentation: version {}'.format(name, version)}
+        {'site_title': '{} Documentation: version {}'.format(name, version)},
+        default_flow_style=False,
     )
 
 
