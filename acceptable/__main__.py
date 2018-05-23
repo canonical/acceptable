@@ -123,38 +123,39 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 
 def metadata_cmd(cli_args):
-    sys.path.insert(0, os.getcwd())
-    try:
-        import_metadata(cli_args.modules)
-    except ImportError as e:
-        return 1
-
+    import_metadata(cli_args.modules)
     current, _ = parse(Metadata)
     print(json.dumps(current, indent=2, sort_keys=True))
 
 
 def import_metadata(module_paths):
-    """Import all the given modules, and then extract the parsed metadata."""
+    """Import all the given modules"""
+    cwd = os.getcwd()
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
     try:
         for path in module_paths:
             import_module(path)
     except ImportError as e:
-        raise Exception('Could not import {}: {}'.format(path, str(e))) from e
+        raise RuntimeError(
+            'Could not import {}: {}'.format(path, str(e))
+        ) from e
 
 
 def load_metadata(stream):
+    """Load json metadata from opened stream."""
     try:
         return json.load(stream)
     except json.JSONDecodeError as e:
         raise RuntimeError(
             'Error parsing {}: {}'.format(stream.name, e)
-        )
+        ) from e
     finally:
         stream.close()
 
 
 def parse(metadata):
-
+    """Parse the imported metadata into json-serializable object."""
     api_metadata = {
         # $ char makes this come first in sort ordering
         '$version': Metadata.current_version,
@@ -228,19 +229,8 @@ def render_markdown(metadata, name):
 
 
 def lint_cmd(cli_args, stream=sys.stdout):
-    try:
-        metadata = json.load(cli_args.metadata)
-    except json.JSONDecodeError as e:
-        return 'Error parsing {}: {}'.format(cli_args.metadata.name, e)
-    finally:
-        cli_args.metadata.close()
-
-    sys.path.insert(0, os.getcwd())
-    try:
-        import_metadata(cli_args.modules)
-    except Exception as e:
-        return str(e)
-
+    metadata = load_metadata(cli_args.metadata)
+    import_metadata(cli_args.modules)
     current, locations = parse(Metadata)
 
     has_errors = False
