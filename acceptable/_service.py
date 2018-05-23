@@ -24,6 +24,7 @@ class APIMetadata:
         self.services = {}
         self.api_names = set()
         self.urls = set()
+        self._current_version = None
 
     def register_service(self, name, group):
         if (name, group) not in self.services:
@@ -45,6 +46,19 @@ class APIMetadata:
         self.urls.add(url_key)
         self.services[name, group][api.name] = api
 
+    @property
+    def current_version(self):
+        if self._current_version is None:
+            versions = set()
+            for service in self.services.values():
+                for api in service.values():
+                    versions.add(api.introduced_at)
+                    if api._changelog:
+                        versions.add(max(api._changelog))
+            if versions:
+                self._current_version = max(versions)
+        return self._current_version
+
     def bind(self, flask_app, name, group=None):
         """Bind the service API urls to a flask app."""
         for name, api in self.services[name, group].items():
@@ -63,6 +77,7 @@ class APIMetadata:
         self.services.clear()
         self.api_names.clear()
         self.urls.clear()
+        self._current_version = None
 
 
 Metadata = APIMetadata()

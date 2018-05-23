@@ -64,6 +64,10 @@ class CheckChangelog(Message):
 
 def metadata_lint(old, new, locations):
     """Run the linter over the new metadata, comparing to the old."""
+    # remove version info
+    old.pop('$version', None)
+    new.pop('$version', None)
+
     for removed in set(old) - set(new):
         yield LintError('', 'api removed', api_name=removed)
 
