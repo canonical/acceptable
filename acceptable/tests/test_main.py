@@ -299,7 +299,10 @@ class RenderMarkdownTests(testtools.TestCase):
         )
 
         top_level_md = yaml.safe_load(output['metadata.yaml'])
-        self.assertEqual({'site_title': 'SERVICE Documentation'}, top_level_md)
+        self.assertEqual(
+            {'site_title': 'SERVICE Documentation: version 1'},
+            top_level_md,
+        )
 
         md = yaml.safe_load(output['en/metadata.yaml'])
         self.assertEqual({
