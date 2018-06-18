@@ -18,6 +18,22 @@ class LintTestCase(testtools.TestCase):
 
 
 class LintTests(LintTestCase):
+    def test_not_modify(self):
+        metadata, locations, path = self.get_metadata("""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+            api = service.api('/', 'api')
+
+            @api
+            def view():
+                "Docs"
+        """)
+
+        self.assertIn('$version', metadata)
+        orig = metadata.copy()
+        list(lint.metadata_lint(metadata, metadata, locations))
+        self.assertEqual(metadata, orig)
+
     def test_missing_api_documentation(self):
         metadata, locations, path = self.get_metadata("""
             from acceptable import *
