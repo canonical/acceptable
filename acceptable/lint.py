@@ -64,6 +64,9 @@ class CheckChangelog(Message):
 
 def metadata_lint(old, new, locations):
     """Run the linter over the new metadata, comparing to the old."""
+    # ensure we don't modify the metadata
+    old = old.copy()
+    new = new.copy()
     # remove version info
     old.pop('$version', None)
     new.pop('$version', None)
