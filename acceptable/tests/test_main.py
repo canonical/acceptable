@@ -223,7 +223,6 @@ def builder_installed():
 
 class RenderMarkdownTests(testtools.TestCase):
 
-    @property
     def metadata(self):
         metadata = OrderedDict()
         metadata['$version'] = 1
@@ -252,7 +251,7 @@ class RenderMarkdownTests(testtools.TestCase):
         return metadata
 
     def test_render_markdown_success(self):
-        iterator = main.render_markdown(self.metadata, 'SERVICE')
+        iterator = main.render_markdown(self.metadata(), 'SERVICE')
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -282,8 +281,33 @@ class RenderMarkdownTests(testtools.TestCase):
             md
         )
 
+    def test_render_markdown_undocumented(self):
+        m = self.metadata()
+        m['api2']['undocumented'] = True
+        iterator = main.render_markdown(m, 'SERVICE')
+        output = OrderedDict((str(k), v) for k, v in iterator)
+
+        self.assertEqual(set([
+                'en/api1.md',
+                'en/index.md',
+                'en/metadata.yaml',
+                'metadata.yaml',
+            ]),
+            set(output),
+        )
+
+        md = yaml.safe_load(output['en/metadata.yaml'])
+        self.assertEqual({
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'api1.md',  'title': 'api1'},
+                ],
+            },
+            md
+        )
+
     def test_render_markdown_multiple_groups(self):
-        metadata = self.metadata
+        metadata = self.metadata()
         metadata['api2']['api_group'] = 'group'
         iterator = main.render_markdown(metadata, 'SERVICE')
         output = OrderedDict((str(k), v) for k, v in iterator)
@@ -317,6 +341,38 @@ class RenderMarkdownTests(testtools.TestCase):
             md
         )
 
+    def test_render_markdown_group_omitted_with_undocumented(self):
+        metadata = self.metadata()
+        metadata['api2']['api_group'] = 'group'
+        metadata['api2']['undocumented'] = True
+        iterator = main.render_markdown(metadata, 'SERVICE')
+        output = OrderedDict((str(k), v) for k, v in iterator)
+
+        self.assertEqual(set([
+                'en/api1.md',
+                'en/index.md',
+                'en/metadata.yaml',
+                'metadata.yaml',
+            ]),
+            set(output),
+        )
+
+        top_level_md = yaml.safe_load(output['metadata.yaml'])
+        self.assertEqual(
+            {'site_title': 'SERVICE Documentation: version 1'},
+            top_level_md,
+        )
+
+        md = yaml.safe_load(output['en/metadata.yaml'])
+        self.assertEqual({
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'api1.md',  'title': 'api1'},
+                ],
+            },
+            md
+        )
+
     @testtools.skipIf(
         not builder_installed(), 'documentation-builder not installed')
     def test_render_cmd_with_documentation_builder(self):
@@ -326,7 +382,7 @@ class RenderMarkdownTests(testtools.TestCase):
         html_dir = self.useFixture(fixtures.TempDir(rootdir=home))
 
         with tempfile.NamedTemporaryFile('w') as metadata:
-            metadata.write(json.dumps(self.metadata))
+            metadata.write(json.dumps(self.metadata()))
             metadata.flush()
 
             args = main.parse_args([

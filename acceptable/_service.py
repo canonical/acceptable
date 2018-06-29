@@ -143,7 +143,14 @@ class AcceptableService:
 class AcceptableAPI:
     """Metadata abount an api endpoint."""
 
-    def __init__(self, name, url, introduced_at, options={}, location=None):
+    def __init__(
+            self,
+            name,
+            url,
+            introduced_at,
+            options={},
+            location=None,
+            undocumented=False):
         self.name = name
         self.url = url
         self.introduced_at = introduced_at
@@ -160,6 +167,7 @@ class AcceptableAPI:
             self.location = get_callsite_location()
         else:
             self.location = location
+        self.undocumented = undocumented
 
     @property
     def methods(self):
