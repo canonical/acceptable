@@ -2,7 +2,7 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 import argparse
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from importlib import import_module
 import json
 from operator import itemgetter
@@ -147,7 +147,7 @@ def import_metadata(module_paths):
 def load_metadata(stream):
     """Load json metadata from opened stream."""
     try:
-        return json.load(stream)
+        return json.load(stream, object_pairs_hook=OrderedDict)
     except json.JSONDecodeError as e:
         raise RuntimeError(
             'Error parsing {}: {}'.format(stream.name, e)
@@ -210,11 +210,14 @@ def render_markdown(metadata, name):
     api_groups = defaultdict(list)
     sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
+    changelog = defaultdict(dict)
 
     for api_name, api in metadata.items():
         page_file = '{}.md'.format(api_name)
         page = {'title': api_name, 'location': page_file}
         api_groups[api.get('api_group')].append(page)
+        for version, log in api['changelog'].items():
+            changelog[version][api_name] = log
         yield en / page_file, page_tmpl.render(name=api_name, **api)
 
     if len(api_groups) == 1:
@@ -234,7 +237,8 @@ def render_markdown(metadata, name):
                 'children': list(sorted(api_groups[group], key=sort_key)),
             })
 
-    yield en / 'index.md', index_tmpl.render(service_name=name)
+    yield en / 'index.md', index_tmpl.render(
+        service_name=name, changelog=changelog)
 
     # documentation-builder requires yaml metadata files in certain locations
     yield en / 'metadata.yaml', yaml.safe_dump(
