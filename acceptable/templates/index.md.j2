@@ -3,3 +3,33 @@ title: {{service_name}} Documentation
 ---
 
 This is the documentation for version {{ version }} of {{service_name}}.
+
+
+{% if changelog %}
+## Changelog
+
+{% for version, api_logs in changelog.items() | sort(reverse=True) %}
+ * Version {{ version }}:
+    {% for api_name, log in api_logs.items() | sort %}
+    * [{{ api_name }}]({{api_name}}.html): {{ log }}
+    {% endfor %}
+
+{% endfor %}
+
+{% endif %}
+
+{% if request_schema %}
+## Request JSON Schema
+
+```json
+{{request_schema|tojson(4)}}
+```
+{% endif %}
+
+{% if response_schema %}
+## Response JSON Schema
+
+```json
+{{response_schema|tojson(4)}}
+```
+{% endif %}
