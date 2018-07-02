@@ -177,6 +177,8 @@ def parse(metadata):
                 'doc': api.docs,
                 'changelog': api._changelog,
             }
+            if api.undocumented:
+                api_metadata[name]['undocumented'] = True
 
             locations[name] = {
                 'api': api.location,
@@ -212,6 +214,8 @@ def render_markdown(metadata, name):
     version = metadata.pop('$version', None)
 
     for api_name, api in metadata.items():
+        if api.get('undocumented', False):
+            continue
         page_file = '{}.md'.format(api_name)
         page = {'title': api_name, 'location': page_file}
         api_groups[api.get('api_group')].append(page)
@@ -229,10 +233,12 @@ def render_markdown(metadata, name):
                 sorted(default_group, key=sort_key),
             )
         for group in sorted(api_groups):
-            navigation.append({
-                'title': group,
-                'children': list(sorted(api_groups[group], key=sort_key)),
-            })
+            children = list(sorted(api_groups[group], key=sort_key))
+            if children:
+                navigation.append({
+                    'title': group,
+                    'children': children,
+                })
 
     yield en / 'index.md', index_tmpl.render(service_name=name)
 
