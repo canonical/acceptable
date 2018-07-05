@@ -16,7 +16,7 @@ DOCUMENTATION = LintTypes.DOCUMENTATION
 ERROR = LintTypes.ERROR
 
 
-class Message:
+class Message(object):
     """A linter message to the user."""
     level = None
 
@@ -58,7 +58,7 @@ class LintFixit(Message):
 
 class CheckChangelog(Message):
     def __init__(self, name, revision):
-        super().__init__(name, '')
+        super(CheckChangelog, self).__init__(name, '')
         self.revision = revision
 
 
@@ -216,7 +216,8 @@ def check_custom_attrs(name, old, new, new_api=False):
 
 def walk_schema(name, old, new, root=False, new_api=False):
     if not root:
-        yield from check_custom_attrs(name, old, new, new_api)
+        for i in check_custom_attrs(name, old, new, new_api):
+            yield i
 
     types = get_schema_types(new)
     old_types = get_schema_types(old)
@@ -245,17 +246,17 @@ def walk_schema(name, old, new, root=False, new_api=False):
                 name + '.' + deleted, 'cannot delete field {}', deleted)
 
         for prop, value in sorted(properties.items()):
-            yield from walk_schema(
-                name + '.' + prop,
-                old_properties.get(prop, {}),
-                value,
-                new_api=new_api,
-            )
+            for i in walk_schema(
+                    name + '.' + prop,
+                    old_properties.get(prop, {}),
+                    value,
+                    new_api=new_api):
+                yield i
 
     if 'array' in types and 'items' in new:
-        yield from walk_schema(
+        for i in walk_schema(
                 name + '.items',
                 old.get('items', {}),
                 new['items'],
-                new_api=new_api
-        )
+                new_api=new_api):
+            yield i

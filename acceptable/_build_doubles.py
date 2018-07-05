@@ -31,6 +31,12 @@ import tempfile
 import textwrap
 
 
+try:
+    FileNotFoundError
+except NameError:
+    PermissionError = FileNotFoundError = IOError
+
+
 def main():
     args = parse_args()
     args.func(args)
