@@ -7,14 +7,14 @@ from importlib import import_module
 import json
 from operator import itemgetter
 import os
-from pathlib import Path
 import sys
 
+from future.utils import raise_from
 from jinja2 import Environment, PackageLoader
 import yaml
 
 from acceptable._service import Metadata
-from acceptable import lint
+from acceptable import lint, Path
 
 
 def main():
@@ -139,9 +139,8 @@ def import_metadata(module_paths):
         for path in module_paths:
             import_module(path)
     except ImportError as e:
-        raise RuntimeError(
-            'Could not import {}: {}'.format(path, str(e))
-        ) from e
+        err = RuntimeError('Could not import {}: {}'.format(path, str(e)))
+        raise_from(err, e)
 
 
 def load_metadata(stream):
@@ -149,9 +148,8 @@ def load_metadata(stream):
     try:
         return json.load(stream, object_pairs_hook=OrderedDict)
     except json.JSONDecodeError as e:
-        raise RuntimeError(
-            'Error parsing {}: {}'.format(stream.name, e)
-        ) from e
+        err = RuntimeError('Error parsing {}: {}'.format(stream.name, e))
+        raise_from(err, e)
     finally:
         stream.close()
 
