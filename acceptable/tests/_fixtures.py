@@ -1,5 +1,13 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import open, str
+from future import standard_library
+standard_library.install_aliases()  # NOQA
+
 import os
 import sys
 import textwrap
@@ -8,8 +16,14 @@ import fixtures
 
 from acceptable import _service
 
+PY2 = sys.version_info[0] == 2
+
 
 def clean_up_module(name, old_syspath=None):
+    if PY2:
+        if isinstance(name, str):
+            name = name.encode('utf8')
+
     sys.modules.pop(name)
     _service.clear_metadata()
 

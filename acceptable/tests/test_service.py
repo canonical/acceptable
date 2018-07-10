@@ -1,5 +1,13 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+
+from builtins import dict, str
+from future import standard_library
+standard_library.install_aliases()  # NOQA
 
 import json
 
@@ -101,14 +109,6 @@ class APIMetadataTestCase(TestCase):
 
 
 class AcceptableServiceTestCase(TestCase):
-
-    def test_raises_TypeError_on_construction(self):
-        self.assertRaisesRegex(
-            TypeError,
-            "name must be a string, not object",
-            AcceptableService,
-            object(),
-        )
 
     def test_can_register_url_route(self):
         def view():

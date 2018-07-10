@@ -1,5 +1,14 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
+from builtins import open
+from builtins import str
+from future import standard_library
+standard_library.install_aliases()  # NOQA
 
 import argparse
 from collections import defaultdict, OrderedDict
@@ -134,21 +143,24 @@ def import_metadata(module_paths):
     cwd = os.getcwd()
     if cwd not in sys.path:
         sys.path.insert(0, cwd)
+    modules = []
     try:
         for path in module_paths:
-            import_module(path)
+            modules.append(import_module(path))
     except ImportError as e:
         err = RuntimeError('Could not import {}: {}'.format(path, str(e)))
-        raise_from(err, e)
+        raise err
+    return modules
 
 
 def load_metadata(stream):
     """Load json metadata from opened stream."""
     try:
-        return json.load(stream, object_pairs_hook=OrderedDict)
+        return json.load(
+            stream, encoding='utf8', object_pairs_hook=OrderedDict)
     except json.JSONDecodeError as e:
         err = RuntimeError('Error parsing {}: {}'.format(stream.name, e))
-        raise_from(err, e)
+        raise err
     finally:
         stream.close()
 
@@ -247,10 +259,12 @@ def render_markdown(metadata, name):
     yield en / 'metadata.yaml', yaml.safe_dump(
         {'navigation': navigation},
         default_flow_style=False,
+        encoding=None,
     )
     yield Path('metadata.yaml'), yaml.safe_dump(
         {'site_title': '{} Documentation: version {}'.format(name, version)},
         default_flow_style=False,
+        encoding=None,
     )
 
 

@@ -1,5 +1,13 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import bytes, str, super
+from future import standard_library
+standard_library.install_aliases()  # NOQA
+
 from enum import IntEnum
 import os
 
@@ -175,7 +183,7 @@ def get_schema_types(schema):
     schema_type = schema.get('type')
     if schema_type is None:
         return []
-    elif isinstance(schema_type, str):
+    elif isinstance(schema_type, (str, bytes)):
         return [schema_type]
     else:
         return schema_type

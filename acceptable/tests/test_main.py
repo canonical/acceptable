@@ -1,16 +1,22 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import str, zip
+from future import standard_library
+standard_library.install_aliases()  # NOQA
+
 import argparse
 from collections import OrderedDict
 from functools import partial
 import io
 import json
 import os
-from subprocess import (
-    call as subprocess_call,
-    PIPE as subprocess_PIPE,
-    STDOUT as subprocess_STDOUT,
-)
+import subprocess
+
+import sys
 import tempfile
 import yaml
 
@@ -23,6 +29,9 @@ from acceptable.tests._fixtures import (
     CleanUpModuleImport,
     TemporaryModuleFixture,
 )
+
+
+PY2 = sys.version_info[0] == 2
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -38,7 +47,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_error_with_no_args(self):
         self.assertRaisesRegex(
             RuntimeError,
-            'the following arguments are required',
+            'arguments are required' if not PY2 else 'too few arguments',
             main.parse_args,
             [],
             SaneArgumentParser,
@@ -47,7 +56,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_metadata_requires_files(self):
         self.assertRaisesRegex(
             RuntimeError,
-            'the following arguments are required',
+            'arguments are required' if not PY2 else 'too few arguments',
             main.parse_args,
             ['metadata'],
             SaneArgumentParser,
@@ -101,7 +110,7 @@ class ParseArgsTests(testtools.TestCase):
 class MetadataTests(testtools.TestCase):
     def test_importing_api_metadata_works(self):
         service = """
-            from acceptable import *
+            from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
 
             root_api = service.api('/', 'root', introduced_at=1)
@@ -114,7 +123,6 @@ class MetadataTests(testtools.TestCase):
                 "Documentation."
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
-
         main.import_metadata(['service'])
         metadata, locations = main.parse(get_metadata())
 
@@ -161,6 +169,7 @@ class MetadataTests(testtools.TestCase):
 
     def test_legacy_api_still_works(self):
         service = """
+
             from acceptable import *
             service = AcceptableService('service')
 
@@ -221,7 +230,7 @@ class MetadataTests(testtools.TestCase):
 
 
 def builder_installed():
-    return subprocess_call(['which', 'documentation-builder']) == 0
+    return subprocess.call(['which', 'documentation-builder']) == 0
 
 
 class RenderMarkdownTests(testtools.TestCase):
@@ -378,6 +387,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
     @testtools.skipIf(
         not builder_installed(), 'documentation-builder not installed')
+    @testtools.skipIf(PY2, 'PY3 only')
     def test_render_cmd_with_documentation_builder(self):
         # documentation-builder is a strict snap, can only work out of $HOME
         home = os.environ['HOME']
@@ -401,13 +411,12 @@ class RenderMarkdownTests(testtools.TestCase):
             '--base-directory={}'.format(markdown_dir.path),
             '--output-path={}'.format(html_dir.path),
         ]
-        rc = subprocess_call(
-            build,
-            stdout=subprocess_PIPE,
-            stderr=subprocess_STDOUT,
-        )
+        try:
+            subprocess.check_output(build)
+        except subprocess.CalledProcessError as e:
+            print(e.output)
+            raise
 
-        self.assertEqual(rc, 0)
         p = partial(os.path.join, html_dir.path)
         self.assertTrue(os.path.exists(p('en/api1.html')))
         self.assertTrue(os.path.exists(p('en/api2.html')))
@@ -425,7 +434,6 @@ EXPECTED_LINT_OUTPUT = [
 class LintTests(testtools.TestCase):
 
     def test_basic_api_changes(self):
-        self.skip('XXX')
         self.useFixture(CleanUpModuleImport('examples.api'))
 
         args = main.parse_args(
@@ -444,7 +452,6 @@ class LintTests(testtools.TestCase):
 class VersionTests(testtools.TestCase):
 
     def test_version(self):
-        self.skip('XXX')
         self.useFixture(CleanUpModuleImport('examples.api'))
 
         args = main.parse_args(
