@@ -50,7 +50,7 @@ class ServiceMock(Fixture):
 
     def __init__(self, service, methods, url, input_schema, output_schema,
                  output, output_status=200):
-        super().__init__()
+        super(ServiceMock, self).__init__()
         self._service = service
         self._methods = methods
         self._url = url

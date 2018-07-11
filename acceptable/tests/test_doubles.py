@@ -17,7 +17,7 @@ from acceptable._doubles import (
 class ServiceMockTests(TestCase):
 
     def setUp(self):
-        super().setUp()
+        super(ServiceMockTests, self).setUp()
         # service locations are cached between tests. This should eventually
         # be fixed, but until then it's easier to set them to an empty dict at
         # the start of every test:
