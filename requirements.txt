@@ -3,4 +3,3 @@ jsonschema
 pyyaml
 jinja2
 future
-pathlib2

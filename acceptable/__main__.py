@@ -18,11 +18,10 @@ from operator import itemgetter
 import os
 import sys
 
-from future.utils import raise_from
 from jinja2 import Environment, PackageLoader
 import yaml
 
-from acceptable import get_metadata, lint, Path
+from acceptable import get_metadata, lint
 
 
 def main():
@@ -201,12 +200,16 @@ def parse(metadata):
 
 
 def render_cmd(cli_args):
-    root_dir = Path(cli_args.dir)
-    root_dir.joinpath('en').mkdir(parents=True, exist_ok=True)
+    root_dir = cli_args.dir
+    en_dir = os.path.join(root_dir, 'en')
+    if not os.path.exists(en_dir):
+        os.makedirs(en_dir)
     metadata = load_metadata(cli_args.metadata)
 
     for path, content in render_markdown(metadata, cli_args.name):
-        root_dir.joinpath(path).write_text(content)
+        full_path = os.path.join(root_dir, path)
+        with open(full_path, 'w', encoding='utf8') as f:
+            f.write(content)
 
 
 def render_markdown(metadata, name):
@@ -215,7 +218,6 @@ def render_markdown(metadata, name):
         autoescape=False,
     )
     navigation = [{'title': 'Index', 'location': 'index.md'}]
-    en = Path('en')
     page_tmpl = env.get_template('api_page.md.j2')
     index_tmpl = env.get_template('index.md.j2')
     api_groups = defaultdict(list)
@@ -231,7 +233,8 @@ def render_markdown(metadata, name):
         api_groups[api.get('api_group')].append(page)
         for version, log in api['changelog'].items():
             changelog[version][api_name] = log
-        yield en / page_file, page_tmpl.render(name=api_name, **api)
+        path = os.path.join('en', page_file)
+        yield path, page_tmpl.render(name=api_name, **api)
 
     if len(api_groups) == 1:
         # only one group, flat navigation
@@ -252,16 +255,16 @@ def render_markdown(metadata, name):
                     'children': children,
                 })
 
-    yield en / 'index.md', index_tmpl.render(
+    yield os.path.join('en', 'index.md'), index_tmpl.render(
         service_name=name, changelog=changelog)
 
     # documentation-builder requires yaml metadata files in certain locations
-    yield en / 'metadata.yaml', yaml.safe_dump(
+    yield os.path.join('en', 'metadata.yaml'), yaml.safe_dump(
         {'navigation': navigation},
         default_flow_style=False,
         encoding=None,
     )
-    yield Path('metadata.yaml'), yaml.safe_dump(
+    yield 'metadata.yaml', yaml.safe_dump(
         {'site_title': '{} Documentation: version {}'.format(name, version)},
         default_flow_style=False,
         encoding=None,
