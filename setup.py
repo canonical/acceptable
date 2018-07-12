@@ -24,7 +24,6 @@ setup(
         'pyyaml',
         'jinja2',
         'future',
-        'pathlib2',
     ],
     test_suite='acceptable.tests',
     include_package_data=True,

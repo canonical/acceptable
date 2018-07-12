@@ -1,5 +1,0 @@
-Flask<1.0
-jsonschema
-pyyaml
-jinja2
-future

@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import *  # NOQA
+from future.utils import PY2
 
 import json
 import sys
@@ -89,7 +90,7 @@ class ValidateBodyTests(TestCase):
             app.post_json,
             []
         )
-        if sys.version_info[0] == 2:
+        if PY2:
             msg = "[] is not of type u'object' at /"
         else:
             msg = "[] is not of type 'object' at /"
@@ -168,7 +169,7 @@ class ValidateOutputTests(TestCase):
             []
         )
 
-        if sys.version_info[0] == 2:
+        if PY2:
             msg = "[] is not of type u'object' at /"
         else:
             msg = "[] is not of type 'object' at /"

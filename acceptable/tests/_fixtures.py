@@ -17,9 +17,8 @@ from acceptable import _service
 
 
 def clean_up_module(name, old_syspath=None):
-    if PY2:
-        if isinstance(name, str):
-            name = name.encode('utf8')
+    if PY2 and isinstance(name, str):
+        name = name.encode('utf8')
 
     sys.modules.pop(name)
     _service.clear_metadata()
