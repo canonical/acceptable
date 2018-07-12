@@ -440,7 +440,6 @@ class LintTests(testtools.TestCase):
 class VersionTests(testtools.TestCase):
 
     def test_version(self):
-
         self.useFixture(CleanUpModuleImport('examples.api'))
 
         args = main.parse_args(
