@@ -80,19 +80,19 @@ class APIMetadata:
         self._current_version = None
 
 
-__metadata = None
+_metadata = None
 
 
 def get_metadata():
-    global __metadata
-    if __metadata is None:
-        __metadata = APIMetadata()
-    return __metadata
+    global _metadata
+    if _metadata is None:
+        _metadata = APIMetadata()
+    return _metadata
 
 
 def clear_metadata():
-    global __metadata
-    __metadata = None
+    global _metadata
+    _metadata = None
 
 
 class AcceptableService:
