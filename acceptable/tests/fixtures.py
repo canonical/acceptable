@@ -11,7 +11,7 @@ from acceptable import _service
 
 def clean_up_module(name, old_syspath=None):
     sys.modules.pop(name)
-    _service.Metadata.clear()
+    _service.clear_metadata()
 
     if old_syspath is not None:
         sys.path = old_syspath
@@ -22,7 +22,7 @@ class CleanUpModuleImport(fixtures.Fixture):
         self.name = name
 
     def _setUp(self):
-        _service.Metadata.clear()
+        _service.clear_metadata()
         self.addCleanup(clean_up_module, self.name)
 
 
@@ -43,6 +43,6 @@ class TemporaryModuleFixture(fixtures.Fixture):
         # preserve state
         old_sys_path = sys.path
         sys.path = [tempdir] + old_sys_path
-        _service.Metadata.clear()
+        _service.clear_metadata()
 
         self.addCleanup(clean_up_module, self.name, old_sys_path)

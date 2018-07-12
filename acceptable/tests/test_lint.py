@@ -1,8 +1,9 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import testtools
+
+from acceptable import get_metadata
 from acceptable.tests.test_main import TemporaryModuleFixture
-from acceptable._service import Metadata
 from acceptable.__main__ import import_metadata, parse
 
 from acceptable import lint
@@ -13,7 +14,7 @@ class LintTestCase(testtools.TestCase):
     def get_metadata(self, code='', module='service', locations=True):
         fixture = self.useFixture(TemporaryModuleFixture(module, code))
         import_metadata([module])
-        metadata, locations = parse(Metadata)
+        metadata, locations = parse(get_metadata())
         return metadata, locations, fixture.path
 
 

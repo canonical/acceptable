@@ -13,8 +13,7 @@ import sys
 from jinja2 import Environment, PackageLoader
 import yaml
 
-from acceptable._service import Metadata
-from acceptable import lint
+from acceptable import get_metadata, lint
 
 
 def main():
@@ -126,7 +125,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 def metadata_cmd(cli_args):
     import_metadata(cli_args.modules)
-    current, _ = parse(Metadata)
+    current, _ = parse(get_metadata())
     print(json.dumps(current, indent=2, sort_keys=True))
 
 
@@ -160,7 +159,7 @@ def parse(metadata):
     """Parse the imported metadata into json-serializable object."""
     api_metadata = {
         # $ char makes this come first in sort ordering
-        '$version': Metadata.current_version,
+        '$version': metadata.current_version,
     }
     locations = {}
     for (svc_name, group), apis in metadata.services.items():
@@ -260,7 +259,7 @@ def render_markdown(metadata, name):
 def lint_cmd(cli_args, stream=sys.stdout):
     metadata = load_metadata(cli_args.metadata)
     import_metadata(cli_args.modules)
-    current, locations = parse(Metadata)
+    current, locations = parse(get_metadata())
 
     has_errors = False
     display_level = lint.WARNING
@@ -294,7 +293,7 @@ def version_cmd(cli_args, stream=sys.stdout):
 
     if cli_args.modules:
         import_metadata(cli_args.modules)
-        import_version = Metadata.current_version
+        import_version = get_metadata().current_version
 
     stream.write('{}: {}\n'.format(cli_args.metadata.name, json_version))
 

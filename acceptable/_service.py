@@ -80,7 +80,19 @@ class APIMetadata:
         self._current_version = None
 
 
-Metadata = APIMetadata()
+__metadata = None
+
+
+def get_metadata():
+    global __metadata
+    if __metadata is None:
+        __metadata = APIMetadata()
+    return __metadata
+
+
+def clear_metadata():
+    global __metadata
+    __metadata = None
 
 
 class AcceptableService:
@@ -93,7 +105,7 @@ class AcceptableService:
     store any API state internally.
     """
 
-    def __init__(self, name, group=None, metadata=Metadata):
+    def __init__(self, name, group=None, metadata=None):
         """Create an instance of AcceptableService.
 
         :param name: The service name.
@@ -106,9 +118,16 @@ class AcceptableService:
                 "name must be a string, not %s" % type(name).__name__)
         self.name = name
         self.group = group
-        self.metadata = metadata
-        self.metadata.register_service(name, group)
+        self._metadata = metadata
         self.location = get_callsite_location()
+        self.metadata.register_service(name, group)
+
+    @property
+    def metadata(self):
+        if self._metadata is None:
+            return get_metadata()
+        else:
+            return self._metadata
 
     @property
     def apis(self):
