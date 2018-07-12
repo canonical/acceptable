@@ -3,7 +3,7 @@
 
 from ._service import (
     AcceptableService,
-    Metadata,
+    get_metadata,
 )
 from ._validation import (
     DataValidationError,
@@ -15,7 +15,7 @@ from ._validation import (
 __all__ = [
     'AcceptableService',
     'DataValidationError',
-    'Metadata',
+    'get_metadata',
     'validate_body',
     'validate_output',
 ]

@@ -14,7 +14,7 @@ import testtools
 import fixtures
 
 from acceptable import __main__ as main
-from acceptable._service import Metadata
+from acceptable import get_metadata
 from acceptable.tests.fixtures import (
     CleanUpModuleImport,
     TemporaryModuleFixture,
@@ -112,7 +112,7 @@ class MetadataTests(testtools.TestCase):
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
         main.import_metadata(['service'])
-        metadata, locations = main.parse(Metadata)
+        metadata, locations = main.parse(get_metadata())
 
         self.assertEqual({
             '$version': 4,
@@ -172,7 +172,7 @@ class MetadataTests(testtools.TestCase):
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
         main.import_metadata(['service'])
-        metadata, locations = main.parse(Metadata)
+        metadata, locations = main.parse(get_metadata())
 
         self.assertEqual({
             '$version': 4,
