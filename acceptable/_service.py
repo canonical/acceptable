@@ -118,16 +118,13 @@ class AcceptableService:
                 "name must be a string, not %s" % type(name).__name__)
         self.name = name
         self.group = group
-        self._metadata = metadata
+        if metadata is None:
+            self.metadata = get_metadata()
+        else:
+            self.metadata = metadata
+
         self.location = get_callsite_location()
         self.metadata.register_service(name, group)
-
-    @property
-    def metadata(self):
-        if self._metadata is None:
-            return get_metadata()
-        else:
-            return self._metadata
 
     @property
     def apis(self):
