@@ -5,7 +5,8 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import absolute_import
 
-from builtins import open, str
+from builtins import *  # NOQA
+from future.utils import PY2
 
 import argparse
 from collections import defaultdict, OrderedDict
@@ -19,6 +20,14 @@ from jinja2 import Environment, PackageLoader
 import yaml
 
 from acceptable import get_metadata, lint
+
+if PY2:
+    from future.types.newlist import newlist
+    from future.types.newdict import newdict
+    yaml.add_representer(
+        newlist, yaml.representer.SafeRepresenter.represent_list)
+    yaml.add_representer(
+        newdict, yaml.representer.SafeRepresenter.represent_dict)
 
 
 def main():

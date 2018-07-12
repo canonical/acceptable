@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
-from builtins import str, zip
+from builtins import *  # NOQA
 from future.utils import PY2
 
 import argparse
@@ -16,6 +16,7 @@ import os
 import subprocess
 import tempfile
 import yaml
+from yaml.representer import SafeRepresenter
 
 import testtools
 import fixtures
@@ -26,6 +27,14 @@ from acceptable.tests._fixtures import (
     CleanUpModuleImport,
     TemporaryModuleFixture,
 )
+
+
+if PY2:
+    # teach yaml about future's newlist and newdict py3 backports
+    from future.types.newlist import newlist
+    from future.types.newdict import newdict
+    SafeRepresenter.add_representer(newlist, SafeRepresenter.represent_list)
+    SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in

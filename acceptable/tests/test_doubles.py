@@ -4,14 +4,10 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
-from builtins import super
-from builtins import dict
-from builtins import str
-from future import standard_library
-standard_library.install_aliases()  # NOQA
+from builtins import *  # NOQA
+from future.utils import PY2
 
 import json
-import sys
 
 import requests
 from testtools import TestCase
@@ -28,7 +24,7 @@ from acceptable._doubles import (
 class ServiceMockTests(TestCase):
 
     def setUp(self):
-        if sys.version_info[0] == 2:
+        if PY2:
             self.skipTest('py3 only')
         super(ServiceMockTests, self).setUp()
         # service locations are cached between tests. This should eventually

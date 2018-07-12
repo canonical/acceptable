@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
-from builtins import open, str
+from builtins import *  # NOQA
 from future.utils import PY2
 
 import os
