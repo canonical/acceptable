@@ -5,8 +5,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import open, str
-from future import standard_library
-standard_library.install_aliases()  # NOQA
+from future.utils import PY2
 
 import os
 import sys
@@ -15,8 +14,6 @@ import textwrap
 import fixtures
 
 from acceptable import _service
-
-PY2 = sys.version_info[0] == 2
 
 
 def clean_up_module(name, old_syspath=None):

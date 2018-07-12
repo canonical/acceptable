@@ -5,8 +5,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import str, zip
-from future import standard_library
-standard_library.install_aliases()  # NOQA
+from future.utils import PY2
 
 import argparse
 from collections import OrderedDict
@@ -15,8 +14,6 @@ import io
 import json
 import os
 import subprocess
-
-import sys
 import tempfile
 import yaml
 
@@ -29,9 +26,6 @@ from acceptable.tests._fixtures import (
     CleanUpModuleImport,
     TemporaryModuleFixture,
 )
-
-
-PY2 = sys.version_info[0] == 2
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
