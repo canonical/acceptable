@@ -26,7 +26,7 @@ class ServiceMockTests(TestCase):
     def setUp(self):
         if PY2:
             self.skipTest('py3 only')
-        super(ServiceMockTests, self).setUp()
+        super().setUp()
         # service locations are cached between tests. This should eventually
         # be fixed, but until then it's easier to set them to an empty dict at
         # the start of every test:

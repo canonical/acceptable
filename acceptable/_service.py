@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import *  # NOQA
+__metaclass__ = type
 
 from collections import OrderedDict
 import textwrap
@@ -19,7 +20,7 @@ class InvalidAPI(Exception):
     pass
 
 
-class APIMetadata(object):
+class APIMetadata():
     """Global datastructure for all services.
 
     Provides a single point to register apis against, so we can easily inspect
@@ -101,7 +102,7 @@ def clear_metadata():
     _metadata = None
 
 
-class AcceptableService(object):
+class AcceptableService():
     """User facing API for a service using acceptable to manage API versions.
 
     This provides a nicer interface to manage the global API metadata within
@@ -116,8 +117,6 @@ class AcceptableService(object):
 
         :param name: The service name.
         :param group: An arbitrary API group within a service.
-        :raises TypeError: If the name string is something other than a
-            string.
         """
         self.name = name
         self.group = group
@@ -159,7 +158,7 @@ class AcceptableService(object):
     initialise = bind
 
 
-class AcceptableAPI(object):
+class AcceptableAPI():
     """Metadata abount an api endpoint."""
 
     def __init__(

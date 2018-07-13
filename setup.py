@@ -20,10 +20,10 @@ setup(
     packages=['acceptable'],
     install_requires=[
         'Flask<1.0',
+        'future',
+        'jinja2',
         'jsonschema',
         'pyyaml',
-        'jinja2',
-        'future',
     ],
     test_suite='acceptable.tests',
     include_package_data=True,

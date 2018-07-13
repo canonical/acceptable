@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import *  # NOQA
+from future.utils import PY2
 
 import ast
 import argparse
@@ -26,7 +27,7 @@ class BuildDoubleTestCase(TestCase):
 
     def setUp(self):
         super().setUp()
-        if sys.version_info[0] == 2:
+        if PY2:
             self.skipTest('py3 only')
 
 

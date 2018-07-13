@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import *  # NOQA
-from future.utils import PY2
+from future.utils import text_to_native_str
 
 import os
 import sys
@@ -17,10 +17,7 @@ from acceptable import _service
 
 
 def clean_up_module(name, old_syspath=None):
-    if PY2 and isinstance(name, str):
-        name = name.encode('utf8')
-
-    sys.modules.pop(name)
+    sys.modules.pop(text_to_native_str(name))
     _service.clear_metadata()
 
     if old_syspath is not None:

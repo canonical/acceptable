@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from builtins import *  # NOQA
+__metaclass__ = type
 
 from enum import IntEnum
 import os
@@ -22,7 +23,7 @@ DOCUMENTATION = LintTypes.DOCUMENTATION
 ERROR = LintTypes.ERROR
 
 
-class Message(object):
+class Message():
     """A linter message to the user."""
     level = None
 
@@ -64,7 +65,7 @@ class LintFixit(Message):
 
 class CheckChangelog(Message):
     def __init__(self, name, revision):
-        super(CheckChangelog, self).__init__(name, '')
+        super().__init__(name, '')
         self.revision = revision
 
 
