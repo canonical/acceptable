@@ -1,5 +1,12 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+from future.utils import PY2
+
 import ast
 import argparse
 import os.path
@@ -12,10 +19,19 @@ from testtools.matchers import (
     Contains
 )
 
+
 from acceptable import _build_doubles
 
 
-class ExtractSchemasFromSourceTests(TestCase):
+class BuildDoubleTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if PY2:
+            self.skipTest('py3 only')
+
+
+class ExtractSchemasFromSourceTests(BuildDoubleTestCase):
 
     def test_invalid_source(self):
         self.assertRaises(
@@ -281,7 +297,7 @@ class ExtractSchemasFromSourceTests(TestCase):
             [], _build_doubles.extract_schemas_from_source('foo = {}'))
 
 
-class ExtractSchemasFromFileTests(TestCase):
+class ExtractSchemasFromFileTests(BuildDoubleTestCase):
 
     def test_logs_on_missing_file(self):
         workdir = self.useFixture(fixtures.TempDir())
@@ -377,7 +393,7 @@ class SaneArgumentParser(argparse.ArgumentParser):
         raise RuntimeError(message)
 
 
-class ParseArgsTests(TestCase):
+class ParseArgsTests(BuildDoubleTestCase):
 
     def test_error_with_no_args(self):
         self.assertRaises(
@@ -414,7 +430,7 @@ class ParseArgsTests(TestCase):
         self.assertEqual(_build_doubles.build_service_doubles, args.func)
 
 
-class RenderValueTests(TestCase):
+class RenderValueTests(BuildDoubleTestCase):
 
     def test_plain(self):
         self.assertEqual("'foo'", _build_doubles.render_value('foo'))
@@ -443,7 +459,7 @@ class RenderValueTests(TestCase):
         self.assertEqual(rendered, _build_doubles.render_value(value))
 
 
-class RenderServiceDoubleTests(TestCase):
+class RenderServiceDoubleTests(BuildDoubleTestCase):
 
     def assertIsValidPython(self, source):
         try:

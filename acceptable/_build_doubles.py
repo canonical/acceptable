@@ -18,6 +18,11 @@ modes of operation:
 In both cases, the service doubles are built by doing an AST parse of the
 python source file in question and extracting calls to acceptable functions.
 """
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
 
 import argparse
 import ast
@@ -29,6 +34,12 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+
+
+try:
+    FileNotFoundError
+except NameError:
+    PermissionError = FileNotFoundError = IOError
 
 
 def main():

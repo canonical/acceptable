@@ -6,13 +6,18 @@
 The ServiceMock class in this file is used at test-run-time to mock out a call
 to a remote service API view.
 """
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+
 import functools
-import urllib.parse
 import json
 
+from future.moves.urllib.parse import urljoin
 from fixtures import Fixture
 import responses
-
 
 from acceptable._validation import validate
 
@@ -83,7 +88,7 @@ class ServiceMock(Fixture):
                 % (self._service, self._service)
             )
 
-        full_url = urllib.parse.urljoin(service_location, self._url)
+        full_url = urljoin(service_location, self._url)
 
         def _callback(request):
             if self._input_schema:

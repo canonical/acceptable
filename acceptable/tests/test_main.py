@@ -1,5 +1,12 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+from future.utils import PY2
+
 import argparse
 from collections import OrderedDict
 from functools import partial
@@ -9,16 +16,25 @@ import os
 import subprocess
 import tempfile
 import yaml
+from yaml.representer import SafeRepresenter
 
 import testtools
 import fixtures
 
 from acceptable import __main__ as main
 from acceptable import get_metadata
-from acceptable.tests.fixtures import (
+from acceptable.tests._fixtures import (
     CleanUpModuleImport,
     TemporaryModuleFixture,
 )
+
+
+if PY2:
+    # teach yaml about future's newlist and newdict py3 backports
+    from future.types.newlist import newlist
+    from future.types.newdict import newdict
+    SafeRepresenter.add_representer(newlist, SafeRepresenter.represent_list)
+    SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -34,7 +50,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_error_with_no_args(self):
         self.assertRaisesRegex(
             RuntimeError,
-            'the following arguments are required',
+            'arguments are required' if not PY2 else 'too few arguments',
             main.parse_args,
             [],
             SaneArgumentParser,
@@ -43,7 +59,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_metadata_requires_files(self):
         self.assertRaisesRegex(
             RuntimeError,
-            'the following arguments are required',
+            'arguments are required' if not PY2 else 'too few arguments',
             main.parse_args,
             ['metadata'],
             SaneArgumentParser,
@@ -97,7 +113,7 @@ class ParseArgsTests(testtools.TestCase):
 class MetadataTests(testtools.TestCase):
     def test_importing_api_metadata_works(self):
         service = """
-            from acceptable import *
+            from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
 
             root_api = service.api('/', 'root', introduced_at=1)
@@ -110,7 +126,6 @@ class MetadataTests(testtools.TestCase):
                 "Documentation."
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
-
         main.import_metadata(['service'])
         metadata, locations = main.parse(get_metadata())
 
@@ -157,6 +172,7 @@ class MetadataTests(testtools.TestCase):
 
     def test_legacy_api_still_works(self):
         service = """
+
             from acceptable import *
             service = AcceptableService('service')
 
@@ -217,8 +233,7 @@ class MetadataTests(testtools.TestCase):
 
 
 def builder_installed():
-    ps = subprocess.run(['which', 'documentation-builder'])
-    return ps.returncode == 0
+    return subprocess.call(['which', 'documentation-builder']) == 0
 
 
 class RenderMarkdownTests(testtools.TestCase):
@@ -375,6 +390,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
     @testtools.skipIf(
         not builder_installed(), 'documentation-builder not installed')
+    @testtools.skipIf(PY2, 'PY3 only')
     def test_render_cmd_with_documentation_builder(self):
         # documentation-builder is a strict snap, can only work out of $HOME
         home = os.environ['HOME']
@@ -398,13 +414,12 @@ class RenderMarkdownTests(testtools.TestCase):
             '--base-directory={}'.format(markdown_dir.path),
             '--output-path={}'.format(html_dir.path),
         ]
-        ps = subprocess.run(
-            build,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        try:
+            subprocess.check_output(build)
+        except subprocess.CalledProcessError as e:
+            print(e.output)
+            raise
 
-        self.assertEqual(ps.returncode, 0, ps.stdout)
         p = partial(os.path.join, html_dir.path)
         self.assertTrue(os.path.exists(p('en/api1.html')))
         self.assertTrue(os.path.exists(p('en/api2.html')))

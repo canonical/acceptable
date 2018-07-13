@@ -2,6 +2,13 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+__metaclass__ = type
+
 from collections import OrderedDict
 import textwrap
 
@@ -13,7 +20,7 @@ class InvalidAPI(Exception):
     pass
 
 
-class APIMetadata:
+class APIMetadata():
     """Global datastructure for all services.
 
     Provides a single point to register apis against, so we can easily inspect
@@ -95,7 +102,7 @@ def clear_metadata():
     _metadata = None
 
 
-class AcceptableService:
+class AcceptableService():
     """User facing API for a service using acceptable to manage API versions.
 
     This provides a nicer interface to manage the global API metadata within
@@ -110,12 +117,7 @@ class AcceptableService:
 
         :param name: The service name.
         :param group: An arbitrary API group within a service.
-        :raises TypeError: If the name string is something other than a
-            string.
         """
-        if not isinstance(name, str):
-            raise TypeError(
-                "name must be a string, not %s" % type(name).__name__)
         self.name = name
         self.group = group
         if metadata is None:
@@ -156,7 +158,7 @@ class AcceptableService:
     initialise = bind
 
 
-class AcceptableAPI:
+class AcceptableAPI():
     """Metadata abount an api endpoint."""
 
     def __init__(

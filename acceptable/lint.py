@@ -1,5 +1,12 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+__metaclass__ = type
+
 from enum import IntEnum
 import os
 
@@ -16,7 +23,7 @@ DOCUMENTATION = LintTypes.DOCUMENTATION
 ERROR = LintTypes.ERROR
 
 
-class Message:
+class Message():
     """A linter message to the user."""
     level = None
 
@@ -175,7 +182,7 @@ def get_schema_types(schema):
     schema_type = schema.get('type')
     if schema_type is None:
         return []
-    elif isinstance(schema_type, str):
+    elif isinstance(schema_type, (str, bytes)):
         return [schema_type]
     else:
         return schema_type
@@ -216,7 +223,8 @@ def check_custom_attrs(name, old, new, new_api=False):
 
 def walk_schema(name, old, new, root=False, new_api=False):
     if not root:
-        yield from check_custom_attrs(name, old, new, new_api)
+        for i in check_custom_attrs(name, old, new, new_api):
+            yield i
 
     types = get_schema_types(new)
     old_types = get_schema_types(old)
@@ -245,17 +253,17 @@ def walk_schema(name, old, new, root=False, new_api=False):
                 name + '.' + deleted, 'cannot delete field {}', deleted)
 
         for prop, value in sorted(properties.items()):
-            yield from walk_schema(
-                name + '.' + prop,
-                old_properties.get(prop, {}),
-                value,
-                new_api=new_api,
-            )
+            for i in walk_schema(
+                    name + '.' + prop,
+                    old_properties.get(prop, {}),
+                    value,
+                    new_api=new_api):
+                yield i
 
     if 'array' in types and 'items' in new:
-        yield from walk_schema(
+        for i in walk_schema(
                 name + '.items',
                 old.get('items', {}),
                 new['items'],
-                new_api=new_api
-        )
+                new_api=new_api):
+            yield i

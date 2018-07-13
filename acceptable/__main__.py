@@ -1,5 +1,11 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from builtins import *  # NOQA
+from future.utils import PY2, raise_from
 
 import argparse
 from collections import defaultdict, OrderedDict
@@ -7,13 +13,20 @@ from importlib import import_module
 import json
 from operator import itemgetter
 import os
-from pathlib import Path
 import sys
 
 from jinja2 import Environment, PackageLoader
 import yaml
 
 from acceptable import get_metadata, lint
+
+if PY2:
+    from future.types.newlist import newlist
+    from future.types.newdict import newdict
+    yaml.add_representer(
+        newlist, yaml.representer.SafeRepresenter.represent_list)
+    yaml.add_representer(
+        newdict, yaml.representer.SafeRepresenter.represent_dict)
 
 
 def main():
@@ -134,23 +147,24 @@ def import_metadata(module_paths):
     cwd = os.getcwd()
     if cwd not in sys.path:
         sys.path.insert(0, cwd)
+    modules = []
     try:
         for path in module_paths:
-            import_module(path)
+            modules.append(import_module(path))
     except ImportError as e:
-        raise RuntimeError(
-            'Could not import {}: {}'.format(path, str(e))
-        ) from e
+        err = RuntimeError('Could not import {}: {}'.format(path, str(e)))
+        raise_from(err, e)
+    return modules
 
 
 def load_metadata(stream):
     """Load json metadata from opened stream."""
     try:
-        return json.load(stream, object_pairs_hook=OrderedDict)
+        return json.load(
+            stream, encoding='utf8', object_pairs_hook=OrderedDict)
     except json.JSONDecodeError as e:
-        raise RuntimeError(
-            'Error parsing {}: {}'.format(stream.name, e)
-        ) from e
+        err = RuntimeError('Error parsing {}: {}'.format(stream.name, e))
+        raise_from(err, e)
     finally:
         stream.close()
 
@@ -191,12 +205,16 @@ def parse(metadata):
 
 
 def render_cmd(cli_args):
-    root_dir = Path(cli_args.dir)
-    root_dir.joinpath('en').mkdir(parents=True, exist_ok=True)
+    root_dir = cli_args.dir
+    en_dir = os.path.join(root_dir, 'en')
+    if not os.path.exists(en_dir):
+        os.makedirs(en_dir)
     metadata = load_metadata(cli_args.metadata)
 
     for path, content in render_markdown(metadata, cli_args.name):
-        root_dir.joinpath(path).write_text(content)
+        full_path = os.path.join(root_dir, path)
+        with open(full_path, 'w', encoding='utf8') as f:
+            f.write(content)
 
 
 def render_markdown(metadata, name):
@@ -205,7 +223,6 @@ def render_markdown(metadata, name):
         autoescape=False,
     )
     navigation = [{'title': 'Index', 'location': 'index.md'}]
-    en = Path('en')
     page_tmpl = env.get_template('api_page.md.j2')
     index_tmpl = env.get_template('index.md.j2')
     api_groups = defaultdict(list)
@@ -221,7 +238,8 @@ def render_markdown(metadata, name):
         api_groups[api.get('api_group')].append(page)
         for version, log in api['changelog'].items():
             changelog[version][api_name] = log
-        yield en / page_file, page_tmpl.render(name=api_name, **api)
+        path = os.path.join('en', page_file)
+        yield path, page_tmpl.render(name=api_name, **api)
 
     if len(api_groups) == 1:
         # only one group, flat navigation
@@ -242,17 +260,19 @@ def render_markdown(metadata, name):
                     'children': children,
                 })
 
-    yield en / 'index.md', index_tmpl.render(
+    yield os.path.join('en', 'index.md'), index_tmpl.render(
         service_name=name, changelog=changelog)
 
     # documentation-builder requires yaml metadata files in certain locations
-    yield en / 'metadata.yaml', yaml.safe_dump(
+    yield os.path.join('en', 'metadata.yaml'), yaml.safe_dump(
         {'navigation': navigation},
         default_flow_style=False,
+        encoding=None,
     )
-    yield Path('metadata.yaml'), yaml.safe_dump(
+    yield 'metadata.yaml', yaml.safe_dump(
         {'site_title': '{} Documentation: version {}'.format(name, version)},
         default_flow_style=False,
+        encoding=None,
     )
 
 

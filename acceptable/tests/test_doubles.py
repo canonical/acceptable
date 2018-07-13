@@ -1,5 +1,12 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+from future.utils import PY2
+
 import json
 
 import requests
@@ -17,6 +24,8 @@ from acceptable._doubles import (
 class ServiceMockTests(TestCase):
 
     def setUp(self):
+        if PY2:
+            self.skipTest('py3 only')
         super().setUp()
         # service locations are cached between tests. This should eventually
         # be fixed, but until then it's easier to set them to an empty dict at

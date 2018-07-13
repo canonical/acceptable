@@ -1,25 +1,12 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
-import pkg_resources
 from setuptools import setup
 
 
 VERSION = '0.15'
-
-
-def parse_requirements_file(path):
-    """Parse a requirements file, return a list of requirements as strings."""
-    with open(path, 'r') as rfile:
-        deps = []
-        for requirement in rfile.readlines():
-            if requirement.isspace():
-                continue
-            deps.append(
-                pkg_resources.Requirement.parse(requirement).project_name)
-        return deps
 
 
 setup(
@@ -31,17 +18,22 @@ setup(
     url='https://github.com/canonical-ols/acceptable',
     license='LGPLv3',
     packages=['acceptable'],
-    install_requires=parse_requirements_file('requirements.txt'),
+    install_requires=[
+        'Flask<1.0',
+        'future',
+        'jinja2',
+        'jsonschema',
+        'pyyaml',
+    ],
     test_suite='acceptable.tests',
-    tests_require=parse_requirements_file('requirements-dev.txt'),
     include_package_data=True,
     package_data={
         'acceptable': ['templates/*'],
     },
     entry_points={
-          'console_scripts': [
-              'build_service_doubles = acceptable._build_doubles:main',
-              'acceptable = acceptable.__main__:main',
-          ]
-      },
+        'console_scripts': [
+            'build_service_doubles = acceptable._build_doubles:main',
+            'acceptable = acceptable.__main__:main',
+        ]
+    },
 )

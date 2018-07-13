@@ -1,6 +1,14 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from builtins import *  # NOQA
+from future.utils import PY2
+
 import json
+import sys
 
 from fixtures import Fixture
 from testtools import TestCase
@@ -82,8 +90,12 @@ class ValidateBodyTests(TestCase):
             app.post_json,
             []
         )
+        if PY2:
+            msg = "[] is not of type u'object' at /"
+        else:
+            msg = "[] is not of type 'object' at /"
         self.assertEqual(
-            ["[] is not of type 'object' at /"],
+            [msg],
             e.error_list
         )
 
@@ -156,9 +168,15 @@ class ValidateOutputTests(TestCase):
             app.post_json,
             []
         )
+
+        if PY2:
+            msg = "[] is not of type u'object' at /"
+        else:
+            msg = "[] is not of type 'object' at /"
+
         self.assertEqual(
             'Response does not comply with output schema: %r.\n%s' % (
-                ["[] is not of type 'object' at /"],
+                [msg],
                 []
             ),
             str(e)
@@ -177,10 +195,8 @@ class ValidateOutputTests(TestCase):
             app.post_json,
             {}
         )
-        self.assertEqual(
-            "Unknown response type '<class \'object\'>'. "
-            "Supported types are list and dict.",
-            str(e))
+        self.assertIn("Unknown response type", str(e))
+        self.assertIn("Supported types are list and dict.", str(e))
 
     def test_skips_validation_if_disabled(self):
         def view():
