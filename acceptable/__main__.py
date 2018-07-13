@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 from builtins import *  # NOQA
-from future.utils import PY2
+from future.utils import PY2, raise_from
 
 import argparse
 from collections import defaultdict, OrderedDict
@@ -154,7 +154,7 @@ def import_metadata(module_paths):
             modules.append(import_module(path))
     except ImportError as e:
         err = RuntimeError('Could not import {}: {}'.format(path, str(e)))
-        raise err
+        raise_from(err, e)
     return modules
 
 
@@ -165,7 +165,7 @@ def load_metadata(stream):
             stream, encoding='utf8', object_pairs_hook=OrderedDict)
     except json.JSONDecodeError as e:
         err = RuntimeError('Error parsing {}: {}'.format(stream.name, e))
-        raise err
+        raise_from(err, e)
     finally:
         stream.close()
 
