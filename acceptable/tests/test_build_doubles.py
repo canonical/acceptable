@@ -1,4 +1,4 @@
-# Copyright 2017 Canonical Ltd.  This software is licensed under the
+# Copyright 2017-2018 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 from __future__ import unicode_literals
 from __future__ import print_function
@@ -295,6 +295,54 @@ class ExtractSchemasFromSourceTests(BuildDoubleTestCase):
     def test_handles_other_assignments(self):
         self.assertEqual(
             [], _build_doubles.extract_schemas_from_source('foo = {}'))
+
+    def test_can_extract_schema_with_input_name(self):
+        [schema] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            FOOBAR = 'object'
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/', 'root')
+
+            @root_api.view(introduced_at='1.0')
+            @validate_body({'type': FOOBAR})
+            def my_view():
+                """Documentation."""
+            '''))
+
+        self.assertEqual('root', schema.view_name)
+        self.assertEqual('/', schema.url)
+        self.assertEqual('1.0', schema.version)
+        self.assertEqual(['GET'], schema.methods)
+        self.assertEqual({'type': 'object'}, schema.input_schema)
+        self.assertEqual('Documentation.', schema.doc)
+        self.assertEqual(None, schema.output_schema)
+
+    def test_can_extract_schema_with_output_name(self):
+        [schema] = _build_doubles.extract_schemas_from_source(
+            dedent('''
+
+            FOOBAR = 'object'
+
+            service = AcceptableService('vendor')
+
+            root_api = service.api('/', 'root')
+
+            @root_api.view(introduced_at='1.0')
+            @validate_output({'type': FOOBAR})
+            def my_view():
+                """Documentation."""
+            '''))
+
+        self.assertEqual('root', schema.view_name)
+        self.assertEqual('/', schema.url)
+        self.assertEqual('1.0', schema.version)
+        self.assertEqual(['GET'], schema.methods)
+        self.assertEqual('Documentation.', schema.doc)
+        self.assertEqual(None, schema.input_schema)
+        self.assertEqual({'type': 'object'}, schema.output_schema)
 
 
 class ExtractSchemasFromFileTests(BuildDoubleTestCase):

@@ -1,4 +1,4 @@
-# Copyright 2017 Canonical Ltd.  This software is licensed under the
+# Copyright 2017-2018 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """Build Service Doubles:
@@ -151,6 +151,29 @@ def extract_schemas_from_file(source_path):
             return schemas
 
 
+def _get_simple_assignments(tree):
+    """Get simple assignments from node tree."""
+    result = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    result[target.id] = node.value
+    return result
+
+
+class _SimpleNamesResolver(ast.NodeTransformer):
+
+    def __init__(self, names_values):
+        super().__init__()
+        self.names_values = names_values
+
+    def visit_Name(self, node):
+        if node.id in self.names_values:
+            node = self.names_values[node.id]
+        return node
+
+
 def extract_schemas_from_source(source, filename='<unknown>'):
     """Extract schemas from 'source'.
 
@@ -167,6 +190,7 @@ def extract_schemas_from_source(source, filename='<unknown>'):
     acceptable_views = {}
     schemas_found = []
     ast_tree = ast.parse(source, filename)
+    simple_names = _get_simple_assignments(ast_tree)
 
     assigns = [n for n in ast_tree.body if isinstance(n, ast.Assign)]
     call_assigns = [n for n in assigns if isinstance(n.value, ast.Call)]
@@ -246,11 +270,10 @@ def extract_schemas_from_source(source, filename='<unknown>'):
             else:
                 decorator_name = decorator.func.id
                 if decorator_name == 'validate_body':
-                    # TODO: Check that nothing in the tree below
-                    # decorator.args[0] is an instance of 'ast.Name', and
-                    # print a nice error message if it is.
+                    _SimpleNamesResolver(simple_names).visit(decorator.args[0])
                     input_schema = ast.literal_eval(decorator.args[0])
                 if decorator_name == 'validate_output':
+                    _SimpleNamesResolver(simple_names).visit(decorator.args[0])
                     output_schema = ast.literal_eval(decorator.args[0])
         for api_options in api_options_list:
             schema = ViewSchema(
