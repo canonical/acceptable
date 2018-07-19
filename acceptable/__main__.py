@@ -23,10 +23,9 @@ from acceptable import get_metadata, lint
 if PY2:
     from future.types.newlist import newlist
     from future.types.newdict import newdict
-    yaml.add_representer(
-        newlist, yaml.representer.SafeRepresenter.represent_list)
-    yaml.add_representer(
-        newdict, yaml.representer.SafeRepresenter.represent_dict)
+    from yaml.representer import SafeRepresenter
+    SafeRepresenter.add_representer(newlist, SafeRepresenter.represent_list)
+    SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
 
 
 def main():
