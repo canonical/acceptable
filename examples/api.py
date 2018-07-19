@@ -13,13 +13,13 @@ foo_api.request_schema = {
         },
         "baz": {
             "type": "object",
-            "doc": "Bar the door.",
+            "description": "Bar the door.",
             "introduced_at": 4,
             "properties": {
                 "bar": {
                     "type": "string",
                     "introduced_at": 5,
-                    "doc": "asdf"
+                    "description": "asdf"
                 }
             },
         },
@@ -32,7 +32,7 @@ foo_api.response_schema = {
         "foo_result": {"type": "string"},
         "bar": {
             "type": "string",
-            "doc": "bar bar",
+            "description": "bar bar",
             "introduced_at": 5,
         },
     }
