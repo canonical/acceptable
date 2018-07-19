@@ -45,8 +45,6 @@ class APIMetadata():
             )
         self.api_names.add(api.name)
 
-        # use api.url so we don't trigger django url lookups at registration
-        # time. Django does its own url uniqueness checking.
         if api.url is not None:
             url_key = (api.url, tuple(api.methods))
             if url_key in self.urls:
