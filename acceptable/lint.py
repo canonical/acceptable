@@ -193,8 +193,8 @@ def check_custom_attrs(name, old, new, new_api=False):
     # standard, and we don't need them on the root schema object, as that
     # takes its doc from the function docstring and its introduced_at from
     # the api definition
-    if 'doc' not in new:
-        yield LintWarning(name + '.doc', 'missing doc field')
+    if 'description' not in new:
+        yield LintWarning(name + '.description', 'missing description field')
 
     if not new_api:
         introduced_at = new.get('introduced_at')

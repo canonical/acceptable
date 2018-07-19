@@ -224,16 +224,32 @@ class WalkSchemaTests(LintTestCase):
             'type': 'object',
             'required': ['foo'],
             'properties': {
-                'foo': {'type': 'string', 'doc': 'doc', 'introduced_at': 1},
-                'bar': {'type': 'string', 'doc': 'doc', 'introduced_at': 1},
+                'foo': {
+                    'type': 'string',
+                    'description': 'description',
+                    'introduced_at': 1,
+                },
+                'bar': {
+                    'type': 'string',
+                    'description': 'description',
+                    'introduced_at': 1,
+                },
             }
         }
         new = {
             'type': 'object',
             'required': ['foo', 'bar'],
             'properties': {
-                'foo': {'type': 'string', 'doc': 'doc', 'introduced_at': 1},
-                'bar': {'type': 'string', 'doc': 'doc', 'introduced_at': 1},
+                'foo': {
+                    'type': 'string',
+                    'description': 'description',
+                    'introduced_at': 1,
+                },
+                'bar': {
+                    'type': 'string',
+                    'description': 'description',
+                    'introduced_at': 1,
+                },
             }
         }
         msgs = list(lint.walk_schema('name', old, new, root=True))
@@ -255,7 +271,11 @@ class WalkSchemaTests(LintTestCase):
         new = {
             'type': 'object',
             'properties': {
-                'foo': {'type': 'string', 'doc': 'doc', 'introduced_at': 1},
+                'foo': {
+                    'type': 'string',
+                    'description': 'description',
+                    'introduced_at': 1,
+                },
             }
         }
 
@@ -281,7 +301,7 @@ class WalkSchemaTests(LintTestCase):
         self.assertEqual(2, len(msgs))
 
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.foo.doc', msgs[0].name)
+        self.assertEqual('name.foo.description', msgs[0].name)
         self.assertIn('missing', msgs[0].msg)
 
         self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
@@ -299,7 +319,7 @@ class WalkSchemaTests(LintTestCase):
         new = {
             'type': 'object',
             'properties': {
-                'foo': {'type': 'object', 'doc': 'doc'},
+                'foo': {'type': 'object', 'description': 'description'},
             },
         }
         msgs = list(lint.walk_schema('name', old, new, root=True))
@@ -322,7 +342,7 @@ class WalkSchemaTests(LintTestCase):
         ))
         self.assertEqual(1, len(msgs))
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.foo.doc', msgs[0].name)
+        self.assertEqual('name.foo.description', msgs[0].name)
         self.assertIn('missing', msgs[0].msg)
 
     def test_nested_objects(self):
@@ -336,7 +356,7 @@ class WalkSchemaTests(LintTestCase):
                         'bar': {'type': 'string'},
                         'baz': {
                             'type': 'string',
-                            'doc': 'doc',
+                            'description': 'description',
                             'introduced_at': 2,
                         },
                     },
@@ -347,17 +367,17 @@ class WalkSchemaTests(LintTestCase):
             'type': 'object',
             'properties': {
                 'foo': {
-                    'doc': 'doc',
+                    'description': 'description',
                     'type': 'object',
                     'required': ['bar', 'foo'],  # error for required change
                     'properties': {
                         'bar': {
                             'type': 'object',  # type changed
-                            'doc': 'doc'
+                            'description': 'description'
                         },
                         'baz': {
                             'type': 'string',
-                            'doc': 'doc',
+                            'description': 'description',
                             'introduced_at': 3,  # changed
                         },
                     },
@@ -381,20 +401,20 @@ class WalkSchemaTests(LintTestCase):
         old = {
             'type': 'array',
             'items': {
-                'doc': 'doc',
+                'description': 'description',
                 'type': 'object',
                 'properties': {
-                    'foo': {'type': 'object', 'doc': 'doc'},
+                    'foo': {'type': 'object', 'description': 'description'},
                 },
             },
         }
         new = {
             'type': 'array',
             'items': {
-                'doc': 'doc',
+                'description': 'description',
                 'type': 'object',
                 'properties': {
-                    'foo': {'type': 'object', 'doc': 'doc'},
+                    'foo': {'type': 'object', 'description': 'description'},
                     'bar': {'type': 'object'},
                 },
             },
@@ -405,7 +425,7 @@ class WalkSchemaTests(LintTestCase):
         self.assertEqual(2, len(msgs))
 
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.items.bar.doc', msgs[0].name)
+        self.assertEqual('name.items.bar.description', msgs[0].name)
 
         self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
         self.assertEqual('name.items.bar.introduced_at', msgs[1].name)

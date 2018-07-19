@@ -11,7 +11,7 @@
     "request_schema": {
       "properties": {
         "foo": {
-          "doc": "The foo thing.",
+          "description": "The foo thing.",
           "type": "string"
         },
         "baz": {
