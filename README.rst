@@ -4,37 +4,74 @@
 acceptable
 ==========
 
-Acceptable builds on top of `flask <http://flask.pocoo.org/>`__ and adds
-several opinionated features designed to make it easier to build a
-product from several small services.
+Acceptable is python tool to annotate and capture the metadata around your
+python web API. This metadata can be used for validation, documentation,
+testing and linting of your API code.
+
+It works standalone, or can be hooked into Flask (beta support for Django) web
+apps for richer integration.
+
 
 Design Goals:
 -------------
 
-Acceptable is designed to solve several common problems when building a
-product composed of several individual services. Specifically, the
-library contains the following high-level features:
+- Tightly couple code, metadata, and documentation to reduce drift and increase DRY.
 
--  API endpoints are versioned using the ``Accept:`` HTTP header.
-   Acceptable handles calling the correct view according to a simple
-   version resolution protocol.
+- Validation of JSON input and output
 
--  Views can be tagged with 'API flags', providing a way to test
-   under-development views in a production environment. This opens the
-   door to a more regular, predictable feature development velocity.
+- Provide tools for developers to make safe changes to APIs
 
--  View input and output is validated using
-   `jsonschema <http://json-schema.org/>`__. This allows views to
-   express their inputs and outputs in a concise manner.
+- Make it easy to generate API documentation.
 
-   -  These input and output definitions can be extracted from your various
-      services and compiled into a library of service doubles, which
-      facilitates easy inter-service interaction testing.
+- Tools for generating testing doubles from the API metadata.
 
-.. |Build Status| image:: https://travis-ci.org/canonical-ols/acceptable.svg?branch=master
-   :target: https://travis-ci.org/canonical-ols/acceptable
-.. |Coverage Status| image:: https://coveralls.io/repos/github/canonical-ols/acceptable/badge.svg?branch=master
-   :target: https://coveralls.io/github/canonical-ols/acceptable?branch=master
+
+Usage
+-----
+
+And example, for flask:
+
+    from acceptable import AcceptableService
+
+    service = AcceptableService('example')
+
+    foo_api = service.api('foo', '/foo', introduced_at=1, methods=['POST'])
+    foo_api.request_schema = <JSON Schema...>
+    foo_api.response_schema = <JSON Schema...>
+    foo_api.changelog(3, 'Changed other thing)
+    foo_api.changelog(2, 'Changed something')
+
+    @foo_api
+    def view():
+        ...
+
+You can use this metadata to bind the url to a flask app
+
+    from acceptable import get_metadata()
+    app = Flask(__name__)
+    get_metadata().bind_all(app)
+
+
+And for django (beta) and piston:
+
+    from acceptable import AcceptableService
+
+    service = AcceptableService('example')
+
+    # url is looked up from name, like reverse()
+    foo_api = service.django_api('app:foo', introduced_at=1)
+    foo_api.django_form = SomeForm
+    foo_api.changelog(3, 'Changed other thing)
+    foo_api.changelog(2, 'Changed something')
+
+    @foo_api.handler
+    class MyHandler(BaseHandler):
+        allowed_methods=['POST']
+        ...
+
+Acceptable will generate a JSON schema representation of the form.
+
+Note: django support is very limited at the minute, and is mainly for documentation.
 
 
 Documentation (beta)
