@@ -35,8 +35,8 @@ class APIMetadataTestCase(TestCase):
 
     def test_register_api_duplicate_name(self):
         metadata = APIMetadata()
-        api1 = AcceptableAPI('api', '/api1', 1)
-        api2 = AcceptableAPI('api', '/api2', 1)
+        api1 = AcceptableAPI(None, 'api', '/api1', 1)
+        api2 = AcceptableAPI(None, 'api', '/api2', 1)
         metadata.register_service('test', None)
         metadata.register_api('test', None, api1)
         self.assertRaises(
@@ -47,8 +47,8 @@ class APIMetadataTestCase(TestCase):
 
     def test_register_api_duplicate_url(self):
         metadata = APIMetadata()
-        api1 = AcceptableAPI('api1', '/api', 1)
-        api2 = AcceptableAPI('api2', '/api', 1)
+        api1 = AcceptableAPI(None, 'api1', '/api', 1)
+        api2 = AcceptableAPI(None, 'api2', '/api', 1)
         metadata.register_service('test', None)
         metadata.register_service('other', None)
         metadata.register_api('test', None, api1)
@@ -60,8 +60,8 @@ class APIMetadataTestCase(TestCase):
 
     def test_register_api_allow_different_methods(self):
         metadata = APIMetadata()
-        api1 = AcceptableAPI('api1', '/api', 1)
-        api2 = AcceptableAPI('api2', '/api', 1, options={'methods': ['POST']})
+        api1 = AcceptableAPI(None, 'api1', '/api', 1)
+        api2 = AcceptableAPI(None, 'api2', '/api', 1, options={'methods': ['POST']})
         metadata.register_service('test', None)
         metadata.register_service('other', None)
         metadata.register_api('test', None, api1)
@@ -69,7 +69,7 @@ class APIMetadataTestCase(TestCase):
 
     def test_register_service_handles_multiple(self):
         metadata = APIMetadata()
-        api = AcceptableAPI('api', '/api', 1)
+        api = AcceptableAPI(None, 'api', '/api', 1)
 
         metadata.register_service('test', None)
         self.assertEqual(
@@ -88,8 +88,8 @@ class APIMetadataTestCase(TestCase):
         app = Flask(__name__)
         metadata = APIMetadata()
         metadata.register_service('test', None)
-        api1 = AcceptableAPI('api1', '/api1', 1)
-        api2 = AcceptableAPI('api2', '/api2', 1)
+        api1 = AcceptableAPI(None, 'api1', '/api1', 1)
+        api2 = AcceptableAPI(None, 'api2', '/api2', 1)
         metadata.register_api('test', None, api1)
         metadata.register_api('test', None, api2)
 

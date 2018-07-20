@@ -153,6 +153,7 @@ class AcceptableService():
         """
         location = get_callsite_location()
         api = AcceptableAPI(
+            self,
             name,
             url,
             introduced_at,
@@ -175,11 +176,12 @@ class AcceptableService():
         from acceptable.djangoutil import DjangoAPI
         location = get_callsite_location()
         api = DjangoAPI(
+            self,
             name,
             introduced_at,
             options,
-            undocumented=undocumented,
             location=location,
+            undocumented=undocumented,
         )
         self.metadata.register_api(self.name, self.group, api)
         return api
@@ -197,12 +199,14 @@ class AcceptableAPI():
 
     def __init__(
             self,
+            service,
             name,
             url,
             introduced_at,
             options={},
             location=None,
             undocumented=False):
+        self.service = service
         self.name = name
         self.url = url
         self.introduced_at = introduced_at
