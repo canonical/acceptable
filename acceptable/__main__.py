@@ -33,7 +33,6 @@ def main():
         cli_args = parse_args()
         sys.exit(cli_args.func(cli_args))
     except Exception as e:
-        raise
         sys.exit(str(e))
 
 
@@ -56,8 +55,11 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
     django_parser = subparser.add_parser(
         'django-metadata',
-        help='Import django project and print extracted metadata in json')
-    django_parser.add_argument('django_app', nargs='*')
+        help=(
+            'Import django project and print extracted metadata in json. '
+            'Set DJANGO_SETTINGS_MODULE as normal.'
+        ),
+    )
     django_parser.set_defaults(func=django_metadata_cmd)
 
     render_parser = subparser.add_parser(
