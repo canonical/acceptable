@@ -43,14 +43,16 @@ class APIMetadata():
                 'API {} is already registered in service {}'.format(
                     api.name, name)
             )
-        url_key = (api.url, tuple(api.methods))
-        if url_key in self.urls:
-            raise InvalidAPI(
-                'URL {} {} is already in service {}'.format(
-                    '|'.join(api.methods), api.url, name)
-            )
         self.api_names.add(api.name)
-        self.urls.add(url_key)
+
+        if api.url is not None:
+            url_key = (api.url, tuple(api.methods))
+            if url_key in self.urls:
+                raise InvalidAPI(
+                    'URL {} {} is already in service {}'.format(
+                        '|'.join(api.methods), api.url, name)
+                )
+            self.urls.add(url_key)
         self.services[name, group][api.name] = api
 
     @property
@@ -132,7 +134,12 @@ class AcceptableService():
     def apis(self):
         return self.metadata.services[self.name, self.group]
 
-    def api(self, url, name, introduced_at=None, **options):
+    def api(self,
+            url,
+            name,
+            introduced_at=None,
+            undocumented=False,
+            **options):
         """Add an API to the service.
 
         :param url: This is the url that the API should be registered at.
@@ -146,7 +153,36 @@ class AcceptableService():
         """
         location = get_callsite_location()
         api = AcceptableAPI(
-            name, url, introduced_at, options, location=location)
+            self,
+            name,
+            url,
+            introduced_at,
+            options,
+            undocumented=undocumented,
+            location=location,
+        )
+        self.metadata.register_api(self.name, self.group, api)
+        return api
+
+    def django_api(self, name, introduced_at, undocumented=False, **options):
+        """Add an django API handler to the service.
+
+        :param name: This is the name of the django url to use.
+
+        The 'methods' paramater can be supplied as normal, you can also user
+        the @api.handler decorator to link this API to its handler.
+
+        """
+        from acceptable.djangoutil import DjangoAPI
+        location = get_callsite_location()
+        api = DjangoAPI(
+            self,
+            name,
+            introduced_at,
+            options,
+            location=location,
+            undocumented=undocumented,
+        )
         self.metadata.register_api(self.name, self.group, api)
         return api
 
@@ -163,17 +199,20 @@ class AcceptableAPI():
 
     def __init__(
             self,
+            service,
             name,
             url,
             introduced_at,
             options={},
             location=None,
             undocumented=False):
+        self.service = service
         self.name = name
         self.url = url
         self.introduced_at = introduced_at
         self.options = options
         self.view_fn = None
+        self.view_fn_location = None
         self.docs = None
         self._request_schema = None
         self._request_schema_location = None
@@ -190,6 +229,9 @@ class AcceptableAPI():
     @property
     def methods(self):
         return self.options.get('methods', ['GET'])
+
+    def resolve_url(self):
+        return self.url
 
     @property
     def request_schema(self):

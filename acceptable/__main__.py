@@ -53,6 +53,15 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     metadata_parser.add_argument('modules', nargs='+')
     metadata_parser.set_defaults(func=metadata_cmd)
 
+    django_parser = subparser.add_parser(
+        'django-metadata',
+        help=(
+            'Import django project and print extracted metadata in json. '
+            'Set DJANGO_SETTINGS_MODULE as normal.'
+        ),
+    )
+    django_parser.set_defaults(func=django_metadata_cmd)
+
     render_parser = subparser.add_parser(
         'render', help='Render markdown documentation for api metadata'
     )
@@ -141,6 +150,16 @@ def metadata_cmd(cli_args):
     print(json.dumps(current, indent=2, sort_keys=True))
 
 
+def django_metadata_cmd(cli_args):
+    import django
+    django.setup()
+    from acceptable.djangoutil import get_urlmap
+    # force import of urlconf, and thus acceptable metadata
+    _ = get_urlmap()
+    current, _ = parse(get_metadata())
+    print(json.dumps(current, indent=2, sort_keys=True))
+
+
 def import_metadata(module_paths):
     """Import all the given modules"""
     cwd = os.getcwd()
@@ -183,12 +202,13 @@ def parse(metadata):
                 'api_name': api.name,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
-                'url': api.url,
                 'request_schema': api.request_schema,
                 'response_schema': api.response_schema,
                 'doc': api.docs,
                 'changelog': api._changelog,
             }
+            api_metadata[name]['url'] = api.resolve_url()
+
             if api.undocumented:
                 api_metadata[name]['undocumented'] = True
 
