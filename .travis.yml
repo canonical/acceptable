@@ -1,11 +1,13 @@
 language: python
+cache: pip
+dist: trusty
+sudo: False
 python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-# command to install dependencies
-install: "pip install -e . -r requirements-dev.txt"
-# command to run tests
-script: coverage run --source acceptable --omit "acceptable/tests/*" setup.py test
+    - 2.7
+    - 3.5
+    - 3.6
+install: 
+    - pip install tox-travis
+script: tox
 after_success:
   - coveralls

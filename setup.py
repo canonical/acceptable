@@ -19,12 +19,19 @@ setup(
     license='LGPLv3',
     packages=['acceptable'],
     install_requires=[
-        'Flask<1.0',
         'future',
         'jinja2',
         'jsonschema',
         'pyyaml',
     ],
+    extras_require=dict(
+        flask=[
+            'Flask<1.0',
+        ],
+        django=[
+            'django>=1.11,<2.1',
+        ]
+    ),
     test_suite='acceptable.tests',
     include_package_data=True,
     package_data={

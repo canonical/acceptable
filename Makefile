@@ -1,6 +1,6 @@
 env/.done: requirements-dev.txt setup.py
 	virtualenv -p python3 env
-	env/bin/pip install -e .
+	env/bin/pip install -e .[flask,django]
 	env/bin/pip install -r requirements-dev.txt
 	touch $@
 

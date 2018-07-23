@@ -10,7 +10,6 @@ import json
 import functools
 
 import jsonschema
-from flask import current_app, request, jsonify
 
 from acceptable.util import get_callsite_location
 
@@ -82,6 +81,8 @@ def validate_body(schema):
 
 
 def wrap_request(fn, schema):
+    from flask import request
+
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         payload = request.get_json(silent=True, cache=True, force=True)
@@ -165,6 +166,8 @@ def validate_output(schema):
 
 
 def wrap_response(fn, schema):
+    from flask import current_app, jsonify
+
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         result = fn(*args, **kwargs)
