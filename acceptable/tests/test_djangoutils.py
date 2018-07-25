@@ -202,7 +202,7 @@ class TestManagementCommands(TestCase):
     # Note: this is located here as it tests all the django stuff, even though
     # the code is not in the djangoutil module
 
-    def test_command(self):
+    def test_metadata_command(self):
         cmd = [sys.executable, 'manage.py', 'acceptable', 'metadata']
         output = subprocess.check_output(
             cmd,
@@ -210,3 +210,18 @@ class TestManagementCommands(TestCase):
             universal_newlines=True,
         )
         self.assertEqual(expected_metadata(), json.loads(output))
+
+    def test_api_version_command(self):
+        cmd = [
+            sys.executable,
+            'manage.py',
+            'acceptable',
+            'api-version',
+            '../api.json',
+        ]
+        output = subprocess.check_output(
+            cmd,
+            cwd='examples/django_app',
+            universal_newlines=True,
+        )
+        self.assertEqual('../api.json: 2\nImported API: 1\n', output)

@@ -29,7 +29,7 @@ Design Goals:
 Usage
 -----
 
-And example, for flask:
+And example, for flask::
 
     from acceptable import AcceptableService
 
@@ -45,14 +45,25 @@ And example, for flask:
     def view():
         ...
 
-You can use this metadata to bind the url to a flask app
+You can use this metadata to bind the url to a flask app::
 
     from acceptable import get_metadata()
     app = Flask(__name__)
     get_metadata().bind_all(app)
 
+You can now generate api metadata like so::
 
-And for django (beta) and piston:
+    acceptable metadata your.import.path > api.json
+
+This metadata can be now used to generate documentation, and provide API linting.
+
+
+Django
+------
+
+Note: django support is very limited at the minute, and is mainly for documentation.
+
+Marking up the APIs themselves is a little different::
 
     from acceptable import AcceptableService
 
@@ -69,9 +80,18 @@ And for django (beta) and piston:
         allowed_methods=['POST']
         ...
 
-Acceptable will generate a JSON schema representation of the form.
+Acceptable will generate a JSON schema representation of the form for documentation.
 
-Note: django support is very limited at the minute, and is mainly for documentation.
+To generate API metadata, you should add 'acceptable' to INSTALLED_APPS. This
+will provide with an 'acceptable' management command::
+
+
+    ./manage.py acceptable metadata > api.json   # generate metadata
+
+And also::
+
+    ./manage.py acceptable api-version api.json  # inspect the current version
+
 
 
 Documentation (beta)
@@ -79,11 +99,7 @@ Documentation (beta)
 
 One of the goals of acceptable is to use the metadata about your api to build documentation.
 
-First, acceptable can parse your code for acceptable metadata, and generate a json version of your api metadata::
-
-    acceptable metadata path/to/files*.py > api.json
-
-Next, acceptable can transform the previously saved metadata into markdown::
+One you have your metadata in json format, as above, you can transform that into markdown documentation::
 
     acceptable render api.json --name 'My Service'
 
