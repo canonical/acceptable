@@ -68,7 +68,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_metadata_parses_files(self):
         args = main.parse_args(['metadata', 'foo', 'bar'])
         self.assertEqual(['foo', 'bar'], args.modules)
-        self.assertEqual(main.metadata_cmd, args.func)
+        self.assertEqual('metadata', args.cmd)
 
     def test_render_parses_file(self):
         with tempfile.NamedTemporaryFile('w') as api:
@@ -77,7 +77,7 @@ class ParseArgsTests(testtools.TestCase):
             args = main.parse_args(['render', '--name=name', api.name])
 
         self.assertTrue('hi', args.metadata.read())
-        self.assertEqual(main.render_cmd, args.func)
+        self.assertEqual('render', args.cmd)
 
         args.metadata.close()  # suppresses ResourceWarning
 
@@ -127,7 +127,7 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
         main.import_metadata(['service'])
-        metadata, locations = main.parse(get_metadata())
+        metadata, locations = main.parse_metadata(get_metadata())
 
         self.assertEqual({
             '$version': 4,
@@ -188,7 +188,7 @@ class MetadataTests(testtools.TestCase):
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
         main.import_metadata(['service'])
-        metadata, locations = main.parse(get_metadata())
+        metadata, locations = main.parse_metadata(get_metadata())
 
         self.assertEqual({
             '$version': 4,

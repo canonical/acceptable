@@ -53,15 +53,6 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     metadata_parser.add_argument('modules', nargs='+')
     metadata_parser.set_defaults(func=metadata_cmd)
 
-    django_parser = subparser.add_parser(
-        'django-metadata',
-        help=(
-            'Import django project and print extracted metadata in json. '
-            'Set DJANGO_SETTINGS_MODULE as normal.'
-        ),
-    )
-    django_parser.set_defaults(func=django_metadata_cmd)
-
     render_parser = subparser.add_parser(
         'render', help='Render markdown documentation for api metadata'
     )
@@ -137,7 +128,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     version_parser.add_argument(
         'modules',
         nargs='*',
-        help='Option modules to import for current imported api',
+        help='Optional modules to import for current imported api',
     )
     version_parser.set_defaults(func=version_cmd)
 
@@ -146,17 +137,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 def metadata_cmd(cli_args):
     import_metadata(cli_args.modules)
-    current, _ = parse(get_metadata())
-    print(json.dumps(current, indent=2, sort_keys=True))
-
-
-def django_metadata_cmd(cli_args):
-    import django
-    django.setup()
-    from acceptable.djangoutil import get_urlmap
-    # force import of urlconf, and thus acceptable metadata
-    _ = get_urlmap()
-    current, _ = parse(get_metadata())
+    current, _ = parse_metadata(get_metadata())
     print(json.dumps(current, indent=2, sort_keys=True))
 
 
@@ -187,7 +168,7 @@ def load_metadata(stream):
         stream.close()
 
 
-def parse(metadata):
+def parse_metadata(metadata):
     """Parse the imported metadata into json-serializable object."""
     api_metadata = {
         # $ char makes this come first in sort ordering
@@ -298,7 +279,7 @@ def render_markdown(metadata, name):
 def lint_cmd(cli_args, stream=sys.stdout):
     metadata = load_metadata(cli_args.metadata)
     import_metadata(cli_args.modules)
-    current, locations = parse(get_metadata())
+    current, locations = parse_metadata(get_metadata())
 
     has_errors = False
     display_level = lint.WARNING
