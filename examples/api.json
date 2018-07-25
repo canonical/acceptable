@@ -2,7 +2,7 @@
   "$version": 2,
   "foo": {
     "api_name": "foo",
-    "changelog": [],
+    "changelog": {},
     "doc": "Documentation goes here.",
     "introduced_at": 2,
     "methods": [

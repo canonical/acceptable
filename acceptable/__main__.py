@@ -5,6 +5,8 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from builtins import *  # NOQA
+__metaclass__ = type
+
 from future.utils import PY2, raise_from
 
 import argparse
@@ -15,7 +17,12 @@ from operator import itemgetter
 import os
 import sys
 
-from jinja2 import Environment, PackageLoader
+from jinja2 import (
+    ChoiceLoader,
+    Environment,
+    FileSystemLoader,
+    PackageLoader,
+)
 import yaml
 
 from acceptable import get_metadata, lint
@@ -28,11 +35,31 @@ if PY2:
     SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
 
 
+TEMPLATES = Environment(
+    loader=ChoiceLoader([
+        FileSystemLoader('./'),
+        PackageLoader('acceptable', 'templates'),
+    ]),
+    autoescape=False,
+)
+
+
+class ForceAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not namespace.update:
+            if namespace.metadata:
+                namespace.metadata.close()  # supresses resource warning
+            parser.error('--force can only be used with --update')
+        else:
+            namespace.force = True
+
+
 def main():
     try:
         cli_args = parse_args()
         sys.exit(cli_args.func(cli_args))
     except Exception as e:
+        raise
         sys.exit(str(e))
 
 
@@ -66,16 +93,19 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         '--name', '-n', required=True, help='Name of service')
     render_parser.add_argument(
         '--dir', '-d', default='docs', help='output directory')
+    render_parser.add_argument(
+        '--page-template',
+        type=TEMPLATES.get_template,
+        default=TEMPLATES.get_template('api_page.md.j2'),
+        help='Jinja2 template to render each API',
+    )
+    render_parser.add_argument(
+        '--index-template',
+        type=TEMPLATES.get_template,
+        default=TEMPLATES.get_template('index.md.j2'),
+        help='Jinja2 template to render the API index page',
+    )
     render_parser.set_defaults(func=render_cmd)
-
-    class ForceAction(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string=None):
-            if not namespace.update:
-                if namespace.metadata:
-                    namespace.metadata.close()  # supresses resource warning
-                parser.error('--force can only be used with --update')
-            else:
-                namespace.force = True
 
     lint_parser = subparser.add_parser(
         'lint', help='Compare current metadata against file metadata')
@@ -210,21 +240,18 @@ def render_cmd(cli_args):
     if not os.path.exists(en_dir):
         os.makedirs(en_dir)
     metadata = load_metadata(cli_args.metadata)
+    name = cli_args.name
+    page = cli_args.page_template
+    index = cli_args.index_template
 
-    for path, content in render_markdown(metadata, cli_args.name):
+    for path, content in render_markdown(metadata, name, page, index):
         full_path = os.path.join(root_dir, path)
         with open(full_path, 'w', encoding='utf8') as f:
             f.write(content)
 
 
-def render_markdown(metadata, name):
-    env = Environment(
-        loader=PackageLoader('acceptable', 'templates'),
-        autoescape=False,
-    )
+def render_markdown(metadata, name, page_template, index_template):
     navigation = [{'title': 'Index', 'location': 'index.md'}]
-    page_tmpl = env.get_template('api_page.md.j2')
-    index_tmpl = env.get_template('index.md.j2')
     api_groups = defaultdict(list)
     sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
@@ -239,7 +266,7 @@ def render_markdown(metadata, name):
         for version, log in api['changelog'].items():
             changelog[version][api_name] = log
         path = os.path.join('en', page_file)
-        yield path, page_tmpl.render(name=api_name, **api)
+        yield path, page_template.render(name=api_name, **api)
 
     if len(api_groups) == 1:
         # only one group, flat navigation
@@ -260,7 +287,7 @@ def render_markdown(metadata, name):
                     'children': children,
                 })
 
-    yield os.path.join('en', 'index.md'), index_tmpl.render(
+    yield os.path.join('en', 'index.md'), index_template.render(
         service_name=name, changelog=changelog)
 
     # documentation-builder requires yaml metadata files in certain locations
