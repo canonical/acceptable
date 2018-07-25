@@ -35,6 +35,10 @@ if PY2:
     SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
 
 
+def tojson_filter(json_object, indent=4):
+    return json.dumps(json_object, indent=indent, sort_keys=True)
+
+
 TEMPLATES = Environment(
     loader=ChoiceLoader([
         FileSystemLoader('./'),
@@ -42,6 +46,7 @@ TEMPLATES = Environment(
     ]),
     autoescape=False,
 )
+TEMPLATES.filters['tojson'] = tojson_filter
 
 
 class ForceAction(argparse.Action):
