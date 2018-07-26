@@ -184,12 +184,12 @@ class DjangoAPI(AcceptableAPI):
     def methods(self):
         default = ['GET']
         if 'methods' in self.options:
-            return self.options.get('methods', default)
+            return list(self.options.get('methods', default))
 
         # allowed_methods works for piston handlers
         # TODO: add support for DRF? And maybe plain view functions with
         # decorators?
-        return getattr(self.handler_class, 'allowed_methods', default)
+        return list(getattr(self.handler_class, 'allowed_methods', default))
 
     @property
     def django_form(self):

@@ -6,6 +6,8 @@ from __future__ import division
 from __future__ import absolute_import
 from builtins import *  # NOQA
 
+import json
+import subprocess
 import sys
 import os
 
@@ -13,12 +15,11 @@ from django import forms
 from testtools import TestCase
 
 from acceptable._service import (
-    APIMetadata,
     clear_metadata,
     get_metadata,
 )
-from acceptable.__main__ import parse
-from acceptable import djangoutil, AcceptableService
+from acceptable.__main__ import parse_metadata
+from acceptable import djangoutil
 
 
 def setUpModule():
@@ -31,6 +32,7 @@ def setUpModule():
         os.environ['DJANGO_SETTINGS_MODULE'] = 'django_app.settings'
     import django
     django.setup()
+    djangoutil.get_urlmap()
 
 
 def tearDownModule():
@@ -169,29 +171,42 @@ class TestFormSchema(TestCase):
         )
 
 
+def expected_metadata():
+    from django_app.views import TestForm
+    return {
+        '$version': 1,
+        'test': {
+            'url': '/test',
+            'methods': ['POST'],
+            'request_schema': djangoutil.get_form_schema(TestForm),
+            'response_schema': None,
+            'doc': 'Documentation.',
+            'changelog': {},
+            'introduced_at': 1,
+            'api_name': 'test',
+            'api_group': None,
+            'service': 'django_app',
+        },
+    }
+
+
 class TestDjangoAPI(TestCase):
 
     def test_example_app_works(self):
-        from django_app.views import TestForm
         metadata = get_metadata()
-        schema = djangoutil.get_form_schema(TestForm)
+        api, _ = parse_metadata(metadata)
+        self.assertEqual(expected_metadata(), api)
 
-        api, _ = parse(metadata)
-        self.assertEqual(
-            {
-                '$version': 1,
-                'test': {
-                    'url': '/test',
-                    'methods': ('POST',),
-                    'request_schema': schema,
-                    'response_schema': None,
-                    'doc': 'Documentation.',
-                    'changelog': {},
-                    'introduced_at': 1,
-                    'api_name': 'test',
-                    'api_group': None,
-                    'service': 'django_app',
-                },
-            },
-            api,
+
+class TestManagementCommands(TestCase):
+    # Note: this is located here as it tests all the django stuff, even though
+    # the code is not in the djangoutil module
+
+    def test_command(self):
+        cmd = [sys.executable, 'manage.py', 'acceptable', 'metadata']
+        output = subprocess.check_output(
+            cmd,
+            cwd='examples/django_app',
+            universal_newlines=True,
         )
+        self.assertEqual(expected_metadata(), json.loads(output))

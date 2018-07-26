@@ -8,7 +8,7 @@ import testtools
 
 from acceptable import get_metadata
 from acceptable.tests.test_main import TemporaryModuleFixture
-from acceptable.__main__ import import_metadata, parse
+from acceptable.__main__ import import_metadata, parse_metadata
 
 from acceptable import lint
 
@@ -18,7 +18,7 @@ class LintTestCase(testtools.TestCase):
     def get_metadata(self, code='', module='service', locations=True):
         fixture = self.useFixture(TemporaryModuleFixture(module, code))
         import_metadata([module])
-        metadata, locations = parse(get_metadata())
+        metadata, locations = parse_metadata(get_metadata())
         return metadata, locations, fixture.path
 
 

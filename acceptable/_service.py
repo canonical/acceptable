@@ -228,7 +228,7 @@ class AcceptableAPI():
 
     @property
     def methods(self):
-        return self.options.get('methods', ['GET'])
+        return list(self.options.get('methods', ['GET']))
 
     def resolve_url(self):
         return self.url
