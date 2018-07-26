@@ -5,6 +5,8 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from builtins import *  # NOQA
+__metaclass__ = type
+
 from future.utils import PY2, raise_from
 
 import argparse
@@ -15,7 +17,12 @@ from operator import itemgetter
 import os
 import sys
 
-from jinja2 import Environment, PackageLoader
+from jinja2 import (
+    ChoiceLoader,
+    Environment,
+    FileSystemLoader,
+    PackageLoader,
+)
 import yaml
 
 from acceptable import get_metadata, lint
@@ -26,6 +33,30 @@ if PY2:
     from yaml.representer import SafeRepresenter
     SafeRepresenter.add_representer(newlist, SafeRepresenter.represent_list)
     SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
+
+
+def tojson_filter(json_object, indent=4):
+    return json.dumps(json_object, indent=indent, sort_keys=True)
+
+
+TEMPLATES = Environment(
+    loader=ChoiceLoader([
+        FileSystemLoader('./'),
+        PackageLoader('acceptable', 'templates'),
+    ]),
+    autoescape=False,
+)
+TEMPLATES.filters['tojson'] = tojson_filter
+
+
+class ForceAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if not namespace.update:
+            if namespace.metadata:
+                namespace.metadata.close()  # suppresses resource warning
+            parser.error('--force can only be used with --update')
+        else:
+            namespace.force = True
 
 
 def main():
@@ -49,12 +80,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     subparser.required = True
 
     metadata_parser = subparser.add_parser(
-        'metadata', help='Import project and print extracted metadata in json')
+        'metadata', help='Import project and print extracted metadata in JSON')
     metadata_parser.add_argument('modules', nargs='+')
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
-        'render', help='Render markdown documentation for api metadata'
+        'render', help='Render markdown documentation for API metadata'
     )
     render_parser.add_argument(
         'metadata',
@@ -66,16 +97,19 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         '--name', '-n', required=True, help='Name of service')
     render_parser.add_argument(
         '--dir', '-d', default='docs', help='output directory')
+    render_parser.add_argument(
+        '--page-template',
+        type=TEMPLATES.get_template,
+        default=TEMPLATES.get_template('api_page.md.j2'),
+        help='Jinja2 template to render each API',
+    )
+    render_parser.add_argument(
+        '--index-template',
+        type=TEMPLATES.get_template,
+        default=TEMPLATES.get_template('index.md.j2'),
+        help='Jinja2 template to render the API index page',
+    )
     render_parser.set_defaults(func=render_cmd)
-
-    class ForceAction(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string=None):
-            if not namespace.update:
-                if namespace.metadata:
-                    namespace.metadata.close()  # supresses resource warning
-                parser.error('--force can only be used with --update')
-            else:
-                namespace.force = True
 
     lint_parser = subparser.add_parser(
         'lint', help='Compare current metadata against file metadata')
@@ -115,7 +149,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
     version_parser = subparser.add_parser(
         'api-version',
-        help='Get the current api version from json meta, and '
+        help='Get the current API version from JSON meta, and '
              'optionally from current code also',
     )
     version_parser.add_argument(
@@ -123,12 +157,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         nargs='?',
         type=argparse.FileType('r'),
         default=stdin,
-        help='The json metadata for the api',
+        help='The JSON metadata for the API',
     )
     version_parser.add_argument(
         'modules',
         nargs='*',
-        help='Optional modules to import for current imported api',
+        help='Optional modules to import for current imported API',
     )
     version_parser.set_defaults(func=version_cmd)
 
@@ -157,7 +191,7 @@ def import_metadata(module_paths):
 
 
 def load_metadata(stream):
-    """Load json metadata from opened stream."""
+    """Load JSON metadata from opened stream."""
     try:
         return json.load(
             stream, encoding='utf8', object_pairs_hook=OrderedDict)
@@ -169,7 +203,7 @@ def load_metadata(stream):
 
 
 def parse_metadata(metadata):
-    """Parse the imported metadata into json-serializable object."""
+    """Parse the imported metadata into JSON-serializable object."""
     api_metadata = {
         # $ char makes this come first in sort ordering
         '$version': metadata.current_version,
@@ -210,21 +244,18 @@ def render_cmd(cli_args):
     if not os.path.exists(en_dir):
         os.makedirs(en_dir)
     metadata = load_metadata(cli_args.metadata)
+    name = cli_args.name
+    page = cli_args.page_template
+    index = cli_args.index_template
 
-    for path, content in render_markdown(metadata, cli_args.name):
+    for path, content in render_markdown(metadata, name, page, index):
         full_path = os.path.join(root_dir, path)
         with open(full_path, 'w', encoding='utf8') as f:
             f.write(content)
 
 
-def render_markdown(metadata, name):
-    env = Environment(
-        loader=PackageLoader('acceptable', 'templates'),
-        autoescape=False,
-    )
+def render_markdown(metadata, name, page_template, index_template):
     navigation = [{'title': 'Index', 'location': 'index.md'}]
-    page_tmpl = env.get_template('api_page.md.j2')
-    index_tmpl = env.get_template('index.md.j2')
     api_groups = defaultdict(list)
     sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
@@ -239,7 +270,7 @@ def render_markdown(metadata, name):
         for version, log in api['changelog'].items():
             changelog[version][api_name] = log
         path = os.path.join('en', page_file)
-        yield path, page_tmpl.render(name=api_name, **api)
+        yield path, page_template.render(name=api_name, **api)
 
     if len(api_groups) == 1:
         # only one group, flat navigation
@@ -260,7 +291,7 @@ def render_markdown(metadata, name):
                     'children': children,
                 })
 
-    yield os.path.join('en', 'index.md'), index_tmpl.render(
+    yield os.path.join('en', 'index.md'), index_template.render(
         service_name=name, changelog=changelog)
 
     # documentation-builder requires yaml metadata files in certain locations

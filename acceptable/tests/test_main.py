@@ -237,6 +237,8 @@ def builder_installed():
 
 
 class RenderMarkdownTests(testtools.TestCase):
+    page = main.TEMPLATES.get_template('api_page.md.j2')
+    index = main.TEMPLATES.get_template('index.md.j2')
 
     def metadata(self):
         metadata = OrderedDict()
@@ -266,7 +268,8 @@ class RenderMarkdownTests(testtools.TestCase):
         return metadata
 
     def test_render_markdown_success(self):
-        iterator = main.render_markdown(self.metadata(), 'SERVICE')
+        iterator = main.render_markdown(
+            self.metadata(), 'SERVICE', self.page, self.index)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -299,7 +302,7 @@ class RenderMarkdownTests(testtools.TestCase):
     def test_render_markdown_undocumented(self):
         m = self.metadata()
         m['api2']['undocumented'] = True
-        iterator = main.render_markdown(m, 'SERVICE')
+        iterator = main.render_markdown(m, 'SERVICE', self.page, self.index)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -324,7 +327,8 @@ class RenderMarkdownTests(testtools.TestCase):
     def test_render_markdown_multiple_groups(self):
         metadata = self.metadata()
         metadata['api2']['api_group'] = 'group'
-        iterator = main.render_markdown(metadata, 'SERVICE')
+        iterator = main.render_markdown(
+            metadata, 'SERVICE', self.page, self.index)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -360,7 +364,8 @@ class RenderMarkdownTests(testtools.TestCase):
         metadata = self.metadata()
         metadata['api2']['api_group'] = 'group'
         metadata['api2']['undocumented'] = True
-        iterator = main.render_markdown(metadata, 'SERVICE')
+        iterator = main.render_markdown(
+                metadata, 'SERVICE', self.page, self.index)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -387,6 +392,35 @@ class RenderMarkdownTests(testtools.TestCase):
             },
             md
         )
+
+    def test_render_cmd_with_templates(self):
+        markdown_dir = self.useFixture(fixtures.TempDir())
+        with tempfile.NamedTemporaryFile('w') as metadata:
+            with tempfile.NamedTemporaryFile('w', dir=os.getcwd()) as template:
+                metadata.write(json.dumps(self.metadata()))
+                metadata.flush()
+
+                template.write('TEMPLATE')
+                template.flush()
+                name = os.path.relpath(template.name)
+
+                args = main.parse_args([
+                    'render',
+                    metadata.name,
+                    '--name=SERVICE',
+                    '--dir={}'.format(markdown_dir.path),
+                    '--page-template=' + name,
+                    '--index-template=' + name,
+                ])
+                main.render_cmd(args)
+
+        p = partial(os.path.join, markdown_dir.path)
+        with open(p('en/api1.md')) as f:
+            self.assertEqual(f.read(), 'TEMPLATE')
+        with open(p('en/api2.md')) as f:
+            self.assertEqual(f.read(), 'TEMPLATE')
+        with open(p('en/index.md')) as f:
+            self.assertEqual(f.read(), 'TEMPLATE')
 
     @testtools.skipIf(
         not builder_installed(), 'documentation-builder not installed')
