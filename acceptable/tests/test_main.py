@@ -268,8 +268,10 @@ class RenderMarkdownTests(testtools.TestCase):
         return metadata
 
     def test_render_markdown_success(self):
-        iterator = main.render_markdown(
-            self.metadata(), 'SERVICE', self.page, self.index)
+        args = main.parse_args(
+            ['render', 'examples/api.json', '--name=SERVICE'])
+
+        iterator = main.render_markdown(self.metadata(), args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -300,9 +302,11 @@ class RenderMarkdownTests(testtools.TestCase):
         )
 
     def test_render_markdown_undocumented(self):
+        args = main.parse_args(
+            ['render', 'examples/api.json', '--name=SERVICE'])
         m = self.metadata()
         m['api2']['undocumented'] = True
-        iterator = main.render_markdown(m, 'SERVICE', self.page, self.index)
+        iterator = main.render_markdown(m, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -325,10 +329,11 @@ class RenderMarkdownTests(testtools.TestCase):
         )
 
     def test_render_markdown_multiple_groups(self):
+        args = main.parse_args(
+            ['render', 'examples/api.json', '--name=SERVICE'])
         metadata = self.metadata()
         metadata['api2']['api_group'] = 'group'
-        iterator = main.render_markdown(
-            metadata, 'SERVICE', self.page, self.index)
+        iterator = main.render_markdown(metadata, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
@@ -361,11 +366,12 @@ class RenderMarkdownTests(testtools.TestCase):
         )
 
     def test_render_markdown_group_omitted_with_undocumented(self):
+        args = main.parse_args(
+            ['render', 'examples/api.json', '--name=SERVICE'])
         metadata = self.metadata()
         metadata['api2']['api_group'] = 'group'
         metadata['api2']['undocumented'] = True
-        iterator = main.render_markdown(
-                metadata, 'SERVICE', self.page, self.index)
+        iterator = main.render_markdown(metadata, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
