@@ -53,7 +53,7 @@ class ForceAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         if not namespace.update:
             if namespace.metadata:
-                namespace.metadata.close()  # supresses resource warning
+                namespace.metadata.close()  # suppresses resource warning
             parser.error('--force can only be used with --update')
         else:
             namespace.force = True
@@ -64,7 +64,6 @@ def main():
         cli_args = parse_args()
         sys.exit(cli_args.func(cli_args))
     except Exception as e:
-        raise
         sys.exit(str(e))
 
 
@@ -81,12 +80,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     subparser.required = True
 
     metadata_parser = subparser.add_parser(
-        'metadata', help='Import project and print extracted metadata in json')
+        'metadata', help='Import project and print extracted metadata in JSON')
     metadata_parser.add_argument('modules', nargs='+')
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
-        'render', help='Render markdown documentation for api metadata'
+        'render', help='Render markdown documentation for API metadata'
     )
     render_parser.add_argument(
         'metadata',
@@ -150,7 +149,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
     version_parser = subparser.add_parser(
         'api-version',
-        help='Get the current api version from json meta, and '
+        help='Get the current API version from JSON meta, and '
              'optionally from current code also',
     )
     version_parser.add_argument(
@@ -158,12 +157,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         nargs='?',
         type=argparse.FileType('r'),
         default=stdin,
-        help='The json metadata for the api',
+        help='The JSON metadata for the API',
     )
     version_parser.add_argument(
         'modules',
         nargs='*',
-        help='Optional modules to import for current imported api',
+        help='Optional modules to import for current imported API',
     )
     version_parser.set_defaults(func=version_cmd)
 
@@ -192,7 +191,7 @@ def import_metadata(module_paths):
 
 
 def load_metadata(stream):
-    """Load json metadata from opened stream."""
+    """Load JSON metadata from opened stream."""
     try:
         return json.load(
             stream, encoding='utf8', object_pairs_hook=OrderedDict)
@@ -204,7 +203,7 @@ def load_metadata(stream):
 
 
 def parse_metadata(metadata):
-    """Parse the imported metadata into json-serializable object."""
+    """Parse the imported metadata into JSON-serializable object."""
     api_metadata = {
         # $ char makes this come first in sort ordering
         '$version': metadata.current_version,

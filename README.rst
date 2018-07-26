@@ -45,23 +45,23 @@ And example, for flask::
     def view():
         ...
 
-You can use this metadata to bind the url to a flask app::
+You can use this metadata to bind the URL to a flask app::
 
     from acceptable import get_metadata()
     app = Flask(__name__)
     get_metadata().bind_all(app)
 
-You can now generate api metadata like so::
+You can now generate API metadata like so::
 
     acceptable metadata your.import.path > api.json
 
-This metadata can be now used to generate documentation, and provide API linting.
+This metadata can now be used to generate documentation, and provide API linting.
 
 
 Django
 ------
 
-Note: django support is very limited at the minute, and is mainly for documentation.
+Note: Django support is very limited at the minute, and is mainly for documentation.
 
 Marking up the APIs themselves is a little different::
 
@@ -83,7 +83,7 @@ Marking up the APIs themselves is a little different::
 Acceptable will generate a JSON schema representation of the form for documentation.
 
 To generate API metadata, you should add 'acceptable' to INSTALLED_APPS. This
-will provide with an 'acceptable' management command::
+will provide an 'acceptable' management command::
 
 
     ./manage.py acceptable metadata > api.json   # generate metadata
@@ -97,9 +97,9 @@ And also::
 Documentation (beta)
 --------------------
 
-One of the goals of acceptable is to use the metadata about your api to build documentation.
+One of the goals of acceptable is to use the metadata about your API to build documentation.
 
-One you have your metadata in json format, as above, you can transform that into markdown documentation::
+Once you have your metadata in JSON format, as above, you can transform that into markdown documentation::
 
     acceptable render api.json --name 'My Service'
 
