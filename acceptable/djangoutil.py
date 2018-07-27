@@ -84,7 +84,6 @@ def get_field_schema(name, field):
     """Returns a JSON Schema representation of a form field."""
     field_schema = {
         'type': 'string',
-        'title': name,
     }
 
     if field.label:
@@ -107,15 +106,22 @@ def get_field_schema(name, field):
         field_schema['type'] = 'integer'
     elif isinstance(field, fields.NullBooleanField):
         field_schema['type'] = 'boolean'
-    # fall through to widget select for the rest
     elif isinstance(field.widget, widgets.CheckboxInput):
         field_schema['type'] = 'boolean'
-    elif isinstance(field.widget, widgets.Select):
+
+    if getattr(field, 'choices', []):
+        field_schema['enum'] = sorted([choice[0] for choice in field.choices])
+
+    # check for multiple values
+    if isinstance(field.widget, (widgets.Select, widgets.ChoiceWidget)):
         if field.widget.allow_multiple_selected:
+            # promote to array of <type>, move details into the items field
+            field_schema['items'] = {
+                'type': field_schema['type'],
+            }
+            if 'enum' in field_schema:
+                field_schema['items']['enum'] = field_schema.pop('enum')
             field_schema['type'] = 'array'
-        else:
-            field_schema['type'] = 'string'
-        field_schema['enum'] = [choice[0] for choice in field.choices]
 
     return field_schema
 
@@ -208,5 +214,5 @@ class DjangoAPI(AcceptableAPI):
         self.handler_class = handler_class
         # we take the docstring from the handler class, not the methods
         if self.docs is None and handler_class.__doc__:
-            self.docs = handler_class.__doc__.strip()
+            self._set_docs_from_docstring(handler_class.__doc__)
         return handler_class

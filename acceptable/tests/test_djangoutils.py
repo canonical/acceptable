@@ -12,6 +12,7 @@ import sys
 import os
 
 from django import forms
+from jsonschema import Draft4Validator, FormatChecker
 from testtools import TestCase
 
 from acceptable._service import (
@@ -74,13 +75,27 @@ class TestFormSchema(TestCase):
                     'title': 'foo',
                     'description': 'foo help',
                     'type': 'string',
-                    'format': 'uri',
+                    'format': 'email',
                 },
                 'bar': {
                     'title': 'bar',
                     'description': 'bar help',
                     'type': 'string',
                     'enum': ['A', 'B', 'C'],
+                },
+                'baz': {
+                    'title': 'baz',
+                    'description': 'baz help',
+                    'type': 'number',
+                },
+                'multi': {
+                    'title': 'multi',
+                    'description': 'multi help',
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'enum': ['A', 'B', 'C'],
+                    },
                 },
             },
         }
@@ -165,10 +180,133 @@ class TestFormSchema(TestCase):
                 'type': 'array',
                 'title': 'label',
                 'description': 'help',
-                'enum': ['A', 'B', 'C']
+                'items': {
+                    'type': 'string',
+                    'enum': ['A', 'B', 'C'],
+                }
             },
             djangoutil.get_field_schema('name', field),
         )
+
+    def test_get_field_schema_multiple_choice_checkbox_widget(self):
+        field = forms.MultipleChoiceField(
+            label='label',
+            help_text='help',
+            choices=['A', 'B', 'C'],
+            widget=forms.CheckboxSelectMultiple(),
+        )
+        self.assertEqual(
+            {
+                'type': 'array',
+                'title': 'label',
+                'description': 'help',
+                'items': {
+                    'type': 'string',
+                    'enum': ['A', 'B', 'C'],
+                }
+            },
+            djangoutil.get_field_schema('name', field),
+        )
+
+    def get_errors(self, form, data):
+        schema = djangoutil.get_form_schema(form)
+        validator = Draft4Validator(schema, format_checker=FormatChecker())
+
+        # manipulate jsonschema errors to look like django form error dict
+        schema_errors = {}
+        for error in validator.iter_errors(data):
+            if error.path:
+                # strip out 'foo.n' naming for arrays to just 'foo'
+                key = '.'.join(
+                    i for i in error.path if isinstance(i, (str, bytes))
+                )
+            else:
+                # missing required fields are not keyed by path
+                key = error.validator_value[0]
+            schema_errors[key] = error.message
+        return form(data=data).errors, schema_errors
+
+    def test_form_and_schema_validate_good_data(self):
+        from django_app.views import TestForm
+
+        form_errors, schema_errors = self.get_errors(
+            TestForm,
+            {
+                'foo': 'foo@example.com',
+                'bar': 'A',
+                'baz': 12.34,
+                'multi': ['B', 'C'],
+            }
+        )
+        self.assertEqual(form_errors, {})
+        self.assertEqual(schema_errors, {})
+
+    def test_form_and_schema_validate_optional(self):
+        from django_app.views import TestForm
+
+        form_errors, schema_errors = self.get_errors(
+            TestForm,
+            {'foo': 'foo@example.com'},
+        )
+        self.assertEqual(form_errors, {})
+        self.assertEqual(schema_errors, {})
+
+    def test_form_and_schema_validate_missing_required(self):
+        from django_app.views import TestForm
+        form_errors, schema_errors = self.get_errors(TestForm, {})
+        self.assertEqual(form_errors.keys(), schema_errors.keys())
+
+    def test_form_and_schema_invalidate_bad_format(self):
+        from django_app.views import TestForm
+        form_errors, schema_errors = self.get_errors(
+            TestForm,
+            {
+                'foo': 'not an email',
+                'bar': 'A',
+                'baz': 12.34,
+                'multi': ['B', 'C'],
+            }
+        )
+        self.assertEqual(form_errors.keys(), schema_errors.keys())
+
+    def test_form_and_schema_invalidate_bad_enum(self):
+        from django_app.views import TestForm
+        form_errors, schema_errors = self.get_errors(
+            TestForm,
+            {
+                'foo': 'foo@example.com',
+                'bar': 'INVALID',
+                'baz': 12.34,
+                'multi': ['B', 'C'],
+            }
+        )
+        self.assertEqual(form_errors.keys(), schema_errors.keys())
+
+    def test_form_and_schema_invalidate_bad_number(self):
+        from django_app.views import TestForm
+        form_errors, schema_errors = self.get_errors(
+            TestForm,
+            {
+                'foo': 'foo@example.com',
+                'bar': 'A',
+                'baz': 'not a number',
+                'multi': ['B', 'C'],
+            }
+        )
+        self.assertEqual(form_errors.keys(), schema_errors.keys())
+
+    def test_form_and_schema_invalidate_bad_multiple_choice(self):
+        from django_app.views import TestForm
+        form_errors, schema_errors = self.get_errors(
+            TestForm,
+            {
+                'foo': 'foo@example.com',
+                'bar': 'A',
+                'baz': 12.34,
+                'multi': ['B', 'XXX'],
+            }
+        )
+        self.assertEqual(form_errors.keys(), schema_errors.keys())
 
 
 def expected_metadata():
@@ -180,7 +318,7 @@ def expected_metadata():
             'methods': ['POST'],
             'request_schema': djangoutil.get_form_schema(TestForm),
             'response_schema': None,
-            'doc': 'Documentation.',
+            'doc': 'Documentation.\n\nMultiline.',
             'changelog': {},
             'introduced_at': 1,
             'api_name': 'test',

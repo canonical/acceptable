@@ -9,7 +9,7 @@ service = AcceptableService('django_app')
 
 
 class TestForm(forms.Form):
-    foo = forms.URLField(
+    foo = forms.EmailField(
         required=True,
         label=_('foo'),
         help_text=_('foo help'),
@@ -19,7 +19,28 @@ class TestForm(forms.Form):
         required=False,
         label=_('bar'),
         help_text=_('bar help'),
-        choices='ABC',
+        choices=[
+            ('A', 'AAA'),
+            ('B', 'BBB'),
+            ('C', 'CCC'),
+        ],
+    )
+
+    baz = forms.DecimalField(
+        required=False,
+        label=_('baz'),
+        help_text=_('baz help'),
+    )
+
+    multi = forms.MultipleChoiceField(
+        label=_('multi'),
+        required=False,
+        help_text=_('multi help'),
+        choices=[
+            ('A', 'AAA'),
+            ('B', 'BBB'),
+            ('C', 'CCC'),
+        ],
     )
 
 
@@ -29,7 +50,9 @@ api.django_form = TestForm
 
 @api.handler
 class TestHandler(object):
-    """Documentation."""
+    """Documentation.
+
+    Multiline."""
     allowed_methods = ('POST',)
 
     def __call__(self, *args):

@@ -1,4 +1,9 @@
 
+Verison 0.18
+
+ * Fix packaging bug that excluded django packages
+ * More robust django form handling, with more rigorous tests
+
 Version 0.17
 
  * make acceptable a django app, for better django integration (#60)
