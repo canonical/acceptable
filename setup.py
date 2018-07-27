@@ -3,10 +3,10 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
-VERSION = '0.17'
+VERSION = '0.18'
 
 
 setup(
@@ -17,7 +17,7 @@ setup(
     author_email='online-services@lists.canonical.com',
     url='https://github.com/canonical-ols/acceptable',
     license='LGPLv3',
-    packages=['acceptable'],
+    packages=find_packages(exclude=['examples', '*tests']),
     install_requires=[
         'future',
         'jinja2',

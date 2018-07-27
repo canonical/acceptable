@@ -226,6 +226,21 @@ class AcceptableAPI():
             self.location = location
         self.undocumented = undocumented
 
+    def _set_docs_from_docstring(self, docstring):
+        """Dedent docstring, special casing the first line."""
+        docstring = docstring.strip()
+        if '\n' in docstring:
+            # multiline docstring
+            if docstring[0].isspace():
+                # whole docstring is indented
+                self.docs = textwrap.dedent(docstring)
+            else:
+                # first line not indented, rest maybe
+                first, _, rest = docstring.partition('\n')
+                self.docs = first + '\n' + textwrap.dedent(rest)
+        else:
+            self.docs = docstring
+
     @property
     def methods(self):
         return list(self.options.get('methods', ['GET']))
@@ -285,7 +300,7 @@ class AcceptableAPI():
         if self.introduced_at is None:
             self.introduced_at = introduced_at
         if self.docs is None and self.view_fn.__doc__ is not None:
-            self.docs = self.view_fn.__doc__.strip()
+            self._set_docs_from_docstring(self.view_fn.__doc__)
 
     # legacy view decorator
     def view(self, introduced_at):
