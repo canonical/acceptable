@@ -1,4 +1,9 @@
 
+Version 0.17
+
+ * make acceptable a django app, for better django integration (#60)
+ * support overriding the documentation templates/extension (#61, #62)
+
 Version 0.16
 
  * py2 support (#53)
