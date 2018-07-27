@@ -109,6 +109,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         default=TEMPLATES.get_template('index.md.j2'),
         help='Jinja2 template to render the API index page',
     )
+    render_parser.add_argument(
+        '--extension', '-e',
+        default='md',
+        help='File extension for rendered documentation',
+    )
+
     render_parser.set_defaults(func=render_cmd)
 
     lint_parser = subparser.add_parser(
@@ -244,18 +250,18 @@ def render_cmd(cli_args):
     if not os.path.exists(en_dir):
         os.makedirs(en_dir)
     metadata = load_metadata(cli_args.metadata)
-    name = cli_args.name
-    page = cli_args.page_template
-    index = cli_args.index_template
 
-    for path, content in render_markdown(metadata, name, page, index):
+    for path, content in render_markdown(metadata, cli_args):
         full_path = os.path.join(root_dir, path)
         with open(full_path, 'w', encoding='utf8') as f:
             f.write(content)
 
 
-def render_markdown(metadata, name, page_template, index_template):
-    navigation = [{'title': 'Index', 'location': 'index.md'}]
+def render_markdown(metadata, cli_args):
+    navigation = [{
+        'title': 'Index',
+        'location': 'index.' + cli_args.extension,
+    }]
     api_groups = defaultdict(list)
     sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
@@ -264,13 +270,13 @@ def render_markdown(metadata, name, page_template, index_template):
     for api_name, api in metadata.items():
         if api.get('undocumented', False):
             continue
-        page_file = '{}.md'.format(api_name)
+        page_file = '{}.{}'.format(api_name, cli_args.extension)
         page = {'title': api_name, 'location': page_file}
         api_groups[api.get('api_group')].append(page)
         for version, log in api['changelog'].items():
             changelog[version][api_name] = log
         path = os.path.join('en', page_file)
-        yield path, page_template.render(name=api_name, **api)
+        yield path, cli_args.page_template.render(name=api_name, **api)
 
     if len(api_groups) == 1:
         # only one group, flat navigation
@@ -291,8 +297,13 @@ def render_markdown(metadata, name, page_template, index_template):
                     'children': children,
                 })
 
-    yield os.path.join('en', 'index.md'), index_template.render(
-        service_name=name, changelog=changelog)
+    yield (
+        os.path.join('en', 'index.' + cli_args.extension),
+        cli_args.index_template.render(
+            service_name=cli_args.name,
+            changelog=changelog,
+        )
+    )
 
     # documentation-builder requires yaml metadata files in certain locations
     yield os.path.join('en', 'metadata.yaml'), yaml.safe_dump(
@@ -300,8 +311,14 @@ def render_markdown(metadata, name, page_template, index_template):
         default_flow_style=False,
         encoding=None,
     )
+    site_meta = {
+        'site_title': '{} Documentation: version {}'.format(
+            cli_args.name,
+            version,
+        )
+    }
     yield 'metadata.yaml', yaml.safe_dump(
-        {'site_title': '{} Documentation: version {}'.format(name, version)},
+        site_meta,
         default_flow_style=False,
         encoding=None,
     )

@@ -17,19 +17,3 @@ This is the documentation for version {{ version }} of {{service_name}}.
 {% endfor %}
 
 {% endif %}
-
-{% if request_schema %}
-## Request JSON Schema
-
-```json
-{{request_schema|tojson(4)}}
-```
-{% endif %}
-
-{% if response_schema %}
-## Response JSON Schema
-
-```json
-{{response_schema|tojson(4)}}
-```
-{% endif %}

@@ -85,11 +85,13 @@ def get_field_schema(name, field):
     field_schema = {
         'type': 'string',
         'title': name,
-        'description': str(field.help_text),  # force translation
     }
 
     if field.label:
         field_schema['title'] = str(field.label)  # force translation
+
+    if field.help_text:
+        field_schema['description'] = str(field.help_text)  # force translation
 
     if isinstance(field, (fields.URLField, fields.FileField)):
         field_schema['format'] = 'uri'
