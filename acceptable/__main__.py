@@ -300,6 +300,7 @@ def render_markdown(metadata, cli_args):
     yield (
         os.path.join('en', 'index.' + cli_args.extension),
         cli_args.index_template.render(
+            version=version,
             service_name=cli_args.name,
             changelog=changelog,
         )
