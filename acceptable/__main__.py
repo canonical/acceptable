@@ -273,8 +273,8 @@ def render_markdown(metadata, cli_args):
         page_file = '{}.{}'.format(api_name, cli_args.extension)
         page = {'title': api_name, 'location': page_file}
         api_groups[api.get('api_group')].append(page)
-        for version, log in api['changelog'].items():
-            changelog[version][api_name] = log
+        for changed_version, log in api['changelog'].items():
+            changelog[changed_version][api_name] = log
         path = os.path.join('en', page_file)
         yield path, cli_args.page_template.render(name=api_name, **api)
 
