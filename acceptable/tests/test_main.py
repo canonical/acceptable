@@ -242,14 +242,16 @@ class RenderMarkdownTests(testtools.TestCase):
 
     def metadata(self):
         metadata = OrderedDict()
-        metadata['$version'] = 1
+        metadata['$version'] = 2
         metadata['api1'] = {
             'api_group': None,
             'api_name': 'api1',
             'methods': ['GET'],
             'url': '/',
             'doc': 'doc1',
-            'changelog': {},
+            'changelog': {
+                '1': 'change',
+            },
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
             'introduced_at':  1,
@@ -260,7 +262,9 @@ class RenderMarkdownTests(testtools.TestCase):
             'methods': ['GET'],
             'url': '/',
             'doc': 'doc2',
-            'changelog': {},
+            'changelog': {
+                '2': '2nd change',
+            },
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
             'introduced_at':  1,
@@ -286,7 +290,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
         top_level_md = yaml.safe_load(output['metadata.yaml'])
         self.assertEqual(
-            {'site_title': 'SERVICE Documentation: version 1'},
+            {'site_title': 'SERVICE Documentation: version 2'},
             top_level_md,
         )
 
@@ -348,7 +352,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
         top_level_md = yaml.safe_load(output['metadata.yaml'])
         self.assertEqual(
-            {'site_title': 'SERVICE Documentation: version 1'},
+            {'site_title': 'SERVICE Documentation: version 2'},
             top_level_md,
         )
 
@@ -385,7 +389,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
         top_level_md = yaml.safe_load(output['metadata.yaml'])
         self.assertEqual(
-            {'site_title': 'SERVICE Documentation: version 1'},
+            {'site_title': 'SERVICE Documentation: version 2'},
             top_level_md,
         )
 
