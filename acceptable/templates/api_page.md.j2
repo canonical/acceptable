@@ -5,7 +5,8 @@ table_of_contents: false
 # {{name}} {{ '**(DEPRECATED)**' if deprecated_at else '' }}
 
 {% if deprecated_at %}
-*Deprecated in version {{deprecated_at}}*
+!!! Warning "Deprecated"
+    Deprecated from version {{deprecated_at}}
 {% endif %}
 {% if deprecated_at != introduced_at %}
 *Introduced in version {{introduced_at}}*

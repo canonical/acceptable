@@ -173,7 +173,7 @@ class AcceptableService():
             undocumented=False,
             deprecated_at=None,
             **options):
-        """Add an django API handler to the service.
+        """Add a django API handler to the service.
 
         :param name: This is the name of the django url to use.
 
