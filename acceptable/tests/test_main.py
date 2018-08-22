@@ -332,6 +332,38 @@ class RenderMarkdownTests(testtools.TestCase):
             md
         )
 
+    def test_render_markdown_deprecated_at(self):
+        args = main.parse_args(
+            ['render', 'examples/api.json', '--name=SERVICE'])
+        m = self.metadata()
+        m['api2']['deprecated_at'] = 2
+        iterator = main.render_markdown(m, args)
+        output = OrderedDict((str(k), v) for k, v in iterator)
+
+        self.assertEqual(set([
+                'en/api1.md',
+                'en/api2.md',
+                'en/index.md',
+                'en/metadata.yaml',
+                'metadata.yaml',
+            ]),
+            set(output),
+        )
+
+        md = yaml.safe_load(output['en/metadata.yaml'])
+        self.assertEqual({
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'api1.md',  'title': 'api1'},
+                    {
+                        'title': 'Deprecated APIs',
+                        'children': [{'title': 'api2', 'location': 'api2.md'}],
+                    },
+                ],
+            },
+            md
+        )
+
     def test_render_markdown_multiple_groups(self):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])

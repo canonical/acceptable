@@ -155,7 +155,8 @@ class DjangoAPI(AcceptableAPI):
             introduced_at,
             options={},
             location=None,
-            undocumented=False):
+            undocumented=False,
+            deprecated_at=None):
         # leave url blank, as we can't know it until django has set itself up
         # properly
         super().__init__(
@@ -166,6 +167,7 @@ class DjangoAPI(AcceptableAPI):
             options,
             location,
             undocumented,
+            deprecated_at,
         )
 
         self._form = None

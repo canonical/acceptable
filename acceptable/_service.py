@@ -139,6 +139,7 @@ class AcceptableService():
             name,
             introduced_at=None,
             undocumented=False,
+            deprecated_at=None,
             **options):
         """Add an API to the service.
 
@@ -159,12 +160,19 @@ class AcceptableService():
             introduced_at,
             options,
             undocumented=undocumented,
+            deprecated_at=deprecated_at,
             location=location,
         )
         self.metadata.register_api(self.name, self.group, api)
         return api
 
-    def django_api(self, name, introduced_at, undocumented=False, **options):
+    def django_api(
+            self,
+            name,
+            introduced_at,
+            undocumented=False,
+            deprecated_at=None,
+            **options):
         """Add an django API handler to the service.
 
         :param name: This is the name of the django url to use.
@@ -182,6 +190,7 @@ class AcceptableService():
             options,
             location=location,
             undocumented=undocumented,
+            deprecated_at=deprecated_at,
         )
         self.metadata.register_api(self.name, self.group, api)
         return api
@@ -205,7 +214,8 @@ class AcceptableAPI():
             introduced_at,
             options={},
             location=None,
-            undocumented=False):
+            undocumented=False,
+            deprecated_at=None):
         self.service = service
         self.name = name
         self.url = url
@@ -225,6 +235,7 @@ class AcceptableAPI():
         else:
             self.location = location
         self.undocumented = undocumented
+        self.deprecated_at = deprecated_at
 
     def _set_docs_from_docstring(self, docstring):
         """Dedent docstring, special casing the first line."""

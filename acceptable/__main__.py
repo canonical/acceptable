@@ -232,6 +232,8 @@ def parse_metadata(metadata):
 
             if api.undocumented:
                 api_metadata[name]['undocumented'] = True
+            if api.deprecated_at:
+                api_metadata[name]['deprecated_at'] = api.deprecated_at
 
             locations[name] = {
                 'api': api.location,
@@ -263,6 +265,7 @@ def render_markdown(metadata, cli_args):
         'location': 'index.' + cli_args.extension,
     }]
     api_groups = defaultdict(list)
+    deprecated = []
     sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
     changelog = defaultdict(dict)
@@ -272,9 +275,15 @@ def render_markdown(metadata, cli_args):
             continue
         page_file = '{}.{}'.format(api_name, cli_args.extension)
         page = {'title': api_name, 'location': page_file}
-        api_groups[api.get('api_group')].append(page)
+
+        if api.get('deprecated_at', False):
+            deprecated.append(page)
+        else:
+            api_groups[api.get('api_group')].append(page)
+
         for changed_version, log in api['changelog'].items():
             changelog[changed_version][api_name] = log
+
         path = os.path.join('en', page_file)
         yield path, cli_args.page_template.render(name=api_name, **api)
 
@@ -296,6 +305,12 @@ def render_markdown(metadata, cli_args):
                     'title': group,
                     'children': children,
                 })
+
+    if deprecated:
+        navigation.append({
+            'title': 'Deprecated APIs',
+            'children': list(sorted(deprecated, key=sort_key)),
+        })
 
     yield (
         os.path.join('en', 'index.' + cli_args.extension),
