@@ -1,8 +1,7 @@
 ---
 title: {{name}}{{ ' DEPRECATED' if deprecated_at else '' }}
-table_of_contents: false
 ---
-# {{name}} {{ '**(DEPRECATED)**' if deprecated_at else '' }}
+# {{name}}{{ ' **(DEPRECATED)**' if deprecated_at else '' }}
 
 {% if deprecated_at %}
 !!! Warning "Deprecated"
