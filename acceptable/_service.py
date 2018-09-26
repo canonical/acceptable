@@ -9,11 +9,11 @@ from __future__ import absolute_import
 from builtins import *  # NOQA
 __metaclass__ = type
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import textwrap
 
 from acceptable import _validation
-from acceptable.util import get_callsite_location
+from acceptable.util import get_callsite_location, clean_docstring
 
 
 class InvalidAPI(Exception):
@@ -28,20 +28,23 @@ class APIMetadata():
     """
 
     def __init__(self):
-        self.services = {}
+        self.services = defaultdict(OrderedDict)
         self.api_names = set()
         self.urls = set()
         self._current_version = None
 
-    def register_service(self, name, group):
-        if (name, group) not in self.services:
-            self.services[name, group] = {}
+    def register_service(self, service, group):
+        if group not in self.services[service]:
+            self.services[service][group] = APIGroup(group)
+        return self.services[service][group]
 
-    def register_api(self, name, group, api):
+    def register_api(self, service, group, api):
+        # check for name/url clashes globally
+        # FIXME: this should probably be per service?
         if api.name in self.api_names:
             raise InvalidAPI(
                 'API {} is already registered in service {}'.format(
-                    api.name, name)
+                    api.name, service)
             )
         self.api_names.add(api.name)
 
@@ -50,27 +53,34 @@ class APIMetadata():
             if url_key in self.urls:
                 raise InvalidAPI(
                     'URL {} {} is already in service {}'.format(
-                        '|'.join(api.methods), api.url, name)
+                        '|'.join(api.methods), api.url, service)
                 )
             self.urls.add(url_key)
-        self.services[name, group][api.name] = api
+
+        self.services[service][group][api.name] = api
 
     @property
     def current_version(self):
         if self._current_version is None:
             versions = set()
             for service in self.services.values():
-                for api in service.values():
-                    versions.add(api.introduced_at)
-                    if api._changelog:
-                        versions.add(max(api._changelog))
+                for group in service.values():
+                    for api in group.values():
+                        versions.add(api.introduced_at)
+                        if api._changelog:
+                            versions.add(max(api._changelog))
             if versions:
                 self._current_version = max(versions)
         return self._current_version
 
-    def bind(self, flask_app, name, group=None):
+    def bind(self, flask_app, service, group=None):
         """Bind the service API urls to a flask app."""
-        for name, api in self.services[name, group].items():
+        if group not in self.services[service]:
+            raise RuntimeError(
+                'API group {} does not exist in service {}'.format(
+                    group, service)
+            )
+        for name, api in self.services[service][group].items():
             # only bind APIs that have views associated with them
             if api.view_fn is None:
                 continue
@@ -79,14 +89,20 @@ class APIMetadata():
                     api.url, name, view_func=api.view_fn, **api.options)
 
     def bind_all(self, flask_app):
-        for name, group in self.services:
-            self.bind(flask_app, name, group)
+        for service, groups in self.services.items():
+            for group in groups:
+                self.bind(flask_app, service, group)
 
     def clear(self):
         self.services.clear()
         self.api_names.clear()
         self.urls.clear()
         self._current_version = None
+
+    def groups(self):
+        for service, groups in self.services.items():
+            for group in groups.values():
+                yield service, group
 
 
 _metadata = None
@@ -102,6 +118,16 @@ def get_metadata():
 def clear_metadata():
     global _metadata
     _metadata = None
+
+
+class APIGroup(dict):
+    """Wrapper for collection of APIs, with associated documentation."""
+    def __init__(self, name=None, docs=None):
+        self.name = name
+        if self.name is None:
+            self.name = 'Default'
+        self.docs = docs
+        super().__init__()
 
 
 class AcceptableService():
@@ -128,11 +154,15 @@ class AcceptableService():
             self.metadata = metadata
 
         self.location = get_callsite_location()
+        self.doc = None
+        module = self.location['module']
+        if module and module.__doc__:
+            self.doc = clean_docstring(module.__doc__)
         self.metadata.register_service(name, group)
 
     @property
     def apis(self):
-        return self.metadata.services[self.name, self.group]
+        return self.metadata.services[self.name][self.group]
 
     def api(self,
             url,
@@ -237,21 +267,6 @@ class AcceptableAPI():
         self.undocumented = undocumented
         self.deprecated_at = deprecated_at
 
-    def _set_docs_from_docstring(self, docstring):
-        """Dedent docstring, special casing the first line."""
-        docstring = docstring.strip()
-        if '\n' in docstring:
-            # multiline docstring
-            if docstring[0].isspace():
-                # whole docstring is indented
-                self.docs = textwrap.dedent(docstring)
-            else:
-                # first line not indented, rest maybe
-                first, _, rest = docstring.partition('\n')
-                self.docs = first + '\n' + textwrap.dedent(rest)
-        else:
-            self.docs = docstring
-
     @property
     def methods(self):
         return list(self.options.get('methods', ['GET']))
@@ -311,7 +326,7 @@ class AcceptableAPI():
         if self.introduced_at is None:
             self.introduced_at = introduced_at
         if self.docs is None and self.view_fn.__doc__ is not None:
-            self._set_docs_from_docstring(self.view_fn.__doc__)
+            self.docs = clean_docstring(self.view_fn.__doc__)
 
     # legacy view decorator
     def view(self, introduced_at):

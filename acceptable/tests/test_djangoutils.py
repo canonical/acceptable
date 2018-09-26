@@ -313,18 +313,22 @@ def expected_metadata():
     from django_app.views import TestForm
     return {
         '$version': 1,
-        'test': {
-            'url': '/test',
-            'methods': ['POST'],
-            'request_schema': djangoutil.get_form_schema(TestForm),
-            'response_schema': None,
-            'doc': 'Documentation.\n\nMultiline.',
-            'changelog': {},
-            'introduced_at': 1,
-            'api_name': 'test',
-            'api_group': None,
-            'service': 'django_app',
-        },
+        'Default': {
+            'apis': {
+                'test': {
+                    'url': '/test',
+                    'methods': ['POST'],
+                    'request_schema': djangoutil.get_form_schema(TestForm),
+                    'response_schema': None,
+                    'doc': 'Documentation.\n\nMultiline.',
+                    'changelog': {},
+                    'introduced_at': 1,
+                    'api_name': 'test',
+                    'api_group': 'Default',
+                    'service': 'django_app',
+                },
+            }
+        }
     }
 
 

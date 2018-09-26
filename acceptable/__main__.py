@@ -13,7 +13,6 @@ import argparse
 from collections import defaultdict, OrderedDict
 from importlib import import_module
 import json
-from operator import itemgetter
 import os
 import sys
 
@@ -100,7 +99,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     render_parser.add_argument(
         '--page-template',
         type=TEMPLATES.get_template,
-        default=TEMPLATES.get_template('api_page.md.j2'),
+        default=TEMPLATES.get_template('api_group.md.j2'),
         help='Jinja2 template to render each API',
     )
     render_parser.add_argument(
@@ -215,11 +214,19 @@ def parse_metadata(metadata):
         '$version': metadata.current_version,
     }
     locations = {}
-    for (svc_name, group), apis in metadata.services.items():
-        for name, api in apis.items():
-            api_metadata[name] = {
+
+    for svc_name, group in metadata.groups():
+        group_apis = OrderedDict()
+        group_metadata = {'apis': group_apis}
+        api_metadata[group.name] = group_metadata
+
+        if group.docs is not None:
+            group_metadata['docs'] = group.docs
+
+        for name, api in group.items():
+            group_apis[name] = {
                 'service': svc_name,
-                'api_group': group,
+                'api_group': group.name,
                 'api_name': api.name,
                 'introduced_at': api.introduced_at,
                 'methods': api.methods,
@@ -228,12 +235,10 @@ def parse_metadata(metadata):
                 'doc': api.docs,
                 'changelog': api._changelog,
             }
-            api_metadata[name]['url'] = api.resolve_url()
+            group_apis[name]['url'] = api.resolve_url()
 
             if api.undocumented:
-                api_metadata[name]['undocumented'] = True
-            if api.deprecated_at:
-                api_metadata[name]['deprecated_at'] = api.deprecated_at
+                group_apis[name]['undocumented'] = True
 
             locations[name] = {
                 'api': api.location,
@@ -264,53 +269,28 @@ def render_markdown(metadata, cli_args):
         'title': 'Index',
         'location': 'index.' + cli_args.extension,
     }]
-    api_groups = defaultdict(list)
-    deprecated = []
-    sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
     changelog = defaultdict(dict)
 
-    for api_name, api in metadata.items():
-        if api.get('undocumented', False):
-            continue
-        page_file = '{}.{}'.format(api_name, cli_args.extension)
-        page = {'title': api_name, 'location': page_file}
+    for group, apis in metadata.items():
+        for api in apis.values():
+            # collect global changelog
+            for changed_version, log in api['changelog'].items():
+                changelog[changed_version][api['api_name']] = log
 
-        if api.get('deprecated_at', False):
-            deprecated.append(page)
-        else:
-            api_groups[api.get('api_group')].append(page)
-
-        for changed_version, log in api['changelog'].items():
-            changelog[changed_version][api_name] = log
-
-        path = os.path.join('en', page_file)
-        yield path, cli_args.page_template.render(name=api_name, **api)
-
-    if len(api_groups) == 1:
-        # only one group, flat navigation
-        navigation.extend(
-            sorted(list(api_groups.values())[0], key=sort_key)
+        all_undocumented = all(
+            api.get('undocumented', False) for api in apis.values()
         )
-    else:
-        default_group = api_groups.pop(None, None)
-        if default_group is not None:
-            navigation.extend(
-                sorted(default_group, key=sort_key),
-            )
-        for group in sorted(api_groups):
-            children = list(sorted(api_groups[group], key=sort_key))
-            if children:
-                navigation.append({
-                    'title': group,
-                    'children': children,
-                })
 
-    if deprecated:
-        navigation.append({
-            'title': 'Deprecated APIs',
-            'children': list(sorted(deprecated, key=sort_key)),
-        })
+        if not all_undocumented:
+            page_file = '{}.{}'.format(group, cli_args.extension)
+            page = {'title': group, 'location': page_file}
+            path = os.path.join('en', page_file)
+            navigation.append(page)
+            yield path, cli_args.page_template.render(
+                group_name=group,
+                group_apis=apis,
+            )
 
     yield (
         os.path.join('en', 'index.' + cli_args.extension),

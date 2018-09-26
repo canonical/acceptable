@@ -54,20 +54,16 @@ class LintTests(LintTestCase):
         self.assertEqual(msgs[0].level, lint.WARNING)
         self.assertEqual('doc', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
-        self.assertEqual(
-            {'filename': path, 'lineno': 6},
-            msgs[0].location,
-        )
+        self.assertEqual(msgs[0].location['filename'], path)
+        self.assertEqual(msgs[0].location['lineno'], 6)
 
         # test with new api
         msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('doc', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
-        self.assertEqual(
-            {'filename': path, 'lineno': 6},
-            msgs[0].location,
-        )
+        self.assertEqual(msgs[0].location['filename'], path)
+        self.assertEqual(msgs[0].location['lineno'], 6)
 
     def test_missing_introduced_at(self):
         metadata, locations, path = self.get_metadata("""
@@ -84,10 +80,8 @@ class LintTests(LintTestCase):
         self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual('introduced_at', msgs[0].name),
         self.assertEqual('api', msgs[0].api_name),
-        self.assertEqual(
-            {'filename': path, 'lineno': 3},
-            msgs[0].location,
-        )
+        self.assertEqual(msgs[0].location['filename'], path)
+        self.assertEqual(msgs[0].location['lineno'], 3)
 
     def test_changed_introduced_at(self):
         old, _, _ = self.get_metadata(module='old', code="""
