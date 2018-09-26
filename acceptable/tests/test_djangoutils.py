@@ -19,7 +19,6 @@ from acceptable._service import (
     clear_metadata,
     get_metadata,
 )
-from acceptable.__main__ import parse_metadata
 from acceptable import djangoutil
 
 
@@ -336,7 +335,7 @@ class TestDjangoAPI(TestCase):
 
     def test_example_app_works(self):
         metadata = get_metadata()
-        api, _ = parse_metadata(metadata)
+        api, _ = metadata.serialize()
         self.assertEqual(expected_metadata(), api)
 
 

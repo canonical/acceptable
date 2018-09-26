@@ -127,7 +127,7 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
         [svc_mod] = main.import_metadata(['service'])
-        metadata, locations = main.parse_metadata(get_metadata())
+        metadata, locations = get_metadata().serialize()
 
         self.assertEqual({
             '$version': 4,
@@ -203,7 +203,7 @@ class MetadataTests(testtools.TestCase):
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
         [svc_mod] = main.import_metadata(['service'])
-        metadata, locations = main.parse_metadata(get_metadata())
+        metadata, locations = get_metadata().serialize()
 
         self.assertEqual({
             '$version': 4,

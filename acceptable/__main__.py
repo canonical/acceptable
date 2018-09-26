@@ -176,7 +176,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 def metadata_cmd(cli_args):
     import_metadata(cli_args.modules)
-    current, _ = parse_metadata(get_metadata())
+    current, _ = get_metadata().serialize()
     print(json.dumps(current, indent=2, sort_keys=True))
 
 
@@ -205,50 +205,6 @@ def load_metadata(stream):
         raise_from(err, e)
     finally:
         stream.close()
-
-
-def parse_metadata(metadata):
-    """Parse the imported metadata into JSON-serializable object."""
-    api_metadata = {
-        # $ char makes this come first in sort ordering
-        '$version': metadata.current_version,
-    }
-    locations = {}
-
-    for svc_name, group in metadata.groups():
-        group_apis = OrderedDict()
-        group_metadata = {'apis': group_apis}
-        api_metadata[group.name] = group_metadata
-
-        if group.docs is not None:
-            group_metadata['docs'] = group.docs
-
-        for name, api in group.items():
-            group_apis[name] = {
-                'service': svc_name,
-                'api_group': group.name,
-                'api_name': api.name,
-                'introduced_at': api.introduced_at,
-                'methods': api.methods,
-                'request_schema': api.request_schema,
-                'response_schema': api.response_schema,
-                'doc': api.docs,
-                'changelog': api._changelog,
-            }
-            group_apis[name]['url'] = api.resolve_url()
-
-            if api.undocumented:
-                group_apis[name]['undocumented'] = True
-
-            locations[name] = {
-                'api': api.location,
-                'request_schema': api._request_schema_location,
-                'response_schema': api._response_schema_location,
-                'changelog': api._changelog_locations,
-                'view': api.view_fn_location,
-            }
-
-    return api_metadata, locations
 
 
 def render_cmd(cli_args):
@@ -323,7 +279,7 @@ def render_markdown(metadata, cli_args):
 def lint_cmd(cli_args, stream=sys.stdout):
     metadata = load_metadata(cli_args.metadata)
     import_metadata(cli_args.modules)
-    current, locations = parse_metadata(get_metadata())
+    current, locations = get_metadata().serialize()
 
     has_errors = False
     display_level = lint.WARNING

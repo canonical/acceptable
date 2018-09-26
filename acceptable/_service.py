@@ -104,6 +104,49 @@ class APIMetadata():
             for group in groups.values():
                 yield service, group
 
+    def serialize(self):
+        """Serialize into JSONable dict, and associated locations data."""
+        api_metadata = {
+            # $ char makes this come first in sort ordering
+            '$version': self.current_version,
+        }
+        locations = {}
+
+        for svc_name, group in self.groups():
+            group_apis = OrderedDict()
+            group_metadata = {'apis': group_apis}
+            api_metadata[group.name] = group_metadata
+
+            if group.docs is not None:
+                group_metadata['docs'] = group.docs
+
+            for name, api in group.items():
+                group_apis[name] = {
+                    'service': svc_name,
+                    'api_group': group.name,
+                    'api_name': api.name,
+                    'introduced_at': api.introduced_at,
+                    'methods': api.methods,
+                    'request_schema': api.request_schema,
+                    'response_schema': api.response_schema,
+                    'doc': api.docs,
+                    'changelog': api._changelog,
+                }
+                group_apis[name]['url'] = api.resolve_url()
+
+                if api.undocumented:
+                    group_apis[name]['undocumented'] = True
+
+                locations[name] = {
+                    'api': api.location,
+                    'request_schema': api._request_schema_location,
+                    'response_schema': api._response_schema_location,
+                    'changelog': api._changelog_locations,
+                    'view': api.view_fn_location,
+                }
+
+        return api_metadata, locations
+
 
 _metadata = None
 
