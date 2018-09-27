@@ -13,7 +13,6 @@ import argparse
 from collections import defaultdict, OrderedDict
 from importlib import import_module
 import json
-from operator import itemgetter
 import os
 import sys
 
@@ -100,7 +99,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     render_parser.add_argument(
         '--page-template',
         type=TEMPLATES.get_template,
-        default=TEMPLATES.get_template('api_page.md.j2'),
+        default=TEMPLATES.get_template('api_group.md.j2'),
         help='Jinja2 template to render each API',
     )
     render_parser.add_argument(
@@ -177,7 +176,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 def metadata_cmd(cli_args):
     import_metadata(cli_args.modules)
-    current, _ = parse_metadata(get_metadata())
+    current, _ = get_metadata().serialize()
     print(json.dumps(current, indent=2, sort_keys=True))
 
 
@@ -208,44 +207,6 @@ def load_metadata(stream):
         stream.close()
 
 
-def parse_metadata(metadata):
-    """Parse the imported metadata into JSON-serializable object."""
-    api_metadata = {
-        # $ char makes this come first in sort ordering
-        '$version': metadata.current_version,
-    }
-    locations = {}
-    for (svc_name, group), apis in metadata.services.items():
-        for name, api in apis.items():
-            api_metadata[name] = {
-                'service': svc_name,
-                'api_group': group,
-                'api_name': api.name,
-                'introduced_at': api.introduced_at,
-                'methods': api.methods,
-                'request_schema': api.request_schema,
-                'response_schema': api.response_schema,
-                'doc': api.docs,
-                'changelog': api._changelog,
-            }
-            api_metadata[name]['url'] = api.resolve_url()
-
-            if api.undocumented:
-                api_metadata[name]['undocumented'] = True
-            if api.deprecated_at:
-                api_metadata[name]['deprecated_at'] = api.deprecated_at
-
-            locations[name] = {
-                'api': api.location,
-                'request_schema': api._request_schema_location,
-                'response_schema': api._response_schema_location,
-                'changelog': api._changelog_locations,
-                'view': api.view_fn_location,
-            }
-
-    return api_metadata, locations
-
-
 def render_cmd(cli_args):
     root_dir = cli_args.dir
     en_dir = os.path.join(root_dir, 'en')
@@ -264,53 +225,41 @@ def render_markdown(metadata, cli_args):
         'title': 'Index',
         'location': 'index.' + cli_args.extension,
     }]
-    api_groups = defaultdict(list)
-    deprecated = []
-    sort_key = itemgetter('title')
     version = metadata.pop('$version', None)
     changelog = defaultdict(dict)
 
-    for api_name, api in metadata.items():
-        if api.get('undocumented', False):
-            continue
-        page_file = '{}.{}'.format(api_name, cli_args.extension)
-        page = {'title': api_name, 'location': page_file}
+    for group in metadata:
+        apis = metadata[group]['apis']
+        for api in apis.values():
+            # collect global changelog
+            for changed_version, log in api.get('changelog', {}).items():
+                changelog[changed_version][api['api_name']] = log
 
-        if api.get('deprecated_at', False):
-            deprecated.append(page)
-        else:
-            api_groups[api.get('api_group')].append(page)
-
-        for changed_version, log in api['changelog'].items():
-            changelog[changed_version][api_name] = log
-
-        path = os.path.join('en', page_file)
-        yield path, cli_args.page_template.render(name=api_name, **api)
-
-    if len(api_groups) == 1:
-        # only one group, flat navigation
-        navigation.extend(
-            sorted(list(api_groups.values())[0], key=sort_key)
+        any_documented = any(
+            not api.get('undocumented', False) for api in apis.values()
         )
-    else:
-        default_group = api_groups.pop(None, None)
-        if default_group is not None:
-            navigation.extend(
-                sorted(default_group, key=sort_key),
-            )
-        for group in sorted(api_groups):
-            children = list(sorted(api_groups[group], key=sort_key))
-            if children:
-                navigation.append({
-                    'title': group,
-                    'children': children,
-                })
 
-    if deprecated:
-        navigation.append({
-            'title': 'Deprecated APIs',
-            'children': list(sorted(deprecated, key=sort_key)),
-        })
+        if any_documented:
+            page_file = '{}.{}'.format(group, cli_args.extension)
+            page = {'title': group.title(), 'location': page_file}
+            navigation.append(page)
+
+            group_apis = []
+            deprecated_apis = []
+            for api in apis.values():
+                if api.get('deprecated_at', False):
+                    deprecated_apis.append(api)
+                else:
+                    group_apis.append(api)
+
+            path = os.path.join('en', page_file)
+
+            yield path, cli_args.page_template.render(
+                group_name=group,
+                group_apis=group_apis,
+                deprecated_apis=deprecated_apis,
+                group_doc=metadata[group].get('docs', ''),
+            )
 
     yield (
         os.path.join('en', 'index.' + cli_args.extension),
@@ -343,7 +292,7 @@ def render_markdown(metadata, cli_args):
 def lint_cmd(cli_args, stream=sys.stdout):
     metadata = load_metadata(cli_args.metadata)
     import_metadata(cli_args.modules)
-    current, locations = parse_metadata(get_metadata())
+    current, locations = get_metadata().serialize()
 
     has_errors = False
     display_level = lint.WARNING

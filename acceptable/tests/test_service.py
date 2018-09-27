@@ -61,7 +61,8 @@ class APIMetadataTestCase(TestCase):
     def test_register_api_allow_different_methods(self):
         metadata = APIMetadata()
         api1 = AcceptableAPI(None, 'api1', '/api', 1)
-        api2 = AcceptableAPI(None, 'api2', '/api', 1, options={'methods': ['POST']})
+        api2 = AcceptableAPI(
+            None, 'api2', '/api', 1, options={'methods': ['POST']})
         metadata.register_service('test', None)
         metadata.register_service('other', None)
         metadata.register_api('test', None, api1)
@@ -73,16 +74,22 @@ class APIMetadataTestCase(TestCase):
 
         metadata.register_service('test', None)
         self.assertEqual(
-            metadata.services['test', None], {})
+            {},
+            metadata.services['test'][None],
+        )
 
         metadata.register_api('test', None, api)
         self.assertEqual(
-            metadata.services['test', None], {'api': api})
+            {'api': api},
+            metadata.services['test'][None],
+        )
 
         # register service again, shouldn't remove any apis
         metadata.register_service('test', None)
         self.assertEqual(
-            metadata.services['test', None], {'api': api})
+            {'api': api},
+            metadata.services['test'][None],
+        )
 
     def test_bind_works(self):
         app = Flask(__name__)
@@ -131,9 +138,10 @@ class ServiceFixture(Fixture):
     def _setUp(self):
         self.metadata = APIMetadata()
         self.service = AcceptableService('service', metadata=self.metadata)
-        foo_api = self.service.api('/foo', 'foo_api', methods=['POST'])
+        foo_api = self.service.api(
+            '/foo', 'foo_api', methods=['POST'], introduced_at=1)
 
-        @foo_api.view(introduced_at='1.0')
+        @foo_api
         def foo():
             return "foo", 200
 
@@ -155,7 +163,7 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(api.name, 'blah')
         self.assertEqual(api.methods, ['GET'])
         self.assertEqual(
-            api, fixture.metadata.services['service', None]['blah'])
+            api, fixture.metadata.services['service'][None]['blah'])
 
     def test_acceptable_api_explicit_docs_works(self):
         fixture = self.useFixture(ServiceFixture())

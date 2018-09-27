@@ -1,3 +1,7 @@
+Version 0.19
+
+ * fix version bug in rendering
+ * support deprecated apis
 
 Verison 0.18
 

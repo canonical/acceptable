@@ -14,6 +14,7 @@ import django
 from django.forms import widgets, fields
 
 from acceptable._service import AcceptableAPI
+from acceptable.util import clean_docstring
 
 logger = logging.getLogger('acceptable')
 _urlmap = None
@@ -216,5 +217,5 @@ class DjangoAPI(AcceptableAPI):
         self.handler_class = handler_class
         # we take the docstring from the handler class, not the methods
         if self.docs is None and handler_class.__doc__:
-            self._set_docs_from_docstring(handler_class.__doc__)
+            self.docs = clean_docstring(handler_class.__doc__)
         return handler_class

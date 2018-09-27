@@ -19,7 +19,6 @@ from acceptable._service import (
     clear_metadata,
     get_metadata,
 )
-from acceptable.__main__ import parse_metadata
 from acceptable import djangoutil
 
 
@@ -313,18 +312,22 @@ def expected_metadata():
     from django_app.views import TestForm
     return {
         '$version': 1,
-        'test': {
-            'url': '/test',
-            'methods': ['POST'],
-            'request_schema': djangoutil.get_form_schema(TestForm),
-            'response_schema': None,
-            'doc': 'Documentation.\n\nMultiline.',
-            'changelog': {},
-            'introduced_at': 1,
-            'api_name': 'test',
-            'api_group': None,
-            'service': 'django_app',
-        },
+        'Default': {
+            'apis': {
+                'test': {
+                    'url': '/test',
+                    'methods': ['POST'],
+                    'request_schema': djangoutil.get_form_schema(TestForm),
+                    'response_schema': None,
+                    'doc': 'Documentation.\n\nMultiline.',
+                    'changelog': {},
+                    'introduced_at': 1,
+                    'api_name': 'test',
+                    'api_group': 'Default',
+                    'service': 'django_app',
+                },
+            }
+        }
     }
 
 
@@ -332,7 +335,7 @@ class TestDjangoAPI(TestCase):
 
     def test_example_app_works(self):
         metadata = get_metadata()
-        api, _ = parse_metadata(metadata)
+        api, _ = metadata.serialize()
         self.assertEqual(expected_metadata(), api)
 
 

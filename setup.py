@@ -6,7 +6,7 @@
 from setuptools import find_packages, setup
 
 
-VERSION = '0.18'
+VERSION = '0.19'
 
 
 setup(
@@ -18,6 +18,7 @@ setup(
     url='https://github.com/canonical-ols/acceptable',
     license='LGPLv3',
     packages=find_packages(exclude=['examples', '*tests']),
+    long_description=open('README.rst').read(),
     install_requires=[
         'future',
         'jinja2',

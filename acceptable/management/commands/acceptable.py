@@ -18,7 +18,7 @@ from django.core.management.base import BaseCommand, CommandParser
 
 from acceptable import get_metadata
 from acceptable.djangoutil import get_urlmap
-from acceptable.__main__ import parse_metadata, load_metadata
+from acceptable.__main__ import load_metadata
 
 
 class Command(BaseCommand):
@@ -57,7 +57,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         get_urlmap()  # this imports all urls and initialises the url mappings
         func = options['func']
-        current, _ = parse_metadata(get_metadata())
+        current, _ = get_metadata().serialize()
         func(options, current)
 
     def metadata(self, options, current):

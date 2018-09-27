@@ -78,17 +78,21 @@ def metadata_lint(old, new, locations):
     old.pop('$version', None)
     new.pop('$version', None)
 
-    for removed in set(old) - set(new):
-        yield LintError('', 'api removed', api_name=removed)
+    for old_group_name in old:
+        if old_group_name not in new:
+            yield LintError('', 'api group removed', api_name=old_group_name)
 
-    for name, api in new.items():
-        old_api = old.get(name, {})
-        api_locations = locations[name]
-        for message in lint_api(name, old_api, api, api_locations):
-            message.api_name = name
-            if message.location is None:
-                message.location = api_locations['api']
-            yield message
+    for group_name, new_group in new.items():
+        old_group = old.get(group_name, {'apis': {}})
+
+        for name, api in new_group['apis'].items():
+            old_api = old_group['apis'].get(name, {})
+            api_locations = locations[name]
+            for message in lint_api(name, old_api, api, api_locations):
+                message.api_name = name
+                if message.location is None:
+                    message.location = api_locations['api']
+                yield message
 
 
 def lint_api(api_name, old, new, locations):

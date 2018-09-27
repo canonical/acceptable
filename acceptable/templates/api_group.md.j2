@@ -1,0 +1,56 @@
+---
+title: {{group_name}}
+---
+ 
+# {{group_name|title}}
+{{ group_doc|default('') }}
+
+{% for api in group_apis + deprecated_apis %}
+
+{% if not api['undocumented']|default(False) %}
+
+## {{api.api_name}}{{ ' **(DEPRECATED)**' if api.deprecated_at else '' }}
+
+{% if api.deprecated_at %}
+!!! Warning "Deprecated"
+    Deprecated from version {{api.deprecated_at}}
+{% endif %}
+
+{% if api.deprecated_at != api.introduced_at %}
+*Introduced in version {{api.introduced_at}}*
+{% endif %}
+
+Summary: **{{api.methods|join('|')}} {{api.url|e}}**
+
+{% if api.doc %}
+{{api.doc}}
+{% else %}
+No documentation yet.
+{% endif %}
+
+{% if api.changelog %}
+### {{api.api_name}} changelog
+
+{% for version, log in api.changelog.items()| sort(reverse=True) %}
+ * Version {{ version }}: {{ log }}
+{% endfor %}
+
+{% endif %}
+
+{% if api.request_schema %}
+### Request JSON Schema
+
+```json
+{{api.request_schema|tojson(4)}}
+```
+{% endif %}
+
+{% if api.response_schema %}
+### Response JSON Schema
+
+```json
+{{api.response_schema|tojson(4)}}
+```
+{% endif %}
+{% endif %}
+{% endfor %}

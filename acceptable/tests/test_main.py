@@ -125,46 +125,62 @@ class MetadataTests(testtools.TestCase):
             def my_view():
                 "Documentation."
         """
+
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
-        main.import_metadata(['service'])
-        metadata, locations = main.parse_metadata(get_metadata())
+        [svc_mod] = main.import_metadata(['service'])
+        metadata, locations = get_metadata().serialize()
 
         self.assertEqual({
             '$version': 4,
-            'root': {
-                'service': 'myservice',
-                'api_group': 'group',
-                'api_name': 'root',
-                'methods': ['GET'],
-                'url': '/',
-                'doc': "Documentation.",
-                'changelog': {
-                    4: 'changelog',
-                },
-                'request_schema': {'type': 'object'},
-                'response_schema': {'type': 'object'},
-                'introduced_at':  1,
+            'group': {
+                'apis': {
+                    'root': {
+                        'service': 'myservice',
+                        'api_group': 'group',
+                        'api_name': 'root',
+                        'methods': ['GET'],
+                        'url': '/',
+                        'doc': "Documentation.",
+                        'changelog': {
+                            4: 'changelog',
+                        },
+                        'request_schema': {'type': 'object'},
+                        'response_schema': {'type': 'object'},
+                        'introduced_at':  1,
+                    }
+                }
             }},
             metadata,
         )
 
         self.assertEqual({
             'root': {
-                'api': {'filename': fixture.path, 'lineno': 4},
+                'api': {
+                    'filename': fixture.path,
+                    'lineno': 4,
+                    'module': svc_mod,
+                },
                 'changelog': {
-                    4: {'filename': fixture.path, 'lineno': 7},
+                    4: {
+                        'filename': fixture.path,
+                        'lineno': 7,
+                        'module': svc_mod,
+                    },
                 },
                 'request_schema': {
                     'filename': fixture.path,
                     'lineno': 5,
+                    'module': svc_mod,
                 },
                 'response_schema': {
                     'filename': fixture.path,
                     'lineno': 6,
+                    'module': svc_mod,
                 },
                 'view': {
                     'filename': fixture.path,
                     'lineno': 10,
+                    'module': svc_mod,
                 },
             }},
             locations,
@@ -187,45 +203,60 @@ class MetadataTests(testtools.TestCase):
         """
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
-        main.import_metadata(['service'])
-        metadata, locations = main.parse_metadata(get_metadata())
+        [svc_mod] = main.import_metadata(['service'])
+        metadata, locations = get_metadata().serialize()
 
         self.assertEqual({
             '$version': 4,
-            'root': {
-                'service': 'service',
-                'api_group': None,
-                'api_name': 'root',
-                'methods': ['GET'],
-                'url': '/',
-                'doc': "Documentation.",
-                'changelog': {
-                    4: 'changelog',
-                },
-                'request_schema': {'type': 'object'},
-                'response_schema': {'type': 'object'},
-                'introduced_at':  1,
+            'Default': {
+                'apis': {
+                    'root': {
+                        'service': 'service',
+                        'api_group': 'Default',
+                        'api_name': 'root',
+                        'methods': ['GET'],
+                        'url': '/',
+                        'doc': "Documentation.",
+                        'changelog': {
+                            4: 'changelog',
+                        },
+                        'request_schema': {'type': 'object'},
+                        'response_schema': {'type': 'object'},
+                        'introduced_at':  1,
+                    }
+                }
             }},
             metadata,
         )
 
         self.assertEqual({
             'root': {
-                'api': {'filename': fixture.path, 'lineno': 4},
+                'api': {
+                    'filename': fixture.path,
+                    'lineno': 4,
+                    'module': svc_mod,
+                },
                 'changelog': {
-                    4: {'filename': fixture.path, 'lineno': 5},
+                    4: {
+                        'filename': fixture.path,
+                        'lineno': 5,
+                        'module': svc_mod,
+                    }
                 },
                 'request_schema': {
                     'filename': fixture.path,
                     'lineno': 8,
+                    'module': svc_mod,
                 },
                 'response_schema': {
                     'filename': fixture.path,
                     'lineno': 9,
+                    'module': svc_mod,
                 },
                 'view': {
                     'filename': fixture.path,
                     'lineno': 10,
+                    'module': svc_mod,
                 },
             }},
             locations,
@@ -237,14 +268,15 @@ def builder_installed():
 
 
 class RenderMarkdownTests(testtools.TestCase):
-    page = main.TEMPLATES.get_template('api_page.md.j2')
+    page = main.TEMPLATES.get_template('api_group.md.j2')
     index = main.TEMPLATES.get_template('index.md.j2')
 
     def metadata(self):
         metadata = OrderedDict()
         metadata['$version'] = 2
-        metadata['api1'] = {
-            'api_group': None,
+        metadata['group'] = dict(apis=dict())
+        metadata['group']['apis']['api1'] = {
+            'api_group': 'group',
             'api_name': 'api1',
             'methods': ['GET'],
             'url': '/',
@@ -256,8 +288,8 @@ class RenderMarkdownTests(testtools.TestCase):
             'response_schema': {'response_schema': 2},
             'introduced_at':  1,
         }
-        metadata['api2'] = {
-            'api_group': None,
+        metadata['group']['apis']['api2'] = {
+            'api_group': 'group',
             'api_name': 'api1',
             'methods': ['GET'],
             'url': '/',
@@ -279,8 +311,7 @@ class RenderMarkdownTests(testtools.TestCase):
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
-                'en/api1.md',
-                'en/api2.md',
+                'en/group.md',
                 'en/index.md',
                 'en/metadata.yaml',
                 'metadata.yaml',
@@ -298,8 +329,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'api1.md',  'title': 'api1'},
-                    {'location': 'api2.md',  'title': 'api2'},
+                    {'location': 'group.md', 'title': 'Group'},
                 ],
             },
             md
@@ -309,12 +339,12 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         m = self.metadata()
-        m['api2']['undocumented'] = True
+        m['group']['apis']['api2']['undocumented'] = True
         iterator = main.render_markdown(m, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
-                'en/api1.md',
+                'en/group.md',
                 'en/index.md',
                 'en/metadata.yaml',
                 'metadata.yaml',
@@ -322,11 +352,13 @@ class RenderMarkdownTests(testtools.TestCase):
             set(output),
         )
 
+        self.assertNotIn('api2', output['en/group.md'])
+
         md = yaml.safe_load(output['en/metadata.yaml'])
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'api1.md',  'title': 'api1'},
+                    {'location': 'group.md', 'title': 'Group'},
                 ],
             },
             md
@@ -336,13 +368,12 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         m = self.metadata()
-        m['api2']['deprecated_at'] = 2
+        m['group']['apis']['api2']['deprecated_at'] = 2
         iterator = main.render_markdown(m, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
-                'en/api1.md',
-                'en/api2.md',
+                'en/group.md',
                 'en/index.md',
                 'en/metadata.yaml',
                 'metadata.yaml',
@@ -354,11 +385,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'api1.md',  'title': 'api1'},
-                    {
-                        'title': 'Deprecated APIs',
-                        'children': [{'title': 'api2', 'location': 'api2.md'}],
-                    },
+                    {'location': 'group.md', 'title': 'Group'},
                 ],
             },
             md
@@ -368,13 +395,17 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         metadata = self.metadata()
-        metadata['api2']['api_group'] = 'group'
+        metadata['group2'] = {
+            'apis': {
+                'api2': metadata['group']['apis'].pop('api2')
+            }
+        }
         iterator = main.render_markdown(metadata, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
-                'en/api1.md',
-                'en/api2.md',
+                'en/group.md',
+                'en/group2.md',
                 'en/index.md',
                 'en/metadata.yaml',
                 'metadata.yaml',
@@ -392,10 +423,8 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'api1.md',  'title': 'api1'},
-                    {'title': 'group', 'children': [
-                        {'location': 'api2.md',  'title': 'api2'}
-                    ]}
+                    {'location': 'group.md', 'title': 'Group'},
+                    {'location': 'group2.md', 'title': 'Group2'},
                 ],
             },
             md
@@ -405,13 +434,17 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         metadata = self.metadata()
-        metadata['api2']['api_group'] = 'group'
-        metadata['api2']['undocumented'] = True
+        metadata['group2'] = {
+            'apis': {
+                'api2': metadata['group']['apis'].pop('api2')
+            }
+        }
+        metadata['group2']['apis']['api2']['undocumented'] = True
         iterator = main.render_markdown(metadata, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
         self.assertEqual(set([
-                'en/api1.md',
+                'en/group.md',
                 'en/index.md',
                 'en/metadata.yaml',
                 'metadata.yaml',
@@ -429,7 +462,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'api1.md',  'title': 'api1'},
+                    {'location': 'group.md',  'title': 'Group'},
                 ],
             },
             md
@@ -457,9 +490,7 @@ class RenderMarkdownTests(testtools.TestCase):
                 main.render_cmd(args)
 
         p = partial(os.path.join, markdown_dir.path)
-        with open(p('en/api1.md')) as f:
-            self.assertEqual(f.read(), 'TEMPLATE')
-        with open(p('en/api2.md')) as f:
+        with open(p('en/group.md')) as f:
             self.assertEqual(f.read(), 'TEMPLATE')
         with open(p('en/index.md')) as f:
             self.assertEqual(f.read(), 'TEMPLATE')
@@ -497,8 +528,7 @@ class RenderMarkdownTests(testtools.TestCase):
             raise
 
         p = partial(os.path.join, html_dir.path)
-        self.assertTrue(os.path.exists(p('en/api1.html')))
-        self.assertTrue(os.path.exists(p('en/api2.html')))
+        self.assertTrue(os.path.exists(p('en/group.html')))
         self.assertTrue(os.path.exists(p('en/index.html')))
 
 

@@ -1,34 +1,38 @@
 {
-  "$version": 2,
-  "foo": {
-    "api_name": "foo",
-    "changelog": {},
-    "doc": "Documentation goes here.",
-    "introduced_at": 2,
-    "methods": [
-      "GET"
-    ],
-    "request_schema": {
-      "properties": {
-        "foo": {
-          "description": "The foo thing.",
-          "type": "string"
-        },
-        "baz": {
-          "type": "object"
+    "$version": 2,
+    "Default": {
+        "apis": {
+            "foo": {
+                "api_name": "foo",
+                "changelog": {},
+                "doc": "Documentation goes here.",
+                "introduced_at": 2,
+                "methods": [
+                    "GET"
+                ],
+                "request_schema": {
+                    "properties": {
+                        "foo": {
+                        "description": "The foo thing.",
+                        "type": "string"
+                        },
+                        "baz": {
+                        "type": "object"
+                        }
+                    },
+                    "required": ["foo"],
+                    "type": "object"
+                },
+                "response_schema": {
+                    "properties": {
+                        "foo_result": {
+                        "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "url": "/foo"
+            }
         }
-      },
-      "required": ["foo"],
-      "type": "object"
-    },
-    "response_schema": {
-      "properties": {
-        "foo_result": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "url": "/foo"
-  }
+    }
 }
