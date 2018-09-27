@@ -235,15 +235,15 @@ def render_markdown(metadata, cli_args):
             for changed_version, log in api.get('changelog', {}).items():
                 changelog[changed_version][api['api_name']] = log
 
-        all_undocumented = all(
-            api.get('undocumented', False) for api in apis.values()
+        any_documented = any(
+            not api.get('undocumented', False) for api in apis.values()
         )
 
-        if not all_undocumented:
+        if any_documented:
             page_file = '{}.{}'.format(group, cli_args.extension)
             page = {'title': group.title(), 'location': page_file}
-            path = os.path.join('en', page_file)
             navigation.append(page)
+
             group_apis = []
             deprecated_apis = []
             for api in apis.values():
@@ -251,6 +251,8 @@ def render_markdown(metadata, cli_args):
                     deprecated_apis.append(api)
                 else:
                     group_apis.append(api)
+
+            path = os.path.join('en', page_file)
 
             yield path, cli_args.page_template.render(
                 group_name=group,
