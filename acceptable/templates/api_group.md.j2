@@ -3,9 +3,11 @@ title: {{group_name}}
 ---
  
 # {{group_name|title}}
-{{ group_doc }}
+{{ group_doc|default('') }}
 
-{% for api in group_apis %}
+{% for api in group_apis + deprecated_apis %}
+
+{% if not api['undocumented']|default(False) %}
 
 ## {{api.api_name}}{{ ' **(DEPRECATED)**' if api.deprecated_at else '' }}
 
@@ -13,6 +15,7 @@ title: {{group_name}}
 !!! Warning "Deprecated"
     Deprecated from version {{api.deprecated_at}}
 {% endif %}
+
 {% if api.deprecated_at != api.introduced_at %}
 *Introduced in version {{api.introduced_at}}*
 {% endif %}
@@ -48,5 +51,6 @@ No documentation yet.
 ```json
 {{api.response_schema|tojson(4)}}
 ```
+{% endif %}
 {% endif %}
 {% endfor %}

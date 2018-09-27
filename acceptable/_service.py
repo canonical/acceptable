@@ -33,9 +33,13 @@ class APIMetadata():
         self.urls = set()
         self._current_version = None
 
-    def register_service(self, service, group):
+    def register_service(self, service, group, docs=None):
         if group not in self.services[service]:
-            self.services[service][group] = APIGroup(group)
+            self.services[service][group] = APIGroup(group, docs)
+        elif docs is not None:
+            additional_docs = '\n' + clean_docstring(docs)
+            self.services[service][group].docs += additional_docs
+
         return self.services[service][group]
 
     def register_api(self, service, group, api):
@@ -136,6 +140,8 @@ class APIMetadata():
 
                 if api.undocumented:
                     group_apis[name]['undocumented'] = True
+                if api.deprecated_at is not None:
+                    group_apis[name]['deprecated_at'] = api.deprecated_at
 
                 locations[name] = {
                     'api': api.location,
@@ -199,9 +205,10 @@ class AcceptableService():
         self.location = get_callsite_location()
         self.doc = None
         module = self.location['module']
+        docs = None
         if module and module.__doc__:
-            self.doc = clean_docstring(module.__doc__)
-        self.metadata.register_service(name, group)
+            docs = clean_docstring(module.__doc__)
+        self.metadata.register_service(name, group, docs)
 
     @property
     def apis(self):

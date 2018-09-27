@@ -228,10 +228,11 @@ def render_markdown(metadata, cli_args):
     version = metadata.pop('$version', None)
     changelog = defaultdict(dict)
 
-    for group, apis in metadata.items():
+    for group in metadata:
+        apis = metadata[group]['apis']
         for api in apis.values():
             # collect global changelog
-            for changed_version, log in api['changelog'].items():
+            for changed_version, log in api.get('changelog', {}).items():
                 changelog[changed_version][api['api_name']] = log
 
         all_undocumented = all(
@@ -240,12 +241,22 @@ def render_markdown(metadata, cli_args):
 
         if not all_undocumented:
             page_file = '{}.{}'.format(group, cli_args.extension)
-            page = {'title': group, 'location': page_file}
+            page = {'title': group.title(), 'location': page_file}
             path = os.path.join('en', page_file)
             navigation.append(page)
+            group_apis = []
+            deprecated_apis = []
+            for api in apis.values():
+                if api.get('deprecated_at', False):
+                    deprecated_apis.append(api)
+                else:
+                    group_apis.append(api)
+
             yield path, cli_args.page_template.render(
                 group_name=group,
-                group_apis=apis,
+                group_apis=group_apis,
+                deprecated_apis=deprecated_apis,
+                group_doc=metadata[group].get('docs', ''),
             )
 
     yield (

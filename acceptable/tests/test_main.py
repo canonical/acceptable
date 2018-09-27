@@ -125,6 +125,7 @@ class MetadataTests(testtools.TestCase):
             def my_view():
                 "Documentation."
         """
+
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
         [svc_mod] = main.import_metadata(['service'])
         metadata, locations = get_metadata().serialize()
@@ -273,8 +274,8 @@ class RenderMarkdownTests(testtools.TestCase):
     def metadata(self):
         metadata = OrderedDict()
         metadata['$version'] = 2
-        metadata['group'] = dict()
-        metadata['group']['api1'] = {
+        metadata['group'] = dict(apis=dict())
+        metadata['group']['apis']['api1'] = {
             'api_group': 'group',
             'api_name': 'api1',
             'methods': ['GET'],
@@ -287,7 +288,7 @@ class RenderMarkdownTests(testtools.TestCase):
             'response_schema': {'response_schema': 2},
             'introduced_at':  1,
         }
-        metadata['group']['api2'] = {
+        metadata['group']['apis']['api2'] = {
             'api_group': 'group',
             'api_name': 'api1',
             'methods': ['GET'],
@@ -328,7 +329,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'group'},
+                    {'location': 'group.md', 'title': 'Group'},
                 ],
             },
             md
@@ -338,7 +339,7 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         m = self.metadata()
-        m['group']['api2']['undocumented'] = True
+        m['group']['apis']['api2']['undocumented'] = True
         iterator = main.render_markdown(m, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
@@ -357,7 +358,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'group'},
+                    {'location': 'group.md', 'title': 'Group'},
                 ],
             },
             md
@@ -367,7 +368,7 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         m = self.metadata()
-        m['group']['api2']['deprecated_at'] = 2
+        m['group']['apis']['api2']['deprecated_at'] = 2
         iterator = main.render_markdown(m, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
@@ -384,7 +385,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md',  'title': 'group'},
+                    {'location': 'group.md', 'title': 'Group'},
                 ],
             },
             md
@@ -394,7 +395,11 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         metadata = self.metadata()
-        metadata['group2'] = {'api2': metadata['group'].pop('api2')}
+        metadata['group2'] = {
+            'apis': {
+                'api2': metadata['group']['apis'].pop('api2')
+            }
+        }
         iterator = main.render_markdown(metadata, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
@@ -418,8 +423,8 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'group'},
-                    {'location': 'group2.md', 'title': 'group2'},
+                    {'location': 'group.md', 'title': 'Group'},
+                    {'location': 'group2.md', 'title': 'Group2'},
                 ],
             },
             md
@@ -429,8 +434,12 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
         metadata = self.metadata()
-        metadata['group2'] = {'api2': metadata['group'].pop('api2')}
-        metadata['group2']['api2']['undocumented'] = True
+        metadata['group2'] = {
+            'apis': {
+                'api2': metadata['group']['apis'].pop('api2')
+            }
+        }
+        metadata['group2']['apis']['api2']['undocumented'] = True
         iterator = main.render_markdown(metadata, args)
         output = OrderedDict((str(k), v) for k, v in iterator)
 
@@ -453,7 +462,7 @@ class RenderMarkdownTests(testtools.TestCase):
         self.assertEqual({
                 'navigation': [
                     {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md',  'title': 'group'},
+                    {'location': 'group.md',  'title': 'Group'},
                 ],
             },
             md
