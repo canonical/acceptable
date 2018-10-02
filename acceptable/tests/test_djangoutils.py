@@ -312,7 +312,8 @@ def expected_metadata():
     from django_app.views import TestForm
     return {
         '$version': 1,
-        'Default': {
+        'default': {
+            'title': 'Default',
             'apis': {
                 'test': {
                     'url': '/test',
@@ -323,8 +324,9 @@ def expected_metadata():
                     'changelog': {},
                     'introduced_at': 1,
                     'api_name': 'test',
-                    'api_group': 'Default',
+                    'api_group': 'default',
                     'service': 'django_app',
+                    'title': 'Test',
                 },
             }
         }

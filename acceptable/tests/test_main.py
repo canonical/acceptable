@@ -133,6 +133,7 @@ class MetadataTests(testtools.TestCase):
         self.assertEqual({
             '$version': 4,
             'group': {
+                'title': 'Group',
                 'apis': {
                     'root': {
                         'service': 'myservice',
@@ -147,6 +148,7 @@ class MetadataTests(testtools.TestCase):
                         'request_schema': {'type': 'object'},
                         'response_schema': {'type': 'object'},
                         'introduced_at':  1,
+                        'title': 'Root',
                     }
                 }
             }},
@@ -208,11 +210,12 @@ class MetadataTests(testtools.TestCase):
 
         self.assertEqual({
             '$version': 4,
-            'Default': {
+            'default': {
+                'title': 'Default',
                 'apis': {
                     'root': {
                         'service': 'service',
-                        'api_group': 'Default',
+                        'api_group': 'default',
                         'api_name': 'root',
                         'methods': ['GET'],
                         'url': '/',
@@ -223,6 +226,7 @@ class MetadataTests(testtools.TestCase):
                         'request_schema': {'type': 'object'},
                         'response_schema': {'type': 'object'},
                         'introduced_at':  1,
+                        'title': 'Root',
                     }
                 }
             }},
@@ -287,6 +291,7 @@ class RenderMarkdownTests(testtools.TestCase):
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
             'introduced_at':  1,
+            'title': 'Api1',
         }
         metadata['group']['apis']['api2'] = {
             'api_group': 'group',
@@ -300,6 +305,7 @@ class RenderMarkdownTests(testtools.TestCase):
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
             'introduced_at':  1,
+            'title': 'Api2',
         }
         return metadata
 

@@ -233,31 +233,32 @@ def render_markdown(metadata, cli_args):
         for api in apis.values():
             # collect global changelog
             for changed_version, log in api.get('changelog', {}).items():
-                changelog[changed_version][api['api_name']] = log
+                changelog[changed_version][(group, api['api_name'])] = log
 
-        any_documented = any(
-            not api.get('undocumented', False) for api in apis.values()
+        documented_apis = OrderedDict(
+            (name, api) for name, api in apis.items()
+            if not api.get('undocumented', False)
         )
 
-        if any_documented:
-            page_file = '{}.{}'.format(group, cli_args.extension)
-            page = {'title': group.title(), 'location': page_file}
-            navigation.append(page)
-
+        if documented_apis:
             group_apis = []
             deprecated_apis = []
-            for api in apis.values():
+            for api in documented_apis.values():
                 if api.get('deprecated_at', False):
                     deprecated_apis.append(api)
                 else:
                     group_apis.append(api)
+            sorted_apis = group_apis + deprecated_apis
+
+            page_file = '{}.{}'.format(group, cli_args.extension)
+            page = {'title': group.title(), 'location': page_file}
+            navigation.append(page)
 
             path = os.path.join('en', page_file)
-
             yield path, cli_args.page_template.render(
                 group_name=group,
-                group_apis=group_apis,
-                deprecated_apis=deprecated_apis,
+                group_title=metadata[group].get('title', group),
+                group_apis=sorted_apis,
                 group_doc=metadata[group].get('docs', ''),
             )
 
