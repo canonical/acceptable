@@ -14,7 +14,7 @@ import django
 from django.forms import widgets, fields
 
 from acceptable._service import AcceptableAPI
-from acceptable.util import clean_docstring
+from acceptable.util import clean_docstring, sort_schema
 
 logger = logging.getLogger('acceptable')
 _urlmap = None
@@ -210,7 +210,7 @@ class DjangoAPI(AcceptableAPI):
     def django_form(self, form):
         self._form = form
         schema = get_form_schema(form)
-        self.request_schema = schema
+        self.request_schema = sort_schema(schema)
 
     def handler(self, handler_class):
         """Link to an API handler class (e.g. piston or DRF)."""

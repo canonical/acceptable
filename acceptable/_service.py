@@ -13,7 +13,11 @@ from collections import OrderedDict, defaultdict
 import textwrap
 
 from acceptable import _validation
-from acceptable.util import get_callsite_location, clean_docstring
+from acceptable.util import (
+    clean_docstring,
+    get_callsite_location,
+    sort_schema,
+)
 
 
 class InvalidAPI(Exception):
@@ -28,12 +32,15 @@ class APIMetadata():
     """
 
     def __init__(self):
-        self.services = defaultdict(OrderedDict)
+        self.services = OrderedDict()
         self.api_names = set()
         self.urls = set()
         self._current_version = None
 
     def register_service(self, service, group, docs=None):
+        if service not in self.services:
+            self.services[service] = OrderedDict()
+
         if group not in self.services[service]:
             self.services[service][group] = APIGroup(group, docs)
         elif docs is not None:
@@ -110,32 +117,31 @@ class APIMetadata():
 
     def serialize(self):
         """Serialize into JSONable dict, and associated locations data."""
-        api_metadata = {
-            # $ char makes this come first in sort ordering
-            '$version': self.current_version,
-        }
+        api_metadata = OrderedDict()
+        # $ char makes this come first in sort ordering
+        api_metadata['$version'] = self.current_version
         locations = {}
 
         for svc_name, group in self.groups():
             group_apis = OrderedDict()
-            group_metadata = {'apis': group_apis}
+            group_metadata = OrderedDict()
+            group_metadata['apis'] = group_apis
             api_metadata[group.name] = group_metadata
 
             if group.docs is not None:
                 group_metadata['docs'] = group.docs
 
             for name, api in group.items():
-                group_apis[name] = {
-                    'service': svc_name,
-                    'api_group': group.name,
-                    'api_name': api.name,
-                    'introduced_at': api.introduced_at,
-                    'methods': api.methods,
-                    'request_schema': api.request_schema,
-                    'response_schema': api.response_schema,
-                    'doc': api.docs,
-                    'changelog': api._changelog,
-                }
+                group_apis[name] = OrderedDict()
+                group_apis[name]['service'] = svc_name
+                group_apis[name]['api_group'] = group.name
+                group_apis[name]['api_name'] = api.name
+                group_apis[name]['introduced_at'] = api.introduced_at
+                group_apis[name]['methods'] = api.methods
+                group_apis[name]['request_schema'] = api.request_schema
+                group_apis[name]['response_schema'] = api.response_schema
+                group_apis[name]['doc'] = api.docs
+                group_apis[name]['changelog'] = api._changelog
                 group_apis[name]['url'] = api.resolve_url()
 
                 if api.undocumented:
@@ -169,7 +175,7 @@ def clear_metadata():
     _metadata = None
 
 
-class APIGroup(dict):
+class APIGroup(OrderedDict):
     """Wrapper for collection of APIs, with associated documentation."""
     def __init__(self, name=None, docs=None):
         self.name = name
@@ -332,7 +338,7 @@ class AcceptableAPI():
     def request_schema(self, schema):
         if schema is not None:
             _validation.validate_schema(schema)
-        self._request_schema = schema
+        self._request_schema = sort_schema(schema)
         # this location is the last item in the dict, sadly
         self._request_schema_location = get_callsite_location()
 
@@ -344,7 +350,7 @@ class AcceptableAPI():
     def response_schema(self, schema):
         if schema is not None:
             _validation.validate_schema(schema)
-        self._response_schema = schema
+        self._response_schema = sort_schema(schema)
         # this location is the last item in the dict, sadly
         self._response_schema_location = get_callsite_location()
 

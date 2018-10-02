@@ -61,7 +61,7 @@ class Command(BaseCommand):
         func(options, current)
 
     def metadata(self, options, current):
-        print(json.dumps(current, indent=2, sort_keys=True))
+        print(json.dumps(current, indent=2))
 
     def version(self, options, current, stream=sys.stdout):
         file_metadata = load_metadata(options['metadata'])
