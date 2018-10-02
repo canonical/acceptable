@@ -113,6 +113,22 @@ class APIMetadataTestCase(TestCase):
         self.assertThat(resp, IsResponse('api1'))
 
 
+    def serialize_preserves_declaration_order(self):
+        metadata = APIMetadata()
+        svc = metadata.register_service('test', 'group')
+        svc.api('api5', '/api/5', 1)
+        svc.api('api1', '/api/1', 1)
+        svc.api('api3', '/api/3', 1)
+        svc.api('api2', '/api/2', 1)
+
+        serialized = metadata.serialize()
+
+        self.assertEqual(
+            ['api5', 'api1', 'api3', 'api2'],
+            list(serialized['group']['apis'])
+        )
+
+
 class AcceptableServiceTestCase(TestCase):
 
     def test_can_register_url_route(self):
@@ -188,6 +204,28 @@ class AcceptableAPITestCase(TestCase):
         api.response_schema = schema
         self.assertEqual(api.request_schema, schema)
         self.assertEqual(api.response_schema, schema)
+
+    def test_acceptable_api_schemas_are_sorted(self):
+        fixture = self.useFixture(ServiceFixture())
+        api = fixture.service.api('/api', 'blah')
+        schema = {
+            'type': 'object',
+            'properties': {
+                '5': {'type': 'string'},
+                '1': {'type': 'string'},
+                '3': {'type': 'string'},
+            }
+        }
+        api.request_schema = schema
+        api.response_schema = schema
+        self.assertEqual(
+            ['1', '3', '5'],
+            list(api.request_schema['properties']),
+        )
+        self.assertEqual(
+            ['1', '3', '5'],
+            list(api.response_schema['properties']),
+        )
 
     def test_acceptable_api_changelog_is_recorded(self):
         fixture = self.useFixture(ServiceFixture())
