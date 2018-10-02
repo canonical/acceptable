@@ -35,7 +35,7 @@ if PY2:
 
 
 def tojson_filter(json_object, indent=4):
-    return json.dumps(json_object, indent=indent, sort_keys=True)
+    return json.dumps(json_object, indent=indent)
 
 
 TEMPLATES = Environment(
@@ -177,7 +177,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 def metadata_cmd(cli_args):
     import_metadata(cli_args.modules)
     current, _ = get_metadata().serialize()
-    print(json.dumps(current, indent=2, sort_keys=True))
+    print(json.dumps(current, indent=2))
 
 
 def import_metadata(module_paths):
@@ -314,7 +314,7 @@ def lint_cmd(cli_args, stream=sys.stdout):
     if cli_args.update:
         if not has_errors or cli_args.force:
             with open(cli_args.metadata.name, 'w') as f:
-                json.dump(current, f, indent=2, sort_keys=True)
+                json.dump(current, f, indent=2)
 
     return 1 if has_errors else 0
 

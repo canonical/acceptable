@@ -11,7 +11,7 @@ import functools
 
 import jsonschema
 
-from acceptable.util import get_callsite_location
+from acceptable.util import get_callsite_location, sort_schema
 
 
 class DataValidationError(Exception):
@@ -74,7 +74,8 @@ def validate_body(schema):
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_request(fn, schema)
-        record_schemas(fn, wrapper, location, request_schema=schema)
+        record_schemas(
+            fn, wrapper, location, request_schema=sort_schema(schema))
         return wrapper
 
     return decorator
@@ -159,7 +160,8 @@ def validate_output(schema):
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_response(fn, schema)
-        record_schemas(fn, wrapper, location, response_schema=schema)
+        record_schemas(
+            fn, wrapper, location, response_schema=sort_schema(schema))
         return wrapper
 
     return decorator
