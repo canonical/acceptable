@@ -37,12 +37,12 @@ class APIMetadata():
         self.urls = set()
         self._current_version = None
 
-    def register_service(self, service, group, docs=None):
+    def register_service(self, service, group, docs=None, title=None):
         if service not in self.services:
             self.services[service] = OrderedDict()
 
         if group not in self.services[service]:
-            self.services[service][group] = APIGroup(group, docs)
+            self.services[service][group] = APIGroup(group, docs, title)
         elif docs is not None:
             additional_docs = '\n' + clean_docstring(docs)
             self.services[service][group].docs += additional_docs
@@ -126,6 +126,7 @@ class APIMetadata():
             group_apis = OrderedDict()
             group_metadata = OrderedDict()
             group_metadata['apis'] = group_apis
+            group_metadata['title'] = group.title
             api_metadata[group.name] = group_metadata
 
             if group.docs is not None:
@@ -142,6 +143,12 @@ class APIMetadata():
                 group_apis[name]['response_schema'] = api.response_schema
                 group_apis[name]['doc'] = api.docs
                 group_apis[name]['changelog'] = api._changelog
+                if api.title:
+                    group_apis[name]['title'] = api.title
+                else:
+                    title = name.replace('-', ' ').replace('_', ' ').title()
+                    group_apis[name]['title'] = title
+
                 group_apis[name]['url'] = api.resolve_url()
 
                 if api.undocumented:
@@ -177,10 +184,14 @@ def clear_metadata():
 
 class APIGroup(OrderedDict):
     """Wrapper for collection of APIs, with associated documentation."""
-    def __init__(self, name=None, docs=None):
+    def __init__(self, name=None, docs=None, title=None):
         self.name = name
+        self.title = title
         if self.name is None:
-            self.name = 'Default'
+            self.name = 'default'
+            self.title = 'Default'
+        elif title is None:
+            self.title = name.replace('-', ' ').title()
         self.docs = docs
         super().__init__()
 
@@ -195,7 +206,7 @@ class AcceptableService():
     store any API state internally.
     """
 
-    def __init__(self, name, group=None, metadata=None):
+    def __init__(self, name, group=None, title=None, metadata=None):
         """Create an instance of AcceptableService.
 
         :param name: The service name.
@@ -214,7 +225,7 @@ class AcceptableService():
         docs = None
         if module and module.__doc__:
             docs = clean_docstring(module.__doc__)
-        self.metadata.register_service(name, group, docs)
+        self.metadata.register_service(name, group, docs, title)
 
     @property
     def apis(self):
@@ -226,6 +237,7 @@ class AcceptableService():
             introduced_at=None,
             undocumented=False,
             deprecated_at=None,
+            title=None,
             **options):
         """Add an API to the service.
 
@@ -247,6 +259,7 @@ class AcceptableService():
             options,
             undocumented=undocumented,
             deprecated_at=deprecated_at,
+            title=title,
             location=location,
         )
         self.metadata.register_api(self.name, self.group, api)
@@ -258,6 +271,7 @@ class AcceptableService():
             introduced_at,
             undocumented=False,
             deprecated_at=None,
+            title=None,
             **options):
         """Add a django API handler to the service.
 
@@ -277,6 +291,7 @@ class AcceptableService():
             location=location,
             undocumented=undocumented,
             deprecated_at=deprecated_at,
+            title=title,
         )
         self.metadata.register_api(self.name, self.group, api)
         return api
@@ -301,7 +316,9 @@ class AcceptableAPI():
             options={},
             location=None,
             undocumented=False,
-            deprecated_at=None):
+            deprecated_at=None,
+            title=None):
+
         self.service = service
         self.name = name
         self.url = url
@@ -322,6 +339,7 @@ class AcceptableAPI():
             self.location = location
         self.undocumented = undocumented
         self.deprecated_at = deprecated_at
+        self.title = title
 
     @property
     def methods(self):

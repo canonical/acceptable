@@ -9,8 +9,8 @@ This is the documentation for version {{ version }} of {{service_name}}.
 
 {% for version, api_logs in changelog.items() | sort(reverse=True) %}
  * Version {{ version }}:
-    {% for api_name, log in api_logs.items() | sort %}
-    * [{{ api_name }}]({{api_name}}.html): {{ log }}
+    {% for (group, api_name), log in api_logs.items() | sort %}
+    * [{{ api_name }}]({{group}}.html#{{api_name}}): {{ log }}
     {% endfor %}
 
 {% endfor %}
