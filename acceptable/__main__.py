@@ -63,6 +63,7 @@ def main():
         cli_args = parse_args()
         sys.exit(cli_args.func(cli_args))
     except Exception as e:
+        raise
         sys.exit(str(e))
 
 
@@ -235,15 +236,15 @@ def render_markdown(metadata, cli_args):
             for changed_version, log in api.get('changelog', {}).items():
                 changelog[changed_version][(group, api['api_name'])] = log
 
-        documented_apis = OrderedDict(
-            (name, api) for name, api in apis.items()
+        documented_apis = [
+            api for api in apis.values()
             if not api.get('undocumented', False)
-        )
+        ]
 
         if documented_apis:
             group_apis = []
             deprecated_apis = []
-            for api in documented_apis.values():
+            for api in documented_apis:
                 if api.get('deprecated_at', False):
                     deprecated_apis.append(api)
                 else:
