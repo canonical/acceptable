@@ -38,7 +38,7 @@ And example, for flask::
     foo_api = service.api('foo', '/foo', introduced_at=1, methods=['POST'])
     foo_api.request_schema = <JSON Schema...>
     foo_api.response_schema = <JSON Schema...>
-    foo_api.changelog(3, 'Changed other thing)
+    foo_api.changelog(3, 'Changed other thing')
     foo_api.changelog(2, 'Changed something')
 
     @foo_api
