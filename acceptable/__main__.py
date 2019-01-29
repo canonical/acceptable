@@ -234,7 +234,7 @@ def render_markdown(metadata, cli_args):
         for api in apis.values():
             # collect global changelog
             for changed_version, log in api.get('changelog', {}).items():
-                changelog[changed_version][(group, api['api_name'])] = log
+                changelog[int(changed_version)][(group, api['api_name'])] = log
 
         documented_apis = [
             api for api in apis.values()
