@@ -1,3 +1,7 @@
+Version 0.21
+
+ * Order versions numerically
+
 Version 0.20
 
  * APIs metadata and documentation rendered in groups, rather than individual
