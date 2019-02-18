@@ -1,3 +1,13 @@
+Version 0.20
+
+ * APIs metadata and documentation rendered in groups, rather than individual
+   API. This may require manually updating any api metadata files you use for
+   linting.
+ * Include module docstring in API group page
+ * Can specifiy human friendly titles for apis and groups.
+ * Fix url escaping in docs
+ * Ordering of metadata now based on import order, rather than alphabetical
+
 Version 0.19
 
  * fix version bug in rendering
