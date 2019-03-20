@@ -267,6 +267,49 @@ class MetadataTests(testtools.TestCase):
         )
 
 
+class LoadMetadataTests(testtools.TestCase):
+
+    def metadata(self):
+        metadata = OrderedDict()
+        metadata['$version'] = 2
+        metadata['group'] = dict(apis=dict())
+        metadata['group']['apis']['api1'] = {
+            'api_group': 'group',
+            'api_name': 'api1',
+            'methods': ['GET'],
+            'url': '/',
+            'doc': 'doc1',
+            'changelog': {
+                2: 'change 2',
+                1: 'change 1',
+            },
+            'request_schema': {'request_schema': 1},
+            'response_schema': {'response_schema': 2},
+            'introduced_at':  1,
+            'title': 'Api1',
+        }
+        return metadata
+
+    def test_load_json_metadata(self):
+        json_file = tempfile.NamedTemporaryFile('w')
+        json.dump(self.metadata(), json_file)
+        json_file.flush()
+
+        # json converts int keys to string
+        json_dict = json.load(open(json_file.name))
+        self.assertEqual(json_dict['group']['apis']['api1']['changelog'], {
+            '1': 'change 1',
+            '2': 'change 2',
+        })
+
+        result = main.load_metadata(open(json_file.name))
+
+        self.assertEqual(result['group']['apis']['api1']['changelog'], {
+            1: 'change 1',
+            2: 'change 2',
+        })
+
+
 def builder_installed():
     return subprocess.call(['which', 'documentation-builder']) == 0
 
