@@ -1,3 +1,11 @@
+Version 0.23
+
+ * Actuall order all changelog versions numerically, rather than rerelease an old version
+
+Version 0.22
+
+ * Order all changelog versions numerically
+
 Version 0.21
 
  * Order versions numerically
