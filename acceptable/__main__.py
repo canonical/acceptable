@@ -153,6 +153,19 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
     lint_parser.set_defaults(func=lint_cmd)
 
+    doubles_parser = subparser.add_parser(
+        'doubles',
+        help='Generate test doubles'
+    )
+    doubles_parser.add_argument(
+        'metadata',
+        nargs='?',
+        type=argparse.FileType('r'),
+        default=stdin,
+        help='metadata file path, uses stdin if omitted'
+    )
+    doubles_parser.set_defaults(func=doubles_cmd)
+
     version_parser = subparser.add_parser(
         'api-version',
         help='Get the current API version from JSON meta, and '
@@ -332,6 +345,15 @@ def lint_cmd(cli_args, stream=sys.stdout):
                 json.dump(current, f, indent=2)
 
     return 1 if has_errors else 0
+
+
+def doubles_cmd(cli_args, stream=sys.stdout):
+    from . import generate_doubles
+    metadata = load_metadata(cli_args.metadata)
+    generate_doubles.generate_service_mock_doubles(
+        metadata,
+        stream=stream
+    )
 
 
 def version_cmd(cli_args, stream=sys.stdout):
