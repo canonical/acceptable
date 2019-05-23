@@ -1,0 +1,61 @@
+{
+  "$version": 5,
+  "default": {
+    "apis": {
+      "foo": {
+        "service": "mysvc",
+        "api_group": "default",
+        "api_name": "foo",
+        "introduced_at": 2,
+        "methods": [
+          "GET"
+        ],
+        "request_schema": {
+          "properties": {
+            "baz": {
+              "description": "Bar the door.",
+              "introduced_at": 4,
+              "properties": {
+                "bar": {
+                  "description": "asdf",
+                  "introduced_at": 5,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "foo": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "foo",
+            "baz"
+          ],
+          "type": "object"
+        },
+        "response_schema": {
+          "properties": {
+            "bar": {
+              "description": "bar bar",
+              "introduced_at": 5,
+              "type": "string"
+            },
+            "foo_result": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "doc": "Documentation goes here.",
+        "changelog": {
+          "5": "Added baz field.",
+          "4": "Added bar field"
+        },
+        "title": "Foo",
+        "url": "/foo"
+      }
+    },
+    "title": "Default"
+  }
+}
