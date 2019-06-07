@@ -12,6 +12,7 @@ import testtools
 class GenerateDoublesTests(testtools.TestCase):
     def test_generate_service_mock_doubles_from_example(self):
         stream = StringIO()
-        metadata = json.load(open('examples/current_api.json'))
-        generate_doubles.generate_service_mock_doubles(metadata, stream=stream)
-        self.assertIn('foo_1_0 = service_mock', stream.getvalue())
+        with open('examples/current_api.json') as f:
+            metadata = json.load(f)
+            generate_doubles.generate_service_mock_doubles(metadata, stream=stream)
+            self.assertIn('foo_1_0 = service_mock', stream.getvalue())

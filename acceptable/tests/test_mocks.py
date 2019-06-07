@@ -5,9 +5,12 @@ from future import standard_library
 
 standard_library.install_aliases()
 
-from acceptable.mocks import EndpointMock, ServiceFactory, EndpointSpec, CallRecorder, responses_mock_context
+from acceptable.mocks import CallRecorder, Endpoint, EndpointMock, EndpointSpec, Service, ServiceFactory, responses_mock_context
 import requests
 import testtools
+from testtools import ExpectedException
+from testtools.matchers import Equals, HasLength
+from testtools.assertions import assert_that
 
 
 class EventMockTests(testtools.TestCase):
@@ -24,7 +27,7 @@ class EventMockTests(testtools.TestCase):
             response_callback=lambda req: response_tuple,
         )
         request = requests.Request("GET", "http://example.com", json="hello").prepare()
-        self.assertEquals(response_tuple, mock._callback(request))
+        assert_that(mock._callback(request), Equals(response_tuple))
 
     def test_validation_failure_event_mock(self):
         call_recorder = CallRecorder()
@@ -38,77 +41,82 @@ class EventMockTests(testtools.TestCase):
             response_callback=lambda req: (200, {}, b""),
         )
         request = requests.Request("GET", "http://example.com", json="hello").prepare()
-        try:
+        with ExpectedException(AssertionError):
             mock._callback(request)
-        except AssertionError:
-            pass
-        else:
-            raise AssertionError("Call should raise AssertionError")
 
 
 class ServiceTests(testtools.TestCase):
     def make_test_service(self):
+        endpoints = [
+            EndpointSpec(
+                "test_endpoint",
+                "test-endpoint",
+                ["GET", "POST"],
+                {"type": "number"},
+                {"type": "number"},
+            ),
+            EndpointSpec(
+                "no_validation",
+                "no-validation",
+                ["GET"],
+                None,
+                None,
+            )
+        ]
         service_factory = ServiceFactory(
             "test-service",
-            [
-                EndpointSpec(
-                    "test_endpoint",
-                    "test-endpoint",
-                    ["GET", "POST"],
-                    {"type": "number"},
-                    {"type": "number"},
-                ),
-                EndpointSpec(
-                    "no_validation",
-                    "no-validation",
-                    ["GET"],
-                    None,
-                    None,
-                )
-            ],
+            endpoints,
         )
         service = service_factory("http://example.com")
-        service.test_endpoint.set_json_response(200, {}, 999)
+        service.endpoints.test_endpoint.set_response(json=999)
         return service
 
     def test_simple_endpoint_cm(self):
         service = self.make_test_service()
-        with service.test_endpoint() as mock:
+        with service.endpoints.test_endpoint() as mock:
             requests.get("http://example.com/test-endpoint", json=888)
-            self.assertEqual(1, len(mock.calls))
+            assert_that(mock.get_calls(), HasLength(1))
 
     def test_service_cm(self):
         service = self.make_test_service()
         with service() as mock:
             requests.get("http://example.com/test-endpoint", json=888)
-            self.assertEqual(1, len(mock.test_endpoint.calls))
+            assert_that(mock.endpoints.test_endpoint.get_calls(), HasLength(1))
 
     def test_validation_failure(self):
         service = self.make_test_service()
         with service() as mock:
-            try:
+            with ExpectedException(AssertionError):
                 requests.get("http://example.com/test-endpoint", json="string")
-            except AssertionError:
-                pass
-            else:
-                raise AssertionError("Validation did not fail")
-        self.assertEqual(1, len(mock.test_endpoint.calls))
+        assert_that(mock.endpoints.test_endpoint.get_calls(), HasLength(1))
 
-    def test_responses_manager(self):
+    def test_responses_manager_resets_responses_mock(self):
         service = self.make_test_service()
         with service() as service_mock:
             with responses_mock_context() as responses_mock:
                 responses_mock.add('GET', 'http://exmaple.com/responses-test', b'test')
                 requests.get("http://example.com/test-endpoint", json=888)
                 requests.get("http://exmaple.com/responses-test")
-                self.assertEqual(1, len(service_mock.test_endpoint.calls), 'test_endpoint call count')
-                self.assertEqual(2, len(responses_mock.calls), 'RequestMock call count inside 2')
-            self.assertEqual(2, len(responses_mock.calls), 'RequestMock call count inside 1r')
-        self.assertEqual(0, len(responses_mock.calls), 'RequestMock call count outside')
+                assert_that(responses_mock.calls, HasLength(2), 'RequestMock call count inside 2')
+            assert_that(responses_mock.calls, HasLength(2), 'RequestMock call count inside 1')
+        assert_that(responses_mock.calls, HasLength(0), 'RequestMock call count outside')
 
     def test_calls_matching(self):
         service = self.make_test_service()
         with service() as service_mock:
             requests.get("http://example.com/test-endpoint", json=888)
             requests.get("http://example.com/no-validation")
-            self.assertEqual(1, len(service_mock.calls_matching('no-validation$')))
+            assert_that(service_mock.get_calls_matching('no-validation$'), HasLength(1))
+
+    def test_endpoint_missing_body(self):
+        ep = Endpoint('http://example.com', 'test', EndpointSpec('endpoint', 'endpoint', ['GET'], True, None))
+        with ep() as mock:
+            with ExpectedException(AssertionError):
+                requests.get("http://example.com/endpoint")
+
+    def test_endpoint_empty_body_json_decoding_error(self):
+        ep = Endpoint('http://example.com', 'test', EndpointSpec('endpoint', 'endpoint', ['GET'], True, None))
+        with ep() as mock:
+            with ExpectedException(AssertionError):
+                requests.get("http://example.com/endpoint", data=b'')
+

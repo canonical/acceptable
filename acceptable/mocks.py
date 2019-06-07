@@ -6,11 +6,29 @@ standard_library.install_aliases()
 
 from collections import namedtuple
 import copy
-import json
+from json import dumps as json_dumps
+from json import loads as json_loads
 from urllib.parse import urljoin
 import responses
 from acceptable._validation import validate
 import re
+
+
+class Attrs(object):
+    def __init__(self, attrs):
+        self._attrs = attrs
+    
+    def __dir__(self):
+        return list(self._attrs)
+    
+    def __getattr__(self, name):
+        try:
+            return self._attrs[name]
+        except KeyError:
+            raise NameError(name)
+
+    def __iter__(self):
+        return iter(self._attrs.items())
 
 
 class ResponsesManager(object):
@@ -72,27 +90,25 @@ class CallRecorder(object):
     def record(self, mock, request, response, error):
         self._calls.append((mock, Call(request, response, error)))
 
-    @property
-    def calls(self):
+    def get_calls(self):
         return [c for m, c in self._calls]
 
-    def calls_for(self, mock):
+    def get_calls_for(self, mock):
         return [c for m, c in self._calls if m == mock]
 
-    def calls_for_matching(self, mock, pattern):
+    def get_calls_for_matching(self, mock, pattern):
         if not hasattr(pattern, "search"):
             pattern = re.compile(pattern)
-        return [c for c in self.calls_for(mock) if pattern.search(c.request.url)]
+        return [c for c in self.get_calls_for(mock) if pattern.search(c.request.url)]
 
-    def calls_matching(self, pattern):
+    def get_calls_matching(self, pattern):
         if not hasattr(pattern, "search"):
             pattern = re.compile(pattern)
         return [c for m, c in self._calls if pattern.search(c.request.url)]
-        
 
 
 EndpointSpec = namedtuple(
-    "EndpointSpec", "name location methods request_schema response_schema".split()
+    "EndpointSpec", ["name", "location", "methods", "request_schema", "response_schema"]
 )
 
 
@@ -138,8 +154,12 @@ class EndpointMock(object):
             else:
                 if isinstance(body, bytes):
                     body = body.decode("utf-8")
-                data = json.loads(body)
-                error_list = validate(data, schema)
+                try:
+                    data = json_loads(body)
+                except ValueError as e :
+                    error_list = ['JSON decoding error: {}'.format(e)]
+                else:
+                    error_list = validate(data, schema)
             if error_list:
                 raise AssertionError(
                     VALIDATION_ERROR_TEXT.format(
@@ -189,16 +209,14 @@ class EndpointMock(object):
             )
             return response_status, response_headers, response_body
 
-    @property
-    def calls(self):
-        return self._call_recorder.calls_for(self)
+    def get_calls(self):
+        return self._call_recorder.get_calls_for(self)
 
-    @property
-    def last_call(self):
-        return self.calls[-1]
+    def get_last_call(self):
+        return self.get_calls()[-1]
 
-    def calls_matching(self, pattern):
-        return self._call_recorder.calls_for_matching(self, pattern)
+    def get_calls_matching(self, pattern):
+        return self._call_recorder.get_calls_for_matching(self, pattern)
 
 
 class EndpointMockContextManager(object):
@@ -242,84 +260,102 @@ class EndpointMockContextManager(object):
         self._stop()
 
 
-def ok_no_content_response_callback(request):
-    return 200, {}, None
+def response_callback_factory(status=200, headers=None, body=None, json=None):
+    if headers is None:
+        headers = {}
+    if json is not None:
+        assert body is None
+        body = json_dumps(json).encode('utf-8')
+        headers['Content-Type'] = 'application/json'
+    def response_callback(request):
+        return status, headers, body
+    return response_callback
 
 
-class EndPoint(object):
-    def __init__(self, service, endpoint_spec):
-        self._service = service
+ok_no_content_response_callback = response_callback_factory()
+
+
+class Endpoint(object):
+    """Configurable endpoint.
+
+    Callable to create a context manager which activates and returns a mock
+    for this endpoint.
+    """
+    def __init__(self, base_url, service_name, endpoint_spec, response_callback=None):
+        self._url = urljoin(base_url, endpoint_spec.location)
+        self._service_name = service_name
         self._name = endpoint_spec.name
-        self._url = None
-        self._location = endpoint_spec.location
         self._methods = list(endpoint_spec.methods)
-        self.request_schema = copy.deepcopy(endpoint_spec.request_schema)
-        self.response_schema = copy.deepcopy(endpoint_spec.response_schema)
-        self.response_callback = None
+        self._request_schema = endpoint_spec.request_schema
+        self._response_schema = endpoint_spec.response_schema
+        self._response_callback = response_callback
 
-    @property
-    def url(self):
-        if self._url is None:
-            return urljoin(self._service._base_url, self._location)
-        return self._url
+    def disable_request_validation(self):
+        self._request_schema = None
 
-    @url.setter
-    def url(self, value):
-        self._url = value
+    def disable_response_validation(self):
+        self._response_schema = None
 
-    def set_response(self, response_status, response_headers, response_body):
-        def response_callback(request):
-            return response_status, response_headers, response_body
+    def disable_validation(self):
+        self.disable_request_validation()
+        self.disable_response_validation()
 
-        self.response_callback = response_callback
+    def set_request_schema(self, schema):
+        self._request_schema = schema
 
-    def set_json_response(self, response_status, response_headers, response_data):
-        self.set_response(response_status, response_headers, json.dumps(response_data))
+    def set_response_schema(self, schema):
+        self._response_schema = schema
 
-    def __call__(self, call_recorder=None):
+    def set_response_callback(self, callback):
+        self._response_callback = callback
+        
+    def set_response(self, status=200, headers=None, body=None, json=None):
+        self._response_callback = response_callback_factory(status, headers, body, json)
+
+    def __call__(self, response_callback=None, call_recorder=None):
         if call_recorder is None:
             call_recorder = CallRecorder()
-        response_callback = self.response_callback
         if response_callback is None:
-            response_callback = ok_no_content_response_callback
+            response_callback = self._response_callback
+            if response_callback is None:
+                response_callback = ok_no_content_response_callback
         return EndpointMockContextManager(
             self._methods,
             call_recorder,
-            self._service._name,
+            self._service_name,
             self._name,
-            self.url,
-            self.request_schema,
-            self.response_schema,
+            self._url,
+            self._request_schema,
+            self._response_schema,
             response_callback,
         )
 
 
 class ServiceMock(object):
+    """User endpoints to endpoint mocks"""
     def __init__(self, call_recorder, endpoints):
         self._call_recorder = call_recorder
-        self._endpoint_cms = {
-            name: endpoint(call_recorder=call_recorder)
-            for name, endpoint in endpoints.items()
-        }
+        mocks = {}
+        self._endpoint_context_managers = []
+        for name, endpoint in endpoints.items():
+            ecm = endpoint(call_recorder=call_recorder)
+            mocks[name]= ecm._mock
+            self._endpoint_context_managers.append(ecm)
+        self.endpoints = Attrs(mocks)
 
-    def calls_matching(self, pattern):
-        return self._call_recorder.calls_matching(pattern)
+    def get_calls(self):
+        return self._call_recorder.get_calls()
+
+    def get_calls_matching(self, pattern):
+        return self._call_recorder.get_calls_matching(pattern)
 
     def _start(self):
-        for endpoint_cm in self._endpoint_cms.values():
-            endpoint_cm._start()
+        for ecm in self._endpoint_context_managers:
+            ecm._start()
 
     def _stop(self):
-        for endpoint_cm in self._endpoint_cms.values():
-            endpoint_cm._stop()
-
-
-
-    def __getattr__(self, name):
-        try:
-            return self._endpoint_cms[name]._mock
-        except KeyError:
-            return NameError(name)
+        for ecm in self._endpoint_context_managers:
+            ecm._stop()
 
 
 class ServiceMockContextManager(object):
@@ -335,33 +371,52 @@ class ServiceMockContextManager(object):
 
 
 class Service(object):
-    def __init__(self, _name, endpoint_specs, base_url):
-        self._name = _name
-        self._base_url = base_url
-        self._endpoints = {}
-        for endpoint_spec in endpoint_specs:
-            self._endpoints[endpoint_spec.name] = EndPoint(self, endpoint_spec)
+    """Has configurable endpoints (.endpoints.*).
 
-    def __getattr__(self, attr):
-        try:
-            return self._endpoints[attr]
-        except KeyError:
-            raise NameError(attr)
+    Callable to create a context manager which will mock all the endpoints on
+    the service.
+
+    Endpoints can also be individually called to return a context manager 
+    which just mocks that endpoint.
+    """
+    def __init__(self, base_url, name, endpoint_specs):
+        self._base_url = base_url
+        self._name = name
+        endpoints = {}
+        for endpoint_spec in endpoint_specs:
+            endpoints[endpoint_spec.name] = Endpoint(self._base_url, self._name, endpoint_spec)
+        self.endpoints = Attrs(endpoints)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def base_url(self):
+        return self._base_url
 
     def __call__(self, call_recorder=None):
         if call_recorder is None:
             call_recorder = CallRecorder()
-        return ServiceMockContextManager(call_recorder, self._endpoints)
+        return ServiceMockContextManager(call_recorder, dict(self.endpoints))
 
 
 class ServiceFactory(object):
-    def __init__(self, service_name, endpoint_specs):
-        self._service_name = service_name
+    """Callable to create Service instances.
+
+    You can create multiple instances of a Service and configure each 
+    independently.
+    """
+    def __init__(self, name, endpoint_specs):
+        self._name = name
         self._endpoint_specs = endpoint_specs
 
     @property
     def name(self):
-        return self._service_name
+        return self._name
 
     def __call__(self, base_url):
-        return Service(self.name, self._endpoint_specs, base_url)
+        return Service(base_url, self.name, self._endpoint_specs)
+
+
+__ALL__ = ['responses_mock_context', 'response_callback_factory', 'ServiceFactory', 'EndpointSpec', 'Endpoint']
