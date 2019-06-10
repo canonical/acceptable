@@ -130,6 +130,7 @@ class EndpointMock(object):
         call_recorder,
         service_name,
         name,
+        methods,
         url,
         request_schema,
         response_schema,
@@ -138,10 +139,27 @@ class EndpointMock(object):
         self._call_recorder = call_recorder
         self._service_name = service_name
         self._name = name
+        self._methods = methods
         self._url = url
         self._request_schema = request_schema
         self._response_schema = response_schema
         self._response_callback = response_callback
+
+    @property
+    def service_name(self):
+        return self._service_name
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def methods(self):
+        return list(self._methods)
 
     @property
     def call_recorder(self):
@@ -236,6 +254,7 @@ class EndpointMockContextManager(object):
             call_recorder,
             service_name,
             name,
+            methods,
             url,
             request_schema,
             response_schema,
@@ -289,6 +308,22 @@ class Endpoint(object):
         self._request_schema = endpoint_spec.request_schema
         self._response_schema = endpoint_spec.response_schema
         self._response_callback = response_callback
+    
+    @property
+    def service_name(self):
+        return self._service_name
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def methods(self):
+        return list(self._methods)
 
     def disable_request_validation(self):
         self._request_schema = None
