@@ -96,9 +96,9 @@ class ServiceTests(testtools.TestCase):
         service = self.make_test_service()
         with service() as service_mock:
             with responses_mock_context() as responses_mock:
-                responses_mock.add('GET', 'http://exmaple.com/responses-test', b'test')
+                responses_mock.add('GET', 'http://example.com/responses-test', b'test')
                 requests.get("http://example.com/test-endpoint", json=888)
-                requests.get("http://exmaple.com/responses-test")
+                requests.get("http://example.com/responses-test")
                 assert_that(responses_mock.calls, HasLength(2), 'RequestMock call count inside 2')
             assert_that(responses_mock.calls, HasLength(2), 'RequestMock call count inside 1')
         assert_that(responses_mock.calls, HasLength(0), 'RequestMock call count outside')

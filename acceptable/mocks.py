@@ -16,23 +16,48 @@ from requests.utils import CaseInsensitiveDict
 
 
 class Attrs(object):
+    """A utility class allowing the creation of namespaces from a dict.
+    Also provides an iterator over the items of the original dict.
+
+    This is used by both Service and ServiceMock to create their 
+    endpoints attributes.
+    
+    e.g:
+    a = Attrs(dict(b=1, c=2))
+    assert a.b == 1
+    assert a.c == 2
+    assert dir(a) == ['b', 'c']
+    """
     def __init__(self, attrs):
-        self._attrs = attrs
+        # I think python name mangling is ok here to help avoid collisions 
+        # between instance attributes and names in attrs
+        self.__attrs = dict(attrs)
     
     def __dir__(self):
-        return list(self._attrs)
+        return list(self.__attrs)
     
     def __getattr__(self, name):
         try:
-            return self._attrs[name]
+            return self.__attrs[name]
         except KeyError:
             raise NameError(name)
 
     def __iter__(self):
-        return iter(self._attrs.items())
+        return iter(self.__attrs.items())
 
 
 class ResponsesManager(object):
+    """The responses library is used to add mock behaviour into the requests
+    library. 
+    
+    It does this using the RequestsMock class, however only one of 
+    these can be active at a time. Attempting to start a new RequestsMock
+    will remove any others hooked into requests.
+    
+    We use an instance of this class to manage use of the RequestsMock 
+    instance `responses.mock`. This allows us to start, stop and reset 
+    the it at the right time.
+    """
     def __init__(self):
         self._attached = 0
 
@@ -63,16 +88,9 @@ _responses_manager = ResponsesManager()
 
 
 class responses_mock_context(object):
-    """A context manager to allow the safe (single threaded) use of the global
-     responses mock.
-
-     The object returned by this context manager is the responses.mock 
-     RequestsMock object.
-
-     You should us this context manager rather than any other instance of
-     RequestsMock.
+    """Provides access to `responses.mock` in a way that is safe to mix with
+    mocks from `acceptable.mocks`.
     """
-
     def __enter__(self):
         _responses_manager._attach()
         return responses.mock
@@ -126,6 +144,8 @@ for service {!r} endpoint {!r} on url {!r} errors where:
 
 
 class EndpointMock(object):
+    """Provides methods to check calls made to this endpoint mock
+    """
     def __init__(
         self,
         call_recorder,
@@ -236,6 +256,12 @@ class EndpointMock(object):
 
     def get_calls_matching(self, pattern):
         return self._call_recorder.get_calls_for_matching(self, pattern)
+
+    def get_call_count(self):
+        return len(self.get_calls())
+
+    def was_called(self):
+        return self.get_call_count() > 0
 
 
 class EndpointMockContextManager(object):
@@ -371,7 +397,9 @@ class Endpoint(object):
 
 
 class ServiceMock(object):
-    """User endpoints to endpoint mocks"""
+    """Provides access to the endpoint mocks for this service and some functions 
+    to get calls made to the services endpoints. 
+     """
     def __init__(self, call_recorder, endpoints):
         self._call_recorder = call_recorder
         mocks = {}
@@ -387,6 +415,12 @@ class ServiceMock(object):
 
     def get_calls_matching(self, pattern):
         return self._call_recorder.get_calls_matching(pattern)
+
+    def get_call_count(self):
+        return len(self.get_calls())
+
+    def was_called(self):
+        return self.get_call_count() > 0
 
     def _start(self):
         for ecm in self._endpoint_context_managers:
