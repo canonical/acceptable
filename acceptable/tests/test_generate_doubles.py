@@ -16,3 +16,5 @@ class GenerateDoublesTests(testtools.TestCase):
             metadata = json.load(f)
             generate_doubles.generate_service_mock_doubles(metadata, stream=stream)
             self.assertIn('foo_1_0 = service_mock', stream.getvalue())
+            #check generated code is valid
+            exec(stream.getvalue(), {}, {})
