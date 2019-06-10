@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import responses
 from acceptable._validation import validate
 import re
+from requests.utils import CaseInsensitiveDict
 
 
 class Attrs(object):
@@ -281,11 +282,14 @@ class EndpointMockContextManager(object):
 
 def response_callback_factory(status=200, headers=None, body=None, json=None):
     if headers is None:
-        headers = {}
+        headers = CaseInsensitiveDict()
+    else:
+        headers = CaseInsensitiveDict(headers)
     if json is not None:
         assert body is None
         body = json_dumps(json).encode('utf-8')
-        headers['Content-Type'] = 'application/json'
+        if 'Content-Type' not in headers:
+            headers['Content-Type'] = 'application/json'
     def response_callback(request):
         return status, headers, body
     return response_callback
