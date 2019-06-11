@@ -164,6 +164,12 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
         default=stdin,
         help='metadata file path, uses stdin if omitted'
     )
+    doubles_parser.add_argument(
+        '-n', '--new-style',
+        action='store_true',
+        default=False,
+        help='Generate new style ServiceFactory mocks',
+    )
     doubles_parser.set_defaults(func=doubles_cmd)
 
     version_parser = subparser.add_parser(
@@ -348,12 +354,19 @@ def lint_cmd(cli_args, stream=sys.stdout):
 
 
 def doubles_cmd(cli_args, stream=sys.stdout):
-    from . import generate_doubles
     metadata = load_metadata(cli_args.metadata)
-    generate_doubles.generate_service_mock_doubles(
-        metadata,
-        stream=stream
-    )
+    if cli_args.new_style:
+        from . import generate_mocks
+        generate_mocks.generate_service_factory(
+            metadata,
+            stream=stream,
+        )
+    else:
+        from . import generate_doubles
+        generate_doubles.generate_service_mock_doubles(
+            metadata,
+            stream=stream
+        )
 
 
 def version_cmd(cli_args, stream=sys.stdout):
