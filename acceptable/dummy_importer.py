@@ -1,10 +1,15 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import print_function
 from future import standard_library
 
 standard_library.install_aliases()
 import sys
-from unittest.mock import MagicMock
+try:
+    # install_aliases() doesn't seem to include unittest.mock
+    from mock import MagicMock
+except ImportError:
+    from unittest.mock import MagicMock
 
 
 class DummyFinder(object):
@@ -31,7 +36,6 @@ class DummyFinder(object):
         self.allowed = set(allowed_real_modules)
 
     def find_module(self, fullname, path=None):
-        print("find_module", fullname, path)
         if fullname in self.allowed:
             for finder in self.finders:
                 loader = finder.find_module(fullname, path)
