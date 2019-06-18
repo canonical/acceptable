@@ -25,6 +25,7 @@ from jinja2 import (
 import yaml
 
 from acceptable import get_metadata, lint
+from acceptable.dummy_importer import DummyImporterContext
 
 if PY2:
     from future.types.newlist import newlist
@@ -67,11 +68,13 @@ def main():
         sys.exit(str(e))
 
 
-def parse_args(raw_args=None, parser_cls=None, stdin=None):
+def parse_args(raw_args=None, parser_cls=None, stdin=None, stdout=None):
     if parser_cls is None:
         parser_cls = argparse.ArgumentParser
     if stdin is None:
         stdin = sys.stdin
+    if stdout is None:
+        stdout = sys.stdout
 
     parser = parser_cls(
         description='Tool for working with acceptable metadata',
@@ -82,6 +85,19 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
     metadata_parser = subparser.add_parser(
         'metadata', help='Import project and print extracted metadata in JSON')
     metadata_parser.add_argument('modules', nargs='+')
+    metadata_parser.add_argument(
+        '--dummy-dependencies', '-d',
+        action='store_true',
+        default=False,
+        help='Import code in a sandbox where dependencies are mocked',
+    )
+    metadata_parser.add_argument(
+        '--output',
+        nargs='?',
+        type=argparse.FileType('w'),
+        default=stdout,
+        help='metadata output file path, uses stdout if omitted'
+    )
     metadata_parser.set_defaults(func=metadata_cmd)
 
     render_parser = subparser.add_parser(
@@ -195,24 +211,57 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None):
 
 
 def metadata_cmd(cli_args):
-    import_metadata(cli_args.modules)
+    import_metadata(cli_args.modules, cli_args.dummy_dependencies)
     current, _ = get_metadata().serialize()
-    print(json.dumps(current, indent=2))
+    cli_args.output.write(json.dumps(current, indent=2))
 
 
-def import_metadata(module_paths):
-    """Import all the given modules"""
+def add_working_dir_to_python_path():
     cwd = os.getcwd()
     if cwd not in sys.path:
         sys.path.insert(0, cwd)
-    modules = []
-    try:
-        for path in module_paths:
-            modules.append(import_module(path))
-    except ImportError as e:
-        err = RuntimeError('Could not import {}: {}'.format(path, str(e)))
-        raise_from(err, e)
-    return modules
+
+
+def import_or_exec(path):
+    """If path exists and ends in .py it is exec'd otherwise
+    import is attempted"""
+    if os.path.exists(path) and path.endswith('.py'):
+        try:
+            exec(open(path).read(), {}, {})
+        except:
+            raise Exception('Could not exec {!r}'.format(path))
+    else:
+        try:
+            import_module(path)
+        except:
+            raise Exception(
+                '{!r} did not look like a filepath and could not be '
+                'loaded as a module'.format(path)
+            )
+
+
+def import_metadata_dummy_dependencies(module_paths):
+    import acceptable._service
+    add_working_dir_to_python_path()
+    for path in module_paths:
+        with DummyImporterContext(path):
+            import_or_exec(path)
+
+
+def import_metadata_real_dependencies(module_paths):
+    add_working_dir_to_python_path()
+    for path in module_paths:
+        import_or_exec(path)
+
+
+def import_metadata(module_paths, dummy_dependencies=False):
+    """Imports modules or execs filepaths in order
+    to get acceptable decorator metadata.
+    """
+    if dummy_dependencies:
+        import_metadata_dummy_dependencies(module_paths)
+    else:
+        import_metadata_real_dependencies(module_paths)
 
 
 def load_metadata(stream):
@@ -354,7 +403,7 @@ def lint_cmd(cli_args, stream=sys.stdout):
 
 
 def doubles_cmd(cli_args, stream=sys.stdout):
-    metadata = load_metadata(cli_args.metadata)
+    metadata = json.load(cli_args.metadata, encoding='utf8')
     if cli_args.new_style:
         from . import generate_mocks
         generate_mocks.generate_service_factory(
