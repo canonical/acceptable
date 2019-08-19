@@ -18,7 +18,8 @@ setup(
     url='https://github.com/canonical-ols/acceptable',
     license='LGPLv3',
     packages=find_packages(exclude=['examples', '*tests']),
-    long_description=open('README.rst').read(),
+    long_description=''.join(open('README.rst').readlines()[2:]),
+    long_description_content_type='text/x-rst',
     install_requires=[
         'future',
         'jinja2',
