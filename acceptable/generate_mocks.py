@@ -9,6 +9,7 @@ from sys import stdout
 
 def write_service_begin(stream, service_name):
     begin = (
+        u"\n"
         u"{service_name} = ServiceFactory(\n"
         u"        {service_name!r},\n"
         u"        [\n"
@@ -19,7 +20,11 @@ def write_service_begin(stream, service_name):
 
 
 def write_service_end(stream):
-    stream.write('    ]\n)\n\n')
+    stream.write(
+        u"    ]\n"
+        u")\n"
+        u"\n"
+    )
 
 
 def write_endpoint_spec(stream, api_data):

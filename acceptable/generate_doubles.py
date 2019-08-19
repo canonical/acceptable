@@ -9,6 +9,7 @@ from sys import stdout
 def write_double(stream, api_name, api_data):
     double_name = u'%s_%s' % (api_name, "1_0")
     double_text = textwrap.dedent(u"""\
+
     {double_name} = service_mock(
         service={service!r},
         methods={methods!r},
