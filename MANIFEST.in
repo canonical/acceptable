@@ -1,0 +1,2 @@
+include acceptable/make/Makefile.acceptable
+include acceptable/templates/*

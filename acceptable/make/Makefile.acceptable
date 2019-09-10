@@ -1,0 +1,13 @@
+api-lint:
+	$(ENV)/bin/acceptable lint api.json $(ACCEPTABLE_MODULES) --quiet $(ARGS)
+
+api-update-metadata:
+	$(ENV)/bin/acceptable lint api.json $(ACCEPTABLE_MODULES) --quiet --update $(ARGS) 
+
+api-version:
+	$(ENV)/bin/acceptable api-version api.json $(ACCEPTABLE_MODULES)
+
+api-docs-markdown:
+	rm -f docs/en/*.md
+	$(ENV)/bin/acceptable render api.json --name "$(ACCEPTABLE_SERVICE_TITLE)" --dir docs
+

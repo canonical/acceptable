@@ -36,9 +36,6 @@ setup(
     ),
     test_suite='acceptable.tests',
     include_package_data=True,
-    package_data={
-        'acceptable': ['templates/*'],
-    },
     entry_points={
         'console_scripts': [
             'build_service_doubles = acceptable._build_doubles:main',

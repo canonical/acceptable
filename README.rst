@@ -112,3 +112,33 @@ This markdown is designed to rendered to html by
 
     documentation-builder --base-directory docs
 
+Includable Makefile
+-------------------
+
+*If you are using make files to automate your build you might find this useful.*
+
+The acceptable package contains a make file fragment that can be included to
+give you the following targets:
+
+- api-lint - Checks backward compatibility and version numbers;
+- api-update-metadata - Check as api-lint then update the api.json;
+- api-version - Print the api.json and current API version;
+- api-docs-markdown - Generates markdown documentation to the ``docs`` directory.
+
+The make file assumes the metadata will be stored in a file called
+``api.json`` and documentation will be created in the ``docs`` directory.
+
+You will need to create an api.json manually the first time using the 
+``acceptable metadata`` command.
+
+The make file assumes the following variables:
+- ENV points to a virtual environment with acceptable installed;
+- ACCEPTABLE_MODULES is a space separated list of modules containing acceptable annotated services;
+- ACCEPTABLE_SERVICE_TITLE is the title of the service used when generating markdown docs.
+
+
+To include the file you'll need to get its path, if the above variables and
+conditions exist you can put this in your make file::
+
+    include $(shell $(ENV)/bin/python -c 'import pkg_resources; print(pkg_resources.resource_filename("acceptable", "make/Makefile.acceptable"))' 2> /dev/null)
+
