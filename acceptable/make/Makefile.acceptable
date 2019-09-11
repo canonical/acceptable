@@ -1,0 +1,16 @@
+ACCEPTABLE_METADATA ?= api.json
+ACCEPTABLE_DOCS ?= docs/
+
+api-lint:
+	$(ENV)/bin/acceptable lint $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES) --quiet $(ARGS)
+
+api-update-metadata:
+	$(ENV)/bin/acceptable lint $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES) --quiet --update $(ARGS)
+
+api-version:
+	$(ENV)/bin/acceptable api-version $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES)
+
+api-docs-markdown:
+	rm -f docs/en/*.md
+	$(ENV)/bin/acceptable render $(ACCEPTABLE_METADATA) --name "$(ACCEPTABLE_SERVICE_TITLE)" --dir $(ACCEPTABLE_DOCS)
+
