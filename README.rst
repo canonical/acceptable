@@ -120,22 +120,25 @@ Includable Makefile
 The acceptable package contains a make file fragment that can be included to
 give you the following targets:
 
-- api-lint - Checks backward compatibility and version numbers;
-- api-update-metadata - Check as api-lint then update the api.json;
-- api-version - Print the api.json and current API version;
-- api-docs-markdown - Generates markdown documentation to the ``docs`` directory.
+- ``api-lint`` - Checks backward compatibility and version numbers;
+- ``api-update-metadata`` - Check like ``api-lint`` then update the saved metadata;
+- ``api-version`` - Print the saved metadata and current API version;
+- ``api-docs-markdown`` - Generates markdown documentation.
 
-The make file assumes the metadata will be stored in a file called
-``api.json`` and documentation will be created in the ``docs`` directory.
+The make file has variables for the following which you can override if
+needed:
 
-You will need to create an api.json manually the first time using the 
-``acceptable metadata`` command.
+- ``ACCEPTABLE_METADATA`` - The saved metadata filename, it defaults to ``api.json``;
+- ``ACCEPTABLE_DOCS`` - The directory ``api-docs-markdown`` will generate documentation under, it defaults to ``docs/``.
+
+You will need to create a saved metadata manually the first time using
+``acceptable metadata`` command and saving it to the value of ``ACCEPTABLE_METADATA``.
 
 The make file assumes the following variables:
-- ENV points to a virtual environment with acceptable installed;
-- ACCEPTABLE_MODULES is a space separated list of modules containing acceptable annotated services;
-- ACCEPTABLE_SERVICE_TITLE is the title of the service used when generating markdown docs.
 
+- ``ENV`` points to a virtual environment with acceptable installed;
+- ``ACCEPTABLE_MODULES`` is a space separated list of modules containing acceptable annotated services;
+- ``ACCEPTABLE_SERVICE_TITLE`` is the title of the service used by ``api-docs-markdown``.
 
 To include the file you'll need to get its path, if the above variables and
 conditions exist you can put this in your make file::
