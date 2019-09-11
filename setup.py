@@ -6,7 +6,7 @@
 from setuptools import find_packages, setup
 
 
-VERSION = '0.25'
+VERSION = '0.26'
 
 
 setup(

@@ -1,3 +1,17 @@
+Version 0.26
+
+ * Adds an includable make file fragement. See README.rst.
+
+Version 0.25
+
+ * Fix for v0.24 which couldn't be uploaded to PyPI due to README.rst parsing issue
+
+Version 0.24
+
+ * ``acceptable doubles`` generates mocks from metadata;
+ * ``acceptable doubles --new-style`` mocks with more features;
+ * ``acceptable metadata --dummy-dependencies`` lets you extract metadata in a less complex and more reliable way.
+
 Version 0.23
 
  * Actuall order all changelog versions numerically, rather than rerelease an old version
