@@ -128,17 +128,21 @@ give you the following targets:
 The make file has variables for the following which you can override if
 needed:
 
+- ``ACCEPTABLE_ENV`` - The virtual environment with acceptable installed, it defaults to ``$(ENV)``.
 - ``ACCEPTABLE_METADATA`` - The saved metadata filename, it defaults to ``api.json``;
-- ``ACCEPTABLE_DOCS`` - The directory ``api-docs-markdown`` will generate documentation under, it defaults to ``docs/``.
+- ``ACCEPTABLE_DOCS`` - The directory ``api-docs-markdown`` will generate documentation under, it defaults to ``docs``.
 
 You will need to create a saved metadata manually the first time using
 ``acceptable metadata`` command and saving it to the value of ``ACCEPTABLE_METADATA``.
 
 The make file assumes the following variables:
 
-- ``ENV`` points to a virtual environment with acceptable installed;
 - ``ACCEPTABLE_MODULES`` is a space separated list of modules containing acceptable annotated services;
 - ``ACCEPTABLE_SERVICE_TITLE`` is the title of the service used by ``api-docs-markdown``.
+
+``ACCEPTABLE_SERVICE_TITLE`` should not be quoted e.g.::
+
+    ACCEPTABLE_SERVICE_TITLE := Title of the Service
 
 To include the file you'll need to get its path, if the above variables and
 conditions exist you can put this in your make file::

@@ -1,3 +1,7 @@
+Version 0.27
+
+ * Improvements to the includable make file.
+
 Version 0.26
 
  * Adds an includable make file fragement. See README.rst.
