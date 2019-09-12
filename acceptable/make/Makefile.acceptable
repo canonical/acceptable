@@ -1,16 +1,21 @@
+ACCEPTABLE_ENV ?= $(ENV)
 ACCEPTABLE_METADATA ?= api.json
-ACCEPTABLE_DOCS ?= docs/
+ACCEPTABLE_DOCS ?= docs
 
+.PHONY: api-lint
 api-lint:
-	$(ENV)/bin/acceptable lint $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES) --quiet $(ARGS)
+	$(ACCEPTABLE_ENV)/bin/acceptable lint $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES) --quiet $(ARGS)
 
+.PHONY: api-update-metadata
 api-update-metadata:
-	$(ENV)/bin/acceptable lint $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES) --quiet --update $(ARGS)
+	$(ACCEPTABLE_ENV)/bin/acceptable lint $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES) --quiet --update $(ARGS)
 
+.PHONY: api-version
 api-version:
-	$(ENV)/bin/acceptable api-version $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES)
+	$(ACCEPTABLE_ENV)/bin/acceptable api-version $(ACCEPTABLE_METADATA) $(ACCEPTABLE_MODULES)
 
+.PHONY: api-docs-markdown
 api-docs-markdown:
-	rm -f docs/en/*.md
-	$(ENV)/bin/acceptable render $(ACCEPTABLE_METADATA) --name "$(ACCEPTABLE_SERVICE_TITLE)" --dir $(ACCEPTABLE_DOCS)
+	rm -f "$(ACCEPTABLE_DOCS)"/en/*.md
+	$(ACCEPTABLE_ENV)/bin/acceptable render $(ACCEPTABLE_METADATA) --name '$(ACCEPTABLE_SERVICE_TITLE)' --dir "$(ACCEPTABLE_DOCS)"
 
