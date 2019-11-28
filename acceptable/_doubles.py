@@ -20,7 +20,7 @@ from fixtures import Fixture
 import responses
 
 from acceptable._validation import validate
-
+from acceptable.mocks import responses_manager
 
 def service_mock(service, methods, url, input_schema, output_schema):
     return functools.partial(
@@ -42,16 +42,8 @@ def get_service_locations():
 
 
 class ServiceMock(Fixture):
-
-    # Responses requires that only one instance of RequestsMock is active at
-    # once. More accurately: each activation of a RequestsMock will overwrite
-    # the previous one.
-    # Since we want each ServiceMock instance to be activatable separately, we
-    # have a single RequestsMock instance shared across all ServiceMock
-    # instances. This may cause bugs or unexpected behavior since the lifetime
-    # of the service mock will be extended to be the lifetime of the longest
-    # service mock.
-    _requests_mock = None
+    # Kept for backwards compatibility
+    _requests_mock = responses.mock
 
     def __init__(self, service, methods, url, input_schema, output_schema,
                  output, output_status=200):
@@ -108,21 +100,11 @@ class ServiceMock(Fixture):
                 json.dumps(self._output)
             )
 
-        if ServiceMock._requests_mock is None:
-            ServiceMock._requests_mock = responses.RequestsMock(
-                assert_all_requests_are_fired=False
-            )
-            self.addCleanup(ServiceMock._clean_requests_mock)
-            ServiceMock._requests_mock.start()
-            self.addCleanup(ServiceMock._requests_mock.stop)
-
+        responses_manager.attach()
+        self.addCleanup(responses_manager.detach)
         for method in self._methods:
-            self._requests_mock.add_callback(method, full_url, _callback)
+            responses.mock.add_callback(method, full_url, _callback)
 
     @property
     def calls(self):
-        return self._requests_mock.calls
-
-    @classmethod
-    def _clean_requests_mock(cls):
-        cls._requests_mock = None
+        return responses.mock.calls
