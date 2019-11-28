@@ -1,3 +1,7 @@
+# Copyright 2019 Canonical Ltd.  This software is licensed under the
+# GNU Lesser General Public License version 3 (see the file LICENSE).
+from __future__ import absolute_import
+
 import responses
 
 
@@ -40,7 +44,6 @@ class ResponsesManager(object):
 
 
 responses_manager = ResponsesManager()
-del ResponsesManager
 
 
 class responses_mock_context(object):
@@ -66,6 +69,9 @@ class responses_mock_context(object):
         responses_manager.detach()
 
     def __call__(self, func):
+        # responses.get_wrapper creates a function which has the same
+        # signature etc.  as `func`. It execs `wrapper_template`
+        # in a seperate namespace to do this. See get_wrapper code.
         wrapper_template = """\
 def wrapper%(signature)s:
     with responses_mock_context:
