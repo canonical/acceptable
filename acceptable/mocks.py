@@ -14,6 +14,8 @@ from acceptable._validation import validate
 import re
 from requests.utils import CaseInsensitiveDict
 
+from .responses import responses_manager
+
 
 class Attrs(object):
     """A utility class allowing the creation of namespaces from a dict.
@@ -44,59 +46,6 @@ class Attrs(object):
 
     def __iter__(self):
         return iter(self.__attrs.items())
-
-
-class ResponsesManager(object):
-    """The responses library is used to add mock behaviour into the requests
-    library. 
-    
-    It does this using the RequestsMock class, however only one of 
-    these can be active at a time. Attempting to start a new RequestsMock
-    will remove any others hooked into requests.
-    
-    We use an instance of this class to manage use of the RequestsMock 
-    instance `responses.mock`. This allows us to start, stop and reset 
-    the it at the right time.
-    """
-    def __init__(self):
-        self._attached = 0
-
-    def _attach(self):
-        if self._attached == 0:
-            responses.mock.start()
-        self._attached += 1
-
-    def _detach(self):
-        self._attached -= 1
-        assert self._attached >= 0
-        if self._attached == 0:
-            responses.mock.stop()
-            responses.mock.reset()
-
-    def attach_callback(self, methods, url, callback):
-        for method in methods:
-            responses.mock.add_callback(method, url, callback)
-        self._attach()
-
-    def detach_callback(self, methods, url, callback):
-        for method in methods:
-            responses.mock.remove(method, url)
-        self._detach()
-
-
-_responses_manager = ResponsesManager()
-
-
-class responses_mock_context(object):
-    """Provides access to `responses.mock` in a way that is safe to mix with
-    mocks from `acceptable.mocks`.
-    """
-    def __enter__(self):
-        _responses_manager._attach()
-        return responses.mock
-
-    def __exit__(self, *args):
-        _responses_manager._detach()
 
 
 Call = namedtuple("Call", "request response error".split())
@@ -289,12 +238,12 @@ class EndpointMockContextManager(object):
         )
 
     def _start(self):
-        _responses_manager.attach_callback(
+        responses_manager.attach_callback(
             self._methods, self._mock._url, self._mock._callback
         )
 
     def _stop(self):
-        _responses_manager.detach_callback(
+        responses_manager.detach_callback(
             self._methods, self._mock._url, self._mock._callback
         )
 

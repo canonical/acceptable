@@ -5,7 +5,15 @@ from future import standard_library
 
 standard_library.install_aliases()
 
-from acceptable.mocks import CallRecorder, Endpoint, EndpointMock, EndpointSpec, Service, ServiceFactory, responses_mock_context
+from acceptable.mocks import (
+    CallRecorder,
+    Endpoint,
+    EndpointMock,
+    EndpointSpec,
+    Service,
+    ServiceFactory,
+)
+from acceptable.responses import responses_mock_context
 import requests
 import testtools
 from testtools import ExpectedException
