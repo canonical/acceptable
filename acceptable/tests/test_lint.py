@@ -190,6 +190,102 @@ class LintTests(LintTestCase):
         self.assertEqual('url', msgs[0].name)
         self.assertIn('/other', msgs[0].msg)
 
+    def test_required_on_new_api_ok(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+            api = service.api('/other', 'api', introduced_at=1)
+            api.request_schema = {
+                'type': 'object',
+                'properties': {
+                    'context': {'type': 'string', 'description': 'Context'}
+                },
+                'required': ['context']
+            }
+
+            @api
+            def view():
+                "Docs"
+        """)
+        self.assertEqual(
+            [],
+            [str(i) for i in lint.metadata_lint(old, new, locations)]
+        )
+
+    def test_required_on_existing_api_is_error(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+
+            api = service.api('/other', 'api', introduced_at=1)
+
+            @api
+            def view():
+                "Docs"
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+            api = service.api('/other', 'api', introduced_at=1)
+            api.request_schema = {
+                'type': 'object',
+                'properties': {
+                    'context': {
+                        'type': 'string',
+                        'introduced_at': 2,
+                        'description': 'Context'
+                    }
+                },
+                'required': ['context']
+            }
+            api.changelog(2, 'Added context field')
+
+            @api
+            def view():
+                "Docs"
+        """)
+        self.assertEqual(
+            ['Cannot require new field context'],
+            [i.msg for i in lint.metadata_lint(old, new, locations)]
+        )
+
+    def test_schema_removed_is_error(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+            api = service.api('/other', 'api', introduced_at=1)
+            api.request_schema = {
+                'type': 'object',
+                'properties': {
+                    'context': {'type': 'string', 'description': 'Context'}
+                },
+                'required': ['context']
+            }
+
+            @api
+            def view():
+                "Docs"
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+            api = service.api('/other', 'api', introduced_at=1)
+
+            @api
+            def view():
+                "Docs"
+        """)
+        self.assertEqual(
+            ['Request schema removed'],
+            [i.msg for i in lint.metadata_lint(old, new, locations)]
+        )
 
 class WalkSchemaTests(LintTestCase):
 
