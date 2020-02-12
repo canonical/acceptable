@@ -161,10 +161,18 @@ def lint_api(api_name, old, new, locations):
     for schema in ['request_schema', 'response_schema']:
         new_schema = new.get(schema)
         if new_schema is None:
+            if old.get(schema) is not None:
+                yield LintError(
+                    schema,
+                    '{} schema removed',
+                    schema.split('_')[0].title(),
+                    api_name=api_name,
+                    location=api_location,
+                )
             continue
 
         schema_location = locations[schema]
-        old_schema = old.get(schema, {})
+        old_schema = old.get(schema) or {}
 
         for message in walk_schema(
                 schema, old_schema, new_schema, root=True, new_api=is_new_api):
@@ -239,14 +247,15 @@ def walk_schema(name, old, new, root=False, new_api=False):
             removed,
         )
 
-    # you cannot add new required fields
-    old_required = old.get('required', [])
-    for removed in set(new.get('required', [])) - set(old_required):
-        yield LintError(
-            name + '.required',
-            'Cannot require new field {}',
-            removed,
-        )
+    # you cannot add new required fields to an existing API.
+    if not new_api:
+        old_required = old.get('required', [])
+        for removed in set(new.get('required', [])) - set(old_required):
+            yield LintError(
+                name + '.required',
+                'Cannot require new field {}',
+                removed,
+            )
 
     if 'object' in types:
         properties = new.get('properties', {})
