@@ -236,20 +236,6 @@ class ValidateOutputTests(TestCase):
         self.assertEqual(200, resp.status_code)
         self.assertResponseJsonEqual(resp, returned_payload)
 
-    def test_passes_on_good_payload_single_tuple_return_parameter(self):
-        returned_payload = ({'foo': 'bar'}, )
-
-        def view():
-            return returned_payload
-
-        app = self.useFixture(FlaskValidateBodyFixture(
-            output_schema={'type': 'object'},
-            view_fn=view
-        ))
-        resp = app.post_json({})
-        self.assertEqual(200, resp.status_code)
-        self.assertResponseJsonEqual(resp, returned_payload[0])
-
     def test_passes_on_good_payload_double_return_parameter(self):
         returned_payload = {'foo': 'bar'}
 
