@@ -173,14 +173,8 @@ def wrap_response(fn, schema):
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         result = fn(*args, **kwargs)
-        resp = code = headers = None
         if isinstance(result, tuple):
-            if len(result) == 1:
-                resp = result[0]
-            elif len(result) == 2:
-                resp, code = result
-            elif len(result) == 3:
-                resp, code, headers = result
+            resp = result[0]
         else:
             resp = result
         if not isinstance(resp, (list, dict)):
@@ -195,12 +189,10 @@ def wrap_response(fn, schema):
                 "Response does not comply with output schema: %r.\n%s"\
                 % (error_list, resp)
 
-        return_value = [jsonify(resp)]
-        if code is not None:
-            return_value.append(code)
-        if headers is not None:
-            return_value.append(headers)
-        return tuple(return_value)
+        if isinstance(result, tuple):
+            return (jsonify(resp), *result[1:])
+        else:
+            return jsonify(result)
     return wrapper
 
 
