@@ -190,7 +190,7 @@ def wrap_response(fn, schema):
                 % (error_list, resp)
 
         if isinstance(result, tuple):
-            return (jsonify(resp), *result[1:])
+            return (jsonify(resp), ) + result[1:]
         else:
             return jsonify(result)
     return wrapper
