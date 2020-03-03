@@ -28,7 +28,7 @@ setup(
     ],
     extras_require=dict(
         flask=[
-            'Flask<1.0',
+            'Flask<2.0',
         ],
         django=[
             'django>=1.11,<2.1',
