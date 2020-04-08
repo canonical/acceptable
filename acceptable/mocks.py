@@ -43,7 +43,7 @@ class Attrs(object):
         try:
             return self.__attrs[name]
         except KeyError:
-            raise NameError(name)
+            raise AttributeError(name)
 
     def __iter__(self):
         return iter(self.__attrs.items())
