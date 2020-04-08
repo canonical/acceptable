@@ -75,7 +75,7 @@ def metadata_lint(old, new, locations):
     old = old.copy()
     new = new.copy()
     # remove version info
-    old.pop('$version', None)
+    old_introduced_at = old.pop('$version', None)
     new.pop('$version', None)
 
     for old_group_name in old:
@@ -84,18 +84,17 @@ def metadata_lint(old, new, locations):
 
     for group_name, new_group in new.items():
         old_group = old.get(group_name, {'apis': {}})
-
         for name, api in new_group['apis'].items():
             old_api = old_group['apis'].get(name, {})
             api_locations = locations[name]
-            for message in lint_api(name, old_api, api, api_locations):
+            for message in lint_api(name, old_api, api, api_locations, old_introduced_at):
                 message.api_name = name
                 if message.location is None:
                     message.location = api_locations['api']
                 yield message
 
 
-def lint_api(api_name, old, new, locations):
+def lint_api(api_name, old, new, locations, old_introduced_at):
     """Lint an acceptable api metadata."""
     is_new_api = not old
     api_location = locations['api']
@@ -122,6 +121,20 @@ def lint_api(api_name, old, new, locations):
             'missing introduced_at field',
             location=api_location,
         )
+
+    if is_new_api:
+        if not isinstance(introduced_at, int):
+            yield LintError(
+                'introduced_at',
+                'introduced_at should be an integer',
+                location=api_location,
+            )
+        if old_introduced_at is not None and introduced_at <= old_introduced_at:
+            yield LintError(
+                'introduced_at',
+                'introduced_at should be > {}'.format(old_introduced_at),
+                location=api_location,
+            )
 
     if not is_new_api:
         # cannot change introduced_at if we already have it
