@@ -519,3 +519,50 @@ class WalkSchemaTests(LintTestCase):
 
         self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
         self.assertEqual('name.items.bar.introduced_at', msgs[1].name)
+
+    def test_new_api_introduced_at_enforced(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+            from acceptable import AcceptableService
+            service = AcceptableService('myservice', 'group')
+            api1 = service.api('/api1', 'api1', introduced_at=1)
+            @api1
+            def view():
+                "Docs"
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import AcceptableService
+            service = AcceptableService('myservice', 'group')
+            api1 = service.api('/api1', 'api1', introduced_at=1)
+            @api1
+            def view1():
+                "Docs"
+
+            api2 = service.api('/api2', 'api2', introduced_at=1)
+            @api2
+            def view2():
+                "Docs"
+        """)
+        self.assertEqual(
+            ['introduced_at should be > 1'],
+            [i.msg for i in lint.metadata_lint(old, new, locations)]
+        )
+
+    def test_new_api_introduced_at_is_int(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+            from acceptable import AcceptableService
+            service = AcceptableService('myservice', 'group')
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import AcceptableService
+            service = AcceptableService('myservice', 'group')
+            api1 = service.api('/api1', 'api1', introduced_at="1")
+            @api1
+            def view1():
+                "Docs"
+        """)
+        self.assertEqual(
+            ['introduced_at should be an integer'],
+            [i.msg for i in lint.metadata_lint(old, new, locations)]
+        )
