@@ -45,6 +45,8 @@ TEMPLATES = Environment(
         PackageLoader('acceptable', 'templates'),
     ]),
     autoescape=False,
+    trim_blocks=True,
+    lstrip_blocks=True,
 )
 TEMPLATES.filters['tojson'] = tojson_filter
 

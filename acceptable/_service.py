@@ -141,6 +141,7 @@ class APIMetadata():
                 group_apis[name]['methods'] = api.methods
                 group_apis[name]['request_schema'] = api.request_schema
                 group_apis[name]['response_schema'] = api.response_schema
+                group_apis[name]['params_schema'] = api.params_schema
                 group_apis[name]['doc'] = api.docs
                 group_apis[name]['changelog'] = api._changelog
                 if api.title:
@@ -160,6 +161,7 @@ class APIMetadata():
                     'api': api.location,
                     'request_schema': api._request_schema_location,
                     'response_schema': api._response_schema_location,
+                    'params_schema': api._params_schema_location,
                     'changelog': api._changelog_locations,
                     'view': api.view_fn_location,
                 }
@@ -305,7 +307,7 @@ class AcceptableService():
 
 
 class AcceptableAPI():
-    """Metadata abount an api endpoint."""
+    """Metadata about an api endpoint."""
 
     def __init__(
             self,
@@ -331,6 +333,8 @@ class AcceptableAPI():
         self._request_schema_location = None
         self._response_schema = None
         self._response_schema_location = None
+        self._params_schema = None
+        self._params_schema_location = None
         self._changelog = OrderedDict()
         self._changelog_locations = OrderedDict()
         if location is None:
@@ -371,6 +375,17 @@ class AcceptableAPI():
         self._response_schema = sort_schema(schema)
         # this location is the last item in the dict, sadly
         self._response_schema_location = get_callsite_location()
+
+    @property
+    def params_schema(self):
+        return self._params_schema
+
+    @params_schema.setter
+    def params_schema(self, schema):
+        if schema is not None:
+            _validation.validate_schema(schema)
+        self._params_schema = sort_schema(schema)
+        self._params_schema_location = get_callsite_location()
 
     def changelog(self, api_version, doc):
         """Add a changelog entry for this api."""
@@ -432,7 +447,10 @@ class AcceptableAPI():
                 self._response_schema = getattr(fn, '_response_schema', None)
                 self._response_schema_location = getattr(
                     fn, '_response_schema_location', None)
-
+            if self._params_schema is None:
+                self._params_schema = getattr(fn, '_params_schema', None)
+                self._params_schema_location = getattr(
+                    fn, '_params_schema_location', None)
             return fn
 
         return decorator

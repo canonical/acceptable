@@ -119,6 +119,7 @@ class MetadataTests(testtools.TestCase):
             root_api = service.api('/', 'root', introduced_at=1)
             root_api.request_schema = {'type': 'object'}
             root_api.response_schema = {'type': 'object'}
+            root_api.params_schema = {'type': 'object'}
             root_api.changelog(4, "changelog")
 
             @root_api
@@ -148,6 +149,7 @@ class MetadataTests(testtools.TestCase):
                         },
                         'request_schema': {'type': 'object'},
                         'response_schema': {'type': 'object'},
+                        'params_schema': {'type': 'object'},
                         'introduced_at':  1,
                         'title': 'Root',
                     }
@@ -166,7 +168,7 @@ class MetadataTests(testtools.TestCase):
                 'changelog': {
                     4: {
                         'filename': fixture.path,
-                        'lineno': 7,
+                        'lineno': 8,
                         'module': svc_mod,
                     },
                 },
@@ -180,9 +182,14 @@ class MetadataTests(testtools.TestCase):
                     'lineno': 6,
                     'module': svc_mod,
                 },
+                'params_schema': {
+                    'filename': fixture.path,
+                    'lineno': 7,
+                    'module': svc_mod
+                },
                 'view': {
                     'filename': fixture.path,
-                    'lineno': 10,
+                    'lineno': 11,
                     'module': svc_mod,
                 },
             }},
@@ -201,6 +208,7 @@ class MetadataTests(testtools.TestCase):
             @root_api.view(introduced_at='1.0')
             @validate_body({'type': 'object'})
             @validate_output({'type': 'object'})
+            @validate_params({'type': 'object', 'properties': {'test': {'type': 'string'}}})
             def my_view():
                 "Documentation."
         """
@@ -227,6 +235,7 @@ class MetadataTests(testtools.TestCase):
                         },
                         'request_schema': {'type': 'object'},
                         'response_schema': {'type': 'object'},
+                        'params_schema': {'type': 'object', 'properties': {'test': {'type': 'string'}}},
                         'introduced_at':  1,
                         'title': 'Root',
                     }
@@ -259,9 +268,14 @@ class MetadataTests(testtools.TestCase):
                     'lineno': 9,
                     'module': svc_mod,
                 },
-                'view': {
+                'params_schema': {
                     'filename': fixture.path,
                     'lineno': 10,
+                    'module': svc_mod,
+                },
+                'view': {
+                    'filename': fixture.path,
+                    'lineno': 11,
                     'module': svc_mod,
                 },
             }},

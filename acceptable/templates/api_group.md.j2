@@ -1,7 +1,6 @@
 ---
 title: {{group_name}}
 ---
- 
 # {{group_title}}
 {{ group_doc|default('') }}
 
@@ -35,6 +34,47 @@ No documentation yet.
 
 {% endif %}
 
+{% if api.params_schema and 'properties' in api.params_schema %}
+### Parameters
+
+{% for name, desc in api.params_schema['properties'].items() %}
+
+#### {{ name }} {% if name in api.params_schema.get('required', []) %}*required* {% endif %}
+
+{% if 'description' in desc %}
+{{ desc['description'] }}
+
+{% endif %}
+{% if 'type' in desc and desc['type'] != 'string' %}
+* Must be {{ desc['type'] }} type
+{% endif %}
+{% if 'pattern' in desc %}
+* Must match regex "{{ desc['pattern'] }}"
+{% endif %}
+{% if 'minLength' in desc %}
+* Length must be >= {{ desc['minLength'] }}
+{% endif %}
+{% if 'maxLength' in desc %}
+* Length must be <= {{ desc['maxLength'] }}
+{% endif %}
+{% if 'minimum' in desc %}
+* Must be >{{ '' if desc.get('exclusiveMinimum') else '=' }} {{ desc['minimum'] }}
+{% endif %}
+{% if 'maximum' in desc %}
+* Must be <{{ '' if desc.get('exclusiveMaximum') else '=' }} {{ desc['maximum'] }}
+{% endif %}
+{% if 'multipleOf' in desc %}
+* Must be multiple of {{ desc['multipleOf'] }}
+{% endif %}
+{% if 'enum' in desc %}
+* Must be one of {% for v in desc['enum'] %}{{ " or " if loop.last else ", " if not loop.first else "" }}"{{ v }}"{% endfor %}
+{% endif %}
+{% if 'const' in desc %}
+* Must be "{{ desc['const'] }}"
+{% endif %}
+{% endfor %}
+
+{% endif %}
 {% if api.request_schema %}
 ### Request JSON Schema
 

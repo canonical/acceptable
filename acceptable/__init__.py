@@ -17,6 +17,7 @@ from ._validation import (  # NOQA
     DataValidationError,
     validate_body,
     validate_output,
+    validate_params,
 )
 
 
@@ -27,4 +28,5 @@ __all__ = [
     'get_metadata',
     'validate_body',
     'validate_output',
+    'validate_params',
 ]
