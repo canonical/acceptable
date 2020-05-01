@@ -35,42 +35,47 @@ No documentation yet.
 {% endif %}
 
 {% if api.params_schema and 'properties' in api.params_schema %}
-### Parameters
+### URL Parameters
+
+```json
+{{api.params_schema|tojson(4)}}
+```
 
 {% for name, desc in api.params_schema['properties'].items() %}
-
-#### {{ name }} {% if name in api.params_schema.get('required', []) %}*required* {% endif %}
-
+* {{ name }}
 {% if 'description' in desc %}
-{{ desc['description'] }}
-
+    * description: {{ desc['description'] }}
+{% endif %}
+{% if name in api.params_schema.get('required', []) %}
+    * Is required
 {% endif %}
 {% if 'type' in desc and desc['type'] != 'string' %}
-* Must be {{ desc['type'] }} type
+    * Must be {{ desc['type'] }} type
 {% endif %}
 {% if 'pattern' in desc %}
-* Must match regex "{{ desc['pattern'] }}"
+    * Must match regex "{{ desc['pattern'] }}"
 {% endif %}
 {% if 'minLength' in desc %}
-* Length must be >= {{ desc['minLength'] }}
+    * Length must be >= {{ desc['minLength'] }}
 {% endif %}
 {% if 'maxLength' in desc %}
-* Length must be <= {{ desc['maxLength'] }}
+    * Length must be <= {{ desc['maxLength'] }}
 {% endif %}
 {% if 'minimum' in desc %}
-* Must be >{{ '' if desc.get('exclusiveMinimum') else '=' }} {{ desc['minimum'] }}
+    * Must be >{{ '' if desc.get('exclusiveMinimum') else '=' }} {{ desc['minimum'] }}
 {% endif %}
 {% if 'maximum' in desc %}
-* Must be <{{ '' if desc.get('exclusiveMaximum') else '=' }} {{ desc['maximum'] }}
+    * Must be <{{ '' if desc.get('exclusiveMaximum') else '=' }} {{ desc['maximum'] }}
 {% endif %}
 {% if 'multipleOf' in desc %}
-* Must be multiple of {{ desc['multipleOf'] }}
+    * Must be multiple of {{ desc['multipleOf'] }}
 {% endif %}
 {% if 'enum' in desc %}
-* Must be one of {% for v in desc['enum'] %}{{ " or " if loop.last else ", " if not loop.first else "" }}"{{ v }}"{% endfor %}
+    * Must be one of {% for v in desc['enum'] %}{{ " or " if loop.last else ", " if not loop.first else "" }}"{{ v }}"{% endfor %}
+
 {% endif %}
 {% if 'const' in desc %}
-* Must be "{{ desc['const'] }}"
+    * Must be "{{ desc['const'] }}"
 {% endif %}
 {% endfor %}
 
