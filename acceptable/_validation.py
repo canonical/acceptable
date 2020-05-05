@@ -1,4 +1,4 @@
-# Copyright 2017 Canonical Ltd.  This software is licensed under the
+# Copyright 2017-2020 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 from __future__ import unicode_literals
 from __future__ import print_function
@@ -25,6 +25,55 @@ class DataValidationError(Exception):
 
     def __str__(self):
         return repr(self)
+
+
+def validate_params(schema):
+    """Validate the request parameters.
+
+    The request parameters (request.args) are validated against the schema.
+
+    The root of the schema should be an object and each of its properties
+    is a parameter.
+
+    An example usage might look like this::
+
+        from snapstore_schemas import validate_params
+
+
+        @validate_params({
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "A test property.",
+                    "pattern": "[0-9A-F]{8}",
+                }
+            },
+            required: ["id"]
+        })
+        def my_flask_view():
+            ...
+
+    """
+    location = get_callsite_location()
+    def decorator(fn):
+        validate_schema(schema)
+        wrapper = wrap_request_params(fn, schema)
+        record_schemas(
+            fn, wrapper, location, params_schema=sort_schema(schema))
+        return wrapper
+    return decorator
+
+
+def wrap_request_params(fn, schema):
+    from flask import request
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        error_list = validate(request.args, schema)
+        if error_list:
+            raise DataValidationError(error_list)
+        return fn(*args, **kwargs)
+    return wrapper
 
 
 def validate_body(schema):
@@ -106,10 +155,17 @@ def wrap_request(fn, schema):
 
 
 def record_schemas(
-        fn, wrapper, location, request_schema=None, response_schema=None):
+        fn, wrapper, location, request_schema=None, response_schema=None, params_schema=None):
     """Support extracting the schema from the decorated function."""
     # have we already been decorated by an acceptable api call?
     has_acceptable = hasattr(fn, '_acceptable_metadata')
+
+    if params_schema is not None:
+        wrapper._params_schema = params_schema
+        wrapper._params_schema_location = location
+        if has_acceptable:
+            fn._acceptable_metadata._params_schema = params_schema
+            fn._acceptable_metadata._params_schema_location = location
 
     if request_schema is not None:
         # preserve schema for later use
