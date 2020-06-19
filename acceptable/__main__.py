@@ -405,7 +405,8 @@ def lint_cmd(cli_args, stream=sys.stdout):
 
 
 def doubles_cmd(cli_args, stream=sys.stdout):
-    metadata = json.load(cli_args.metadata, encoding='utf8')
+    metadata = json.load(cli_args.metadata, encoding='utf8',  
+        object_pairs_hook=OrderedDict)
     if cli_args.new_style:
         from . import generate_mocks
         generate_mocks.generate_service_factory(
