@@ -312,7 +312,8 @@ class LoadMetadataTests(testtools.TestCase):
         json_file.flush()
 
         # json converts int keys to string
-        json_dict = json.load(open(json_file.name))
+        with open(json_file.name) as fd:
+            json_dict = json.load(fd)
         self.assertEqual(json_dict['group']['apis']['api1']['changelog'], {
             '1': 'change 1',
             '2': 'change 2',
