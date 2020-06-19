@@ -319,7 +319,8 @@ class LoadMetadataTests(testtools.TestCase):
             '2': 'change 2',
         })
 
-        result = main.load_metadata(open(json_file.name))
+        with open(json_file.name) as fd:
+            result = main.load_metadata(fd)
 
         self.assertEqual(result['group']['apis']['api1']['changelog'], {
             1: 'change 1',
