@@ -9,6 +9,7 @@ from future.utils import PY2
 
 import argparse
 from collections import OrderedDict
+import contextlib
 from functools import partial
 import io
 import json
@@ -312,13 +313,15 @@ class LoadMetadataTests(testtools.TestCase):
         json_file.flush()
 
         # json converts int keys to string
-        json_dict = json.load(open(json_file.name))
+        with open(json_file.name) as fd:
+            json_dict = json.load(fd)
         self.assertEqual(json_dict['group']['apis']['api1']['changelog'], {
             '1': 'change 1',
             '2': 'change 2',
         })
 
-        result = main.load_metadata(open(json_file.name))
+        with open(json_file.name) as fd:
+            result = main.load_metadata(fd)
 
         self.assertEqual(result['group']['apis']['api1']['changelog'], {
             1: 'change 1',
@@ -372,166 +375,171 @@ class RenderMarkdownTests(testtools.TestCase):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
 
-        iterator = main.render_markdown(self.metadata(), args)
-        output = OrderedDict((str(k), v) for k, v in iterator)
+        with contextlib.closing(args.metadata):
+            iterator = main.render_markdown(self.metadata(), args)
+            output = OrderedDict((str(k), v) for k, v in iterator)
 
-        self.assertEqual(set([
-                'en/group.md',
-                'en/index.md',
-                'en/metadata.yaml',
-                'metadata.yaml',
-            ]),
-            set(output),
-        )
+            self.assertEqual(set([
+                    'en/group.md',
+                    'en/index.md',
+                    'en/metadata.yaml',
+                    'metadata.yaml',
+                ]),
+                set(output),
+            )
 
-        top_level_md = yaml.safe_load(output['metadata.yaml'])
-        self.assertEqual(
-            {'site_title': 'SERVICE Documentation: version 2'},
-            top_level_md,
-        )
+            top_level_md = yaml.safe_load(output['metadata.yaml'])
+            self.assertEqual(
+                {'site_title': 'SERVICE Documentation: version 2'},
+                top_level_md,
+            )
 
-        md = yaml.safe_load(output['en/metadata.yaml'])
-        self.assertEqual({
-                'navigation': [
-                    {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'Group'},
-                ],
-            },
-            md
-        )
+            md = yaml.safe_load(output['en/metadata.yaml'])
+            self.assertEqual({
+                    'navigation': [
+                        {'location': 'index.md', 'title': 'Index'},
+                        {'location': 'group.md', 'title': 'Group'},
+                    ],
+                },
+                md
+            )
 
     def test_render_markdown_undocumented(self):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
-        m = self.metadata()
-        m['group']['apis']['api2']['undocumented'] = True
-        iterator = main.render_markdown(m, args)
-        output = OrderedDict((str(k), v) for k, v in iterator)
+        with contextlib.closing(args.metadata):
+            m = self.metadata()
+            m['group']['apis']['api2']['undocumented'] = True
+            iterator = main.render_markdown(m, args)
+            output = OrderedDict((str(k), v) for k, v in iterator)
 
-        self.assertEqual(set([
-                'en/group.md',
-                'en/index.md',
-                'en/metadata.yaml',
-                'metadata.yaml',
-            ]),
-            set(output),
-        )
+            self.assertEqual(set([
+                    'en/group.md',
+                    'en/index.md',
+                    'en/metadata.yaml',
+                    'metadata.yaml',
+                ]),
+                set(output),
+            )
 
-        self.assertNotIn('api2', output['en/group.md'])
+            self.assertNotIn('api2', output['en/group.md'])
 
-        md = yaml.safe_load(output['en/metadata.yaml'])
-        self.assertEqual({
-                'navigation': [
-                    {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'Group'},
-                ],
-            },
-            md
-        )
+            md = yaml.safe_load(output['en/metadata.yaml'])
+            self.assertEqual({
+                    'navigation': [
+                        {'location': 'index.md', 'title': 'Index'},
+                        {'location': 'group.md', 'title': 'Group'},
+                    ],
+                },
+                md
+            )
 
     def test_render_markdown_deprecated_at(self):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
-        m = self.metadata()
-        m['group']['apis']['api2']['deprecated_at'] = 2
-        iterator = main.render_markdown(m, args)
-        output = OrderedDict((str(k), v) for k, v in iterator)
+        with contextlib.closing(args.metadata):
+            m = self.metadata()
+            m['group']['apis']['api2']['deprecated_at'] = 2
+            iterator = main.render_markdown(m, args)
+            output = OrderedDict((str(k), v) for k, v in iterator)
 
-        self.assertEqual(set([
-                'en/group.md',
-                'en/index.md',
-                'en/metadata.yaml',
-                'metadata.yaml',
-            ]),
-            set(output),
-        )
+            self.assertEqual(set([
+                    'en/group.md',
+                    'en/index.md',
+                    'en/metadata.yaml',
+                    'metadata.yaml',
+                ]),
+                set(output),
+            )
 
-        md = yaml.safe_load(output['en/metadata.yaml'])
-        self.assertEqual({
-                'navigation': [
-                    {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'Group'},
-                ],
-            },
-            md
-        )
+            md = yaml.safe_load(output['en/metadata.yaml'])
+            self.assertEqual({
+                    'navigation': [
+                        {'location': 'index.md', 'title': 'Index'},
+                        {'location': 'group.md', 'title': 'Group'},
+                    ],
+                },
+                md
+            )
 
     def test_render_markdown_multiple_groups(self):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
-        metadata = self.metadata()
-        metadata['group2'] = {
-            'apis': {
-                'api2': metadata['group']['apis'].pop('api2')
+        with contextlib.closing(args.metadata):
+            metadata = self.metadata()
+            metadata['group2'] = {
+                'apis': {
+                    'api2': metadata['group']['apis'].pop('api2')
+                }
             }
-        }
-        iterator = main.render_markdown(metadata, args)
-        output = OrderedDict((str(k), v) for k, v in iterator)
+            iterator = main.render_markdown(metadata, args)
+            output = OrderedDict((str(k), v) for k, v in iterator)
 
-        self.assertEqual(set([
-                'en/group.md',
-                'en/group2.md',
-                'en/index.md',
-                'en/metadata.yaml',
-                'metadata.yaml',
-            ]),
-            set(output),
-        )
+            self.assertEqual(set([
+                    'en/group.md',
+                    'en/group2.md',
+                    'en/index.md',
+                    'en/metadata.yaml',
+                    'metadata.yaml',
+                ]),
+                set(output),
+            )
 
-        top_level_md = yaml.safe_load(output['metadata.yaml'])
-        self.assertEqual(
-            {'site_title': 'SERVICE Documentation: version 2'},
-            top_level_md,
-        )
+            top_level_md = yaml.safe_load(output['metadata.yaml'])
+            self.assertEqual(
+                {'site_title': 'SERVICE Documentation: version 2'},
+                top_level_md,
+            )
 
-        md = yaml.safe_load(output['en/metadata.yaml'])
-        self.assertEqual({
-                'navigation': [
-                    {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md', 'title': 'Group'},
-                    {'location': 'group2.md', 'title': 'Group2'},
-                ],
-            },
-            md
-        )
+            md = yaml.safe_load(output['en/metadata.yaml'])
+            self.assertEqual({
+                    'navigation': [
+                        {'location': 'index.md', 'title': 'Index'},
+                        {'location': 'group.md', 'title': 'Group'},
+                        {'location': 'group2.md', 'title': 'Group2'},
+                    ],
+                },
+                md
+            )
 
     def test_render_markdown_group_omitted_with_undocumented(self):
         args = main.parse_args(
             ['render', 'examples/api.json', '--name=SERVICE'])
-        metadata = self.metadata()
-        metadata['group2'] = {
-            'apis': {
-                'api2': metadata['group']['apis'].pop('api2')
+        with contextlib.closing(args.metadata):
+            metadata = self.metadata()
+            metadata['group2'] = {
+                'apis': {
+                    'api2': metadata['group']['apis'].pop('api2')
+                }
             }
-        }
-        metadata['group2']['apis']['api2']['undocumented'] = True
-        iterator = main.render_markdown(metadata, args)
-        output = OrderedDict((str(k), v) for k, v in iterator)
+            metadata['group2']['apis']['api2']['undocumented'] = True
+            iterator = main.render_markdown(metadata, args)
+            output = OrderedDict((str(k), v) for k, v in iterator)
 
-        self.assertEqual(set([
-                'en/group.md',
-                'en/index.md',
-                'en/metadata.yaml',
-                'metadata.yaml',
-            ]),
-            set(output),
-        )
+            self.assertEqual(set([
+                    'en/group.md',
+                    'en/index.md',
+                    'en/metadata.yaml',
+                    'metadata.yaml',
+                ]),
+                set(output),
+            )
 
-        top_level_md = yaml.safe_load(output['metadata.yaml'])
-        self.assertEqual(
-            {'site_title': 'SERVICE Documentation: version 2'},
-            top_level_md,
-        )
+            top_level_md = yaml.safe_load(output['metadata.yaml'])
+            self.assertEqual(
+                {'site_title': 'SERVICE Documentation: version 2'},
+                top_level_md,
+            )
 
-        md = yaml.safe_load(output['en/metadata.yaml'])
-        self.assertEqual({
-                'navigation': [
-                    {'location': 'index.md', 'title': 'Index'},
-                    {'location': 'group.md',  'title': 'Group'},
-                ],
-            },
-            md
-        )
+            md = yaml.safe_load(output['en/metadata.yaml'])
+            self.assertEqual({
+                    'navigation': [
+                        {'location': 'index.md', 'title': 'Index'},
+                        {'location': 'group.md',  'title': 'Group'},
+                    ],
+                },
+                md
+            )
 
     def test_render_cmd_with_templates(self):
         markdown_dir = self.useFixture(fixtures.TempDir())

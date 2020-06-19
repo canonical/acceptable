@@ -229,7 +229,8 @@ def import_or_exec(path):
     import is attempted"""
     if os.path.exists(path) and path.endswith('.py'):
         try:
-            exec(open(path).read(), {}, {})
+            with open(path) as fd:
+                exec(fd.read(), {}, {})
         except:
             raise Exception('Could not exec {!r}'.format(path))
     else:
