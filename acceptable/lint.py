@@ -221,29 +221,26 @@ def check_custom_attrs(name, old, new, new_api=False):
     if 'description' not in new:
         yield LintWarning(name + '.description', 'missing description field')
 
-    if not new_api:
-        introduced_at = new.get('introduced_at')
-        if introduced_at is None:
-            if not old:  # new field
-                yield LintFixit(
-                    name + '.introduced_at', 'missing introduced_at field')
-        else:
-            introduced_at_changed = False
-            old_introduced_at = old.get('introduced_at')
-            if old_introduced_at is not None:
-                introduced_at_changed = old_introduced_at != introduced_at
-
-            if introduced_at_changed:
-                yield LintError(
-                    name + '.introduced_at',
-                    'introduced_at changed from {} to {}',
-                    old_introduced_at,
-                    introduced_at,
-                )
-            else:
-                # we have a specific introduced_at field, make sure to
-                # check it's referenced by a changelog entry
-                yield CheckChangelog(name, introduced_at)
+    # New field on existing api without introduced_at
+    if not new_api and not old and new.get('introduced_at') is None:
+        yield LintFixit(
+            '{}.introduced_at'.format(name), 'missing introduced_at field'
+        )
+    # Existing field but introduced_at has changed
+    elif (
+        not new_api and
+        old.get('introduced_at') is not None and
+        old.get('introduced_at') != new.get('introduced_at')
+    ):
+        yield LintError(
+            '{}.introduced_at'.format(name),
+            'introduced_at changed from {} to {}',
+            old.get('introduced_at'),
+            new.get('introduced_at'),
+        )
+    # Check introduced_at has a change log entry
+    elif new.get('introduced_at') is not None:
+        yield CheckChangelog(name, new.get('introduced_at'))
 
 
 def walk_schema(name, old, new, root=False, new_api=False):
