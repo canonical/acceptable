@@ -41,8 +41,6 @@ class LintTests(LintTestCase):
 
     def test_missing_api_documentation(self):
         metadata, locations, path = self.get_metadata("""
-
-
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
