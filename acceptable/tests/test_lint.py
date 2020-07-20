@@ -52,16 +52,16 @@ class LintTests(LintTestCase):
 
         msgs = list(lint.metadata_lint(metadata, metadata, locations))
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('doc', msgs[0].name),
-        self.assertEqual('api', msgs[0].api_name),
+        self.assertEqual('doc', msgs[0].name)
+        self.assertEqual('api', msgs[0].api_name)
         self.assertEqual(msgs[0].location['filename'], path)
         self.assertEqual(msgs[0].location['lineno'], 6)
 
         # test with new api
         msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('doc', msgs[0].name),
-        self.assertEqual('api', msgs[0].api_name),
+        self.assertEqual('doc', msgs[0].name)
+        self.assertEqual('api', msgs[0].api_name)
         self.assertEqual(msgs[0].location['filename'], path)
         self.assertEqual(msgs[0].location['lineno'], 6)
 
@@ -78,8 +78,8 @@ class LintTests(LintTestCase):
 
         msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('introduced_at', msgs[0].name),
-        self.assertEqual('api', msgs[0].api_name),
+        self.assertEqual('introduced_at', msgs[0].name)
+        self.assertEqual('api', msgs[0].api_name)
         self.assertEqual(msgs[0].location['filename'], path)
         self.assertEqual(msgs[0].location['lineno'], 3)
 
@@ -284,6 +284,77 @@ class LintTests(LintTestCase):
         """)
         self.assertEqual(
             ['Request schema removed'],
+            [i.msg for i in lint.metadata_lint(old, new, locations)]
+        )
+
+    def test_changelog_required_for_revision_new_api(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+
+            api = service.api('/other', 'api', introduced_at=1)
+            api.request_schema = {
+                'type': 'object',
+                'properties': {
+                    'context': {
+                        'type': 'string',
+                        'introduced_at': 2,
+                        'description': 'Context'
+                    }
+                },
+            }
+
+            @api
+            def view():
+                "Docs"
+        """)
+        self.assertEqual(
+            ['No changelog entry for revision 2'],
+            [i.msg for i in lint.metadata_lint(old, new, locations)]
+        )
+
+    def test_changelog_required_for_revision_existing_api(self):
+        old, _, _ = self.get_metadata(module='old', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+
+            api = service.api('/other', 'api', introduced_at=1)
+            api.request_schema = {
+                'type': 'object',
+                'properties': {
+                },
+            }
+
+            @api
+            def view():
+                "Docs"
+        """)
+
+        new, locations, _ = self.get_metadata(module='new', code="""
+            from acceptable import *
+            service = AcceptableService('myservice', 'group')
+
+            api = service.api('/other', 'api', introduced_at=1)
+            api.request_schema = {
+                'type': 'object',
+                'properties': {
+                    'context': {
+                        'type': 'string',
+                        'introduced_at': 2,
+                        'description': 'Context'
+                    }
+                },
+            }
+
+            @api
+            def view():
+                "Docs"
+        """)
+        self.assertEqual(
+            ['No changelog entry for revision 2'],
             [i.msg for i in lint.metadata_lint(old, new, locations)]
         )
 
