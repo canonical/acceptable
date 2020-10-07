@@ -6,7 +6,7 @@
 from setuptools import find_packages, setup
 
 
-VERSION = '0.29'
+VERSION = '0.30'
 
 
 setup(
@@ -31,7 +31,7 @@ setup(
             'Flask<2.0',
         ],
         django=[
-            'django>=1.11,<2.1',
+            'django>=2.1',
         ]
     ),
     test_suite='acceptable.tests',

@@ -25,22 +25,15 @@ class Command(BaseCommand):
     help = 'Generate Acceptable API Metadata from project'
 
     def add_arguments(self, parser):
-        cmd = self
+        # Handle our subparsers in a way that is suppoert in Django 2.1+
+        subparsers = parser.add_subparsers(dest='cmd')
 
-        class SubParser(CommandParser):
-            """Django command aware subparser."""
-            def __init__(self, **kwargs):
-                super().__init__(cmd, **kwargs)
-
-        subparser = parser.add_subparsers(dest='cmd', parser_class=SubParser)
-        subparser.required = True
-
-        metadata_parser = subparser.add_parser(
+        metadata_parser = subparsers.add_parser(
             'metadata',
             help='Import project and print extracted metadata in json')
         metadata_parser.set_defaults(func=self.metadata)
 
-        version_parser = subparser.add_parser(
+        version_parser = subparsers.add_parser(
             'api-version',
             help='Get the current api version from json meta, and '
                  'optionally from current code also',
