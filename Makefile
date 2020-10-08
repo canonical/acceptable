@@ -9,7 +9,7 @@ test: env/.done
 	env/bin/python setup.py test
 
 env/bin/tox: env/.done
-	env/bin/pip install tox "six>=1.14.0"
+	env/bin/pip install tox
 
 .PHONY: tox
 tox: env/bin/tox
