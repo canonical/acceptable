@@ -1,6 +1,6 @@
 language: python
 cache: pip
-dist: trusty
+dist: xenial
 sudo: False
 python:
     - 3.5
