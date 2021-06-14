@@ -2,6 +2,7 @@ env/.done: requirements-dev.txt setup.py
 	virtualenv -p python3 env
 	env/bin/pip install -e .[flask,django]
 	env/bin/pip install -r requirements-dev.txt
+	env/bin/pip uninstall -y argparse  # we want to use the built-in version of argparse
 	touch $@
 
 .PHONY: text
