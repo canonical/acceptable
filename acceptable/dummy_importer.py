@@ -1,15 +1,7 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import print_function
-from future import standard_library
-
-standard_library.install_aliases()
 import sys
-try:
-    # install_aliases() doesn't seem to include unittest.mock
-    from mock import MagicMock
-except ImportError:
-    from unittest.mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class DummyFinder(object):

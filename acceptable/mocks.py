@@ -1,10 +1,5 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import absolute_import
-from future import standard_library
-
-standard_library.install_aliases()
-
 from collections import namedtuple
 import copy
 from json import dumps as json_dumps
@@ -22,9 +17,9 @@ class Attrs(object):
     """A utility class allowing the creation of namespaces from a dict.
     Also provides an iterator over the items of the original dict.
 
-    This is used by both Service and ServiceMock to create their 
+    This is used by both Service and ServiceMock to create their
     endpoints attributes.
-    
+
     e.g:
     a = Attrs(dict(b=1, c=2))
     assert a.b == 1
@@ -32,13 +27,13 @@ class Attrs(object):
     assert dir(a) == ['b', 'c']
     """
     def __init__(self, attrs):
-        # I think python name mangling is ok here to help avoid collisions 
+        # I think python name mangling is ok here to help avoid collisions
         # between instance attributes and names in attrs
         self.__attrs = dict(attrs)
-    
+
     def __dir__(self):
         return list(self.__attrs)
-    
+
     def __getattr__(self, name):
         try:
             return self.__attrs[name]
@@ -288,7 +283,7 @@ class Endpoint(object):
         self._request_schema = endpoint_spec.request_schema
         self._response_schema = endpoint_spec.response_schema
         self._response_callback = response_callback
-    
+
     @property
     def service_name(self):
         return self._service_name
@@ -323,7 +318,7 @@ class Endpoint(object):
 
     def set_response_callback(self, callback):
         self._response_callback = callback
-        
+
     def set_response(self, status=200, headers=None, body=None, json=None):
         self._response_callback = response_callback_factory(status, headers, body, json)
 
@@ -347,8 +342,8 @@ class Endpoint(object):
 
 
 class ServiceMock(object):
-    """Provides access to the endpoint mocks for this service and some functions 
-    to get calls made to the services endpoints. 
+    """Provides access to the endpoint mocks for this service and some functions
+    to get calls made to the services endpoints.
      """
     def __init__(self, call_recorder, endpoints):
         self._call_recorder = call_recorder
@@ -399,7 +394,7 @@ class Service(object):
     Callable to create a context manager which will mock all the endpoints on
     the service.
 
-    Endpoints can also be individually called to return a context manager 
+    Endpoints can also be individually called to return a context manager
     which just mocks that endpoint.
     """
     def __init__(self, base_url, name, endpoint_specs):
@@ -427,7 +422,7 @@ class Service(object):
 class ServiceFactory(object):
     """Callable to create Service instances.
 
-    You can create multiple instances of a Service and configure each 
+    You can create multiple instances of a Service and configure each
     independently.
     """
     def __init__(self, name, endpoint_specs):
