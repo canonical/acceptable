@@ -127,6 +127,69 @@ class ServiceMockTests(TestCase):
         self.assertEqual(200, resp.status_code)
         self.assertEqual([], resp.json())
 
+    def test_can_construct_double_with_error_and_different_output_schema(self):
+        error = {'error_list': {'code': 'test'}}
+        double = ServiceMock(
+            service='foo',
+            methods=['POST'],
+            url='/',
+            input_schema=None,
+            output_schema={'type': 'object'},
+            output_status=400,
+            output=error
+        )
+        set_service_locations(dict(foo="http://localhost:1234/"))
+
+        self.useFixture(double)
+
+        resp = requests.post("http://localhost:1234/")
+
+        self.assertEqual(400, resp.status_code)
+        self.assertEqual(error, resp.json())
+
+    def test_can_construct_double_with_custom_headers(self):
+        custom = {'Cool-Header': 'What a wonderful life'}
+        double = ServiceMock(
+            service='foo',
+            methods=['POST'],
+            url='/',
+            input_schema=None,
+            output_schema={'type': 'object'},
+            output_headers=custom,
+            output={'ok': True}
+        )
+        set_service_locations(dict(foo="http://localhost:1234/"))
+
+        self.useFixture(double)
+
+        resp = requests.post("http://localhost:1234/")
+
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual({'ok': True}, resp.json())
+        custom['Content-Type'] = 'application/json'
+        self.assertEqual(custom, resp.headers)
+
+    def test_can_construct_double_given_content_type_respected(self):
+        custom = {'Content-Type': 'not-json'}
+        double = ServiceMock(
+            service='foo',
+            methods=['POST'],
+            url='/',
+            input_schema=None,
+            output_schema={'type': 'object'},
+            output_headers=custom,
+            output={'ok': True}
+        )
+        set_service_locations(dict(foo="http://localhost:1234/"))
+
+        self.useFixture(double)
+
+        resp = requests.post("http://localhost:1234/")
+
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual({'ok': True}, resp.json())
+        self.assertEqual(custom, resp.headers)
+
     def test_mock_records_calls(self):
         double = ServiceMock(
             service='foo',
