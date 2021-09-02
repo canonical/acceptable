@@ -40,7 +40,7 @@ class ServiceMock(Fixture):
     _requests_mock = responses.mock
 
     def __init__(self, service, methods, url, input_schema, output_schema,
-                 output, output_status=200):
+                 output, output_status=200, output_headers=None):
         super().__init__()
         self._service = service
         self._methods = methods
@@ -49,9 +49,11 @@ class ServiceMock(Fixture):
         self._output_schema = output_schema
         self._output = output
         self._output_status = output_status
+        self._output_headers = output_headers.copy() if output_headers else {}
+        self._output_headers.setdefault("Content-Type", "application/json")
 
     def _setUp(self):
-        if self._output_schema:
+        if self._output_schema and self._output_status < 300:
             error_list = validate(self._output, self._output_schema)
             if error_list:
                 msg = (
@@ -87,10 +89,10 @@ class ServiceMock(Fixture):
                         {'Content-Type': 'application/json'},
                         json.dumps(error_list),
                     )
-            # TODO: Do we need to support more than just json responses?
+
             return (
                 self._output_status,
-                {"Content-Type": "application/json"},
+                self._output_headers,
                 json.dumps(self._output)
             )
 
