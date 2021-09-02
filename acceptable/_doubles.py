@@ -89,7 +89,7 @@ class ServiceMock(Fixture):
                         {'Content-Type': 'application/json'},
                         json.dumps(error_list),
                     )
-            # TODO: Do we need to support more than just json responses?
+
             return (
                 self._output_status,
                 self._output_headers,
