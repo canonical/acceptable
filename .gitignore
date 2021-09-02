@@ -8,3 +8,5 @@ build/
 docs/
 .tox
 .coverage
+venv/
+.eggs/

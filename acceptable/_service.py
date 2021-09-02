@@ -2,13 +2,6 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programatic API Metadata for Flask apps."""
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from builtins import *  # NOQA
-__metaclass__ = type
-
 from collections import OrderedDict, defaultdict
 import textwrap
 

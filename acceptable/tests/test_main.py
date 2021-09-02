@@ -1,12 +1,5 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from builtins import *  # NOQA
-from future.utils import PY2
-
 import argparse
 from collections import OrderedDict
 import contextlib
@@ -30,13 +23,6 @@ from acceptable.tests._fixtures import (
 )
 
 
-if PY2:
-    # teach yaml about future's newlist and newdict py3 backports
-    from future.types.newlist import newlist
-    from future.types.newdict import newdict
-    SafeRepresenter.add_representer(newlist, SafeRepresenter.represent_list)
-    SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
-
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
 # our tests:
@@ -51,7 +37,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_error_with_no_args(self):
         self.assertRaisesRegex(
             RuntimeError,
-            'arguments are required' if not PY2 else 'too few arguments',
+            'arguments are required',
             main.parse_args,
             [],
             SaneArgumentParser,
@@ -60,7 +46,7 @@ class ParseArgsTests(testtools.TestCase):
     def test_metadata_requires_files(self):
         self.assertRaisesRegex(
             RuntimeError,
-            'arguments are required' if not PY2 else 'too few arguments',
+            'arguments are required',
             main.parse_args,
             ['metadata'],
             SaneArgumentParser,
@@ -570,7 +556,6 @@ class RenderMarkdownTests(testtools.TestCase):
 
     @testtools.skipIf(
         not builder_installed(), 'documentation-builder not installed')
-    @testtools.skipIf(PY2, 'PY3 only')
     def test_render_cmd_with_documentation_builder(self):
         # documentation-builder is a strict snap, can only work out of $HOME
         home = os.environ['HOME']

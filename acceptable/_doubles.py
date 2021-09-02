@@ -6,16 +6,10 @@
 The ServiceMock class in this file is used at test-run-time to mock out a call
 to a remote service API view.
 """
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from builtins import *  # NOQA
-
 import functools
 import json
+from urllib.parse import urljoin
 
-from future.moves.urllib.parse import urljoin
 from fixtures import Fixture
 import responses
 
