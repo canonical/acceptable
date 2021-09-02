@@ -1,12 +1,5 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from builtins import *  # NOQA
-from future.utils import text_to_native_str
-
 import os
 import sys
 import textwrap
@@ -17,7 +10,7 @@ from acceptable import _service
 
 
 def clean_up_module(name, old_syspath=None):
-    sys.modules.pop(text_to_native_str(name))
+    sys.modules.pop(name)
     _service.clear_metadata()
 
     if old_syspath is not None:

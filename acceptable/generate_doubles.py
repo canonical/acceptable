@@ -1,6 +1,5 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import print_function
 import json
 import textwrap
 from sys import stdout

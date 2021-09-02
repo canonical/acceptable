@@ -1,20 +1,18 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import absolute_import
-
 import responses
 
 
 class ResponsesManager(object):
     """The responses library is used to add mock behaviour into the requests
-    library. 
-    
-    It does this using the RequestsMock class, however only one of 
+    library.
+
+    It does this using the RequestsMock class, however only one of
     these can be active at a time. Attempting to start a new RequestsMock
     will remove any others hooked into requests.
-    
-    We use an instance of this class to manage use of the RequestsMock 
-    instance `responses.mock`. This allows us to start, stop and reset 
+
+    We use an instance of this class to manage use of the RequestsMock
+    instance `responses.mock`. This allows us to start, stop and reset
     the it at the right time.
     """
     def __init__(self):
