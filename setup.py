@@ -21,7 +21,6 @@ setup(
     long_description=''.join(open('README.rst').readlines()[2:]),
     long_description_content_type='text/x-rst',
     install_requires=[
-        'future',
         'jinja2',
         'jsonschema',
         'pyyaml',
@@ -31,7 +30,7 @@ setup(
             'Flask<2.0',
         ],
         django=[
-            'django>=2.1',
+            'django>=2.1,<3',
         ]
     ),
     test_suite='acceptable.tests',

@@ -1,14 +1,5 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from __future__ import print_function
-from __future__ import division
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from builtins import *  # NOQA
-__metaclass__ = type
-
-from future.utils import PY2, raise_from
-
 import argparse
 from collections import defaultdict, OrderedDict
 from importlib import import_module
@@ -26,13 +17,6 @@ import yaml
 
 from acceptable import get_metadata, lint
 from acceptable.dummy_importer import DummyImporterContext
-
-if PY2:
-    from future.types.newlist import newlist
-    from future.types.newdict import newdict
-    from yaml.representer import SafeRepresenter
-    SafeRepresenter.add_representer(newlist, SafeRepresenter.represent_list)
-    SafeRepresenter.add_representer(newdict, SafeRepresenter.represent_dict)
 
 
 def tojson_filter(json_object, indent=4):
@@ -271,10 +255,10 @@ def load_metadata(stream):
     """Load JSON metadata from opened stream."""
     try:
         metadata = json.load(
-            stream, encoding='utf8', object_pairs_hook=OrderedDict)
+            stream, object_pairs_hook=OrderedDict)
     except json.JSONDecodeError as e:
         err = RuntimeError('Error parsing {}: {}'.format(stream.name, e))
-        raise_from(err, e)
+        raise err from e
     else:
         # convert changelog keys back to ints for sorting
         for group in metadata:
@@ -406,8 +390,7 @@ def lint_cmd(cli_args, stream=sys.stdout):
 
 
 def doubles_cmd(cli_args, stream=sys.stdout):
-    metadata = json.load(cli_args.metadata, encoding='utf8',  
-        object_pairs_hook=OrderedDict)
+    metadata = json.load(cli_args.metadata)
     if cli_args.new_style:
         from . import generate_mocks
         generate_mocks.generate_service_factory(
