@@ -3,7 +3,10 @@
 import testtools
 
 from acceptable import get_metadata
-from acceptable.tests.test_main import TemporaryModuleFixture
+from acceptable.tests.test_main import (
+    TemporaryModuleFixture,
+    lineno_per_py_version,
+)
 from acceptable.__main__ import import_metadata
 
 from acceptable import lint
@@ -51,7 +54,8 @@ class LintTests(LintTestCase):
         self.assertEqual('doc', msgs[0].name)
         self.assertEqual('api', msgs[0].api_name)
         self.assertEqual(msgs[0].location['filename'], path)
-        self.assertEqual(msgs[0].location['lineno'], 6)
+        self.assertEqual(
+            msgs[0].location['lineno'], lineno_per_py_version(6, 7))
 
         # test with new api
         msgs = list(lint.metadata_lint({}, metadata, locations))
@@ -59,7 +63,8 @@ class LintTests(LintTestCase):
         self.assertEqual('doc', msgs[0].name)
         self.assertEqual('api', msgs[0].api_name)
         self.assertEqual(msgs[0].location['filename'], path)
-        self.assertEqual(msgs[0].location['lineno'], 6)
+        self.assertEqual(
+            msgs[0].location['lineno'], lineno_per_py_version(6, 7))
 
     def test_missing_introduced_at(self):
         metadata, locations, path = self.get_metadata("""

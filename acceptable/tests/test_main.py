@@ -8,6 +8,7 @@ import io
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import yaml
 from yaml.representer import SafeRepresenter
@@ -22,6 +23,17 @@ from acceptable.tests._fixtures import (
     TemporaryModuleFixture,
 )
 
+
+def lineno_per_py_version(old, new):
+    # Becasue https://bugs.python.org/issue38283
+    # "sys._getframe(1).f_lineno changed behavior in 3.8"
+    # when calling get_callsite_location in different python version we get
+    # different line numbers.
+    if sys.version_info < (3, 8):
+        result = old
+    else:
+        result = new
+    return result
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -176,7 +188,7 @@ class MetadataTests(testtools.TestCase):
                 },
                 'view': {
                     'filename': fixture.path,
-                    'lineno': 11,
+                    'lineno': lineno_per_py_version(11, 12),
                     'module': svc_mod,
                 },
             }},
@@ -262,7 +274,7 @@ class MetadataTests(testtools.TestCase):
                 },
                 'view': {
                     'filename': fixture.path,
-                    'lineno': 11,
+                    'lineno': lineno_per_py_version(11, 12),
                     'module': svc_mod,
                 },
             }},
@@ -591,10 +603,14 @@ class RenderMarkdownTests(testtools.TestCase):
 
 
 EXPECTED_LINT_OUTPUT = [
-    'examples/api.py:22: Error: API foo at request_schema.required',
-    'examples/api.py:22: Warning: API foo at request_schema.foo.description',
-    'examples/api.py:36: Warning: API foo at response_schema.foo_result.description', # noqa
-    'examples/api.py:36: Documentation: API foo at response_schema.foo_result.introduced_at'  # noqa
+    ('examples/api.py', lineno_per_py_version(22, 7),
+     ' Error: API foo at request_schema.required'),
+    ('examples/api.py', lineno_per_py_version(22, 7),
+     ' Warning: API foo at request_schema.foo.description'),
+    ('examples/api.py', lineno_per_py_version(36, 29),
+     ' Warning: API foo at response_schema.foo_result.description'),
+    ('examples/api.py', lineno_per_py_version(36, 29),
+     ' Documentation: API foo at response_schema.foo_result.introduced_at'),
 ]
 
 
@@ -613,7 +629,7 @@ class LintTests(testtools.TestCase):
         lines = output.getvalue().splitlines()
 
         for actual, expected in zip(lines, EXPECTED_LINT_OUTPUT):
-            self.assertIn(expected, actual)
+            self.assertIn(':'.join(map(str, expected)), actual)
 
 
 class VersionTests(testtools.TestCase):
