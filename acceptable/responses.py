@@ -76,4 +76,8 @@ def wrapper%(signature)s:
         return func%(funcargs)s
 """
         namespace = {'responses_mock_context': self, 'func': func}
-        return responses.get_wrapped(func, wrapper_template, namespace)
+        try:
+            return responses.get_wrapped(func, wrapper_template, namespace)
+        except TypeError:
+            # In responses > 0.10.2, the function definition has changed
+            return responses.get_wrapped(func, self)
