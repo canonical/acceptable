@@ -147,7 +147,7 @@ The make file assumes the following variables:
 To include the file you'll need to get its path, if the above variables and
 conditions exist you can put this in your make file::
 
-    ACCEPTABLE_MAKEFILE = $(shell realpath --relative-to=. $(shell $(ENV)/bin/python -c 'import pkg_resources; print(pkg_resources.resource_filename("acceptable", "make/Makefile.acceptable"))'))
+    ACCEPTABLE_MAKEFILE = $(shell realpath --relative-to=. $(shell $(ENV)/bin/python -c 'import pkg_resources; print(pkg_resources.resource_filename("acceptable", "make/Makefile.acceptable"))' 2>/dev/null) 2>/dev/null)
 
     -include $(ACCEPTABLE_MAKEFILE)
 
