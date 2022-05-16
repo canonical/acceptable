@@ -21,14 +21,14 @@ setup(
     long_description=''.join(open('README.rst').readlines()[2:]),
     long_description_content_type='text/x-rst',
     install_requires=[
-        'Jinja2<3.0,>=2.10.1',
         'jsonschema',
         'pyyaml',
-        'MarkupSafe<2.1',
     ],
     extras_require=dict(
         flask=[
             'Flask<2.0',
+            'Jinja2<3.0,>=2.10.1',
+            'MarkupSafe<2.1',
         ],
         django=[
             'django>=2.1,<3',
