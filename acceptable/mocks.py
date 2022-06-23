@@ -276,7 +276,10 @@ class Endpoint(object):
     for this endpoint.
     """
     def __init__(self, base_url, service_name, endpoint_spec, response_callback=None):
-        self._url = urljoin(base_url, endpoint_spec.location)
+        if isinstance(endpoint_spec.location, str):
+            self._url = urljoin(base_url, endpoint_spec.location)
+        else:
+            self._url = endpoint_spec.location
         self._service_name = service_name
         self._name = endpoint_spec.name
         self._methods = list(endpoint_spec.methods)
