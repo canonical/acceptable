@@ -278,6 +278,11 @@ class Endpoint(object):
     def __init__(self, base_url, service_name, endpoint_spec, response_callback=None):
         if isinstance(endpoint_spec.location, str):
             self._url = urljoin(base_url, endpoint_spec.location)
+            if self._url.find('<') >0 and self._url.find('<') >0:
+                # we know that there are variable references in the url, so
+                # let's change the url in a regexp
+                self._url=self._url.replace('<', '(?P<').replace('>', '>\S+)')
+                self._url = re.compile(self._url)
         else:
             self._url = endpoint_spec.location
         self._service_name = service_name
