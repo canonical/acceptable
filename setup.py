@@ -23,12 +23,11 @@ setup(
     install_requires=[
         'jsonschema',
         'pyyaml',
+        'Jinja2',
     ],
     extras_require=dict(
         flask=[
-            'Flask<2.0',
-            'Jinja2<3.0,>=2.10.1',
-            'MarkupSafe<2.1',
+            'Flask',
         ],
         django=[
             'django>=2.1,<3',

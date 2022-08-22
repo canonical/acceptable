@@ -1,3 +1,7 @@
+Version 0.33
+
+  * Drop support for python < 3.8, so only Ubuntu LTS 20.04 & 22.204
+
 Version 0.27
 
  * Improvements to the includable make file.
