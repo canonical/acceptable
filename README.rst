@@ -1,6 +1,3 @@
-|Build Status| |Coverage Status|
-
-==========
 acceptable
 ==========
 
@@ -149,3 +146,7 @@ conditions exist you can put this in your make file::
 
     include $(shell $(ENV)/bin/python -c 'import pkg_resources; print(pkg_resources.resource_filename("acceptable", "make/Makefile.acceptable"))' 2> /dev/null)
 
+Development
+-----------
+
+``make test`` and ``make tox`` should run without errors.
