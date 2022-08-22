@@ -1,6 +1,6 @@
 Version 0.33
 
-  * Drop support for python < 3.8, so only Ubuntu LTS 20.04 & 22.204
+  * Drop support for Python < 3.8, so only Ubuntu 20.04 LTS & 22.04 LTS
 
 Version 0.27
 
