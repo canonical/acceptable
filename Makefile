@@ -5,7 +5,7 @@ env/.done: requirements-dev.txt setup.py
 	env/bin/pip uninstall -y argparse  # we want to use the built-in version of argparse
 	touch $@
 
-.PHONY: text
+.PHONY: test
 test: env/.done
 	env/bin/python setup.py test
 
@@ -18,4 +18,3 @@ tox: env/bin/tox
 
 clean:
 	rm -rf env docs html .tox .eggs build
-
