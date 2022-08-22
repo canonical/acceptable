@@ -11,7 +11,6 @@ import subprocess
 import sys
 import tempfile
 import yaml
-from yaml.representer import SafeRepresenter
 
 import testtools
 import fixtures
@@ -128,7 +127,7 @@ class MetadataTests(testtools.TestCase):
 
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
         main.import_metadata(['service'])
-        import service as svc_mod
+        import service as svc_mod  # noqa: we monkey-patched this in the line above
         metadata, locations = get_metadata().serialize()
 
         self.assertEqual({
@@ -214,7 +213,7 @@ class MetadataTests(testtools.TestCase):
         fixture = self.useFixture(TemporaryModuleFixture('service', service))
 
         main.import_metadata(['service'])
-        import service as svc_mod
+        import service as svc_mod  # noqa: we monkey-patched this in the line above
         metadata, locations = get_metadata().serialize()
 
         self.assertEqual({
@@ -613,6 +612,11 @@ EXPECTED_LINT_OUTPUT = [
      ' Documentation: API foo at response_schema.foo_result.introduced_at'),
 ]
 
+EXPECTED_OPENAPI_RESULT = [
+    "null\n",
+    "...\n",
+]
+
 
 class LintTests(testtools.TestCase):
 
@@ -625,11 +629,35 @@ class LintTests(testtools.TestCase):
 
         output = io.StringIO()
         result = main.lint_cmd(args, stream=output)
-        self.assertEqual(1, result) == 1
+        self.assertEqual(1, result)
         lines = output.getvalue().splitlines()
 
         for actual, expected in zip(lines, EXPECTED_LINT_OUTPUT):
             self.assertIn(':'.join(map(str, expected)), actual)
+
+    def test_openapi_output(self):
+        self.useFixture(CleanUpModuleImport('examples.osample'))
+
+        # Given the collection of files "examples/osample.*"
+        # When we perform a lint-update
+        args = main.parse_args(
+            ['lint', '--update', 'examples/osample.json', 'examples.osample'],
+        )
+
+        output = io.StringIO()
+        result = main.lint_cmd(args, stream=output)
+
+        # Then we exit without error
+        self.assertEqual(0, result)
+
+        # And there is no content in the output
+        self.assertEqual([], output.getvalue().splitlines())
+
+        # And the OpenAPI file contains the expected value
+        with open("examples/osample.yaml", "r") as f:
+            self.assertListEqual(EXPECTED_OPENAPI_RESULT, f.readlines())
+
+        # And we implicitly assume the files have not changed
 
 
 class VersionTests(testtools.TestCase):
@@ -643,7 +671,7 @@ class VersionTests(testtools.TestCase):
 
         output = io.StringIO()
         result = main.version_cmd(args, stream=output)
-        self.assertEqual(0, result) == 0
+        self.assertEqual(0, result)
         self.assertEqual(
             'examples/api.json: 2\nexamples.api: 5\n',
             output.getvalue(),

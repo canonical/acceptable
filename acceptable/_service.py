@@ -17,7 +17,7 @@ class InvalidAPI(Exception):
     pass
 
 
-class APIMetadata():
+class APIMetadata:
     """Global datastructure for all services.
 
     Provides a single point to register apis against, so we can easily inspect
@@ -160,6 +160,11 @@ class APIMetadata():
                 }
 
         return api_metadata, locations
+
+    def openapi_31x(self):
+        """Return an object conforming to the OpenAPI 3.1.x specification."""
+
+        return None
 
 
 _metadata = None

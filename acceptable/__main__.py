@@ -1,21 +1,22 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import argparse
-from collections import defaultdict, OrderedDict
-from importlib import import_module
 import json
 import os
 import sys
+from collections import defaultdict, OrderedDict
+from importlib import import_module
 
+import yaml
 from jinja2 import (
     ChoiceLoader,
     Environment,
     FileSystemLoader,
     PackageLoader,
 )
-import yaml
 
 from acceptable import get_metadata, lint
+from acceptable._oas import dump_oas
 from acceptable.dummy_importer import DummyImporterContext
 
 
@@ -228,7 +229,6 @@ def import_or_exec(path):
 
 
 def import_metadata_dummy_dependencies(module_paths):
-    import acceptable._service
     add_working_dir_to_python_path()
     for path in module_paths:
         with DummyImporterContext(path):
@@ -362,7 +362,9 @@ def render_markdown(metadata, cli_args):
 def lint_cmd(cli_args, stream=sys.stdout):
     metadata = load_metadata(cli_args.metadata)
     import_metadata(cli_args.modules)
-    current, locations = get_metadata().serialize()
+    _metadata = get_metadata()
+    current, locations = _metadata.serialize()
+    openapi = _metadata.openapi_31x()
 
     has_errors = False
     display_level = lint.WARNING
@@ -381,10 +383,14 @@ def lint_cmd(cli_args, stream=sys.stdout):
         if message.level >= error_level:
             has_errors = True
 
-    if cli_args.update:
-        if not has_errors or cli_args.force:
-            with open(cli_args.metadata.name, 'w') as f:
-                json.dump(current, f, indent=2)
+    if cli_args.update and (not has_errors or cli_args.force):
+        json_filename = cli_args.metadata.name
+        with open(json_filename, 'w') as j:
+            json.dump(current, j, indent=2)
+
+        openapi_filename = json_filename.replace("api", "openapi").replace("json", "yaml")
+        with open(openapi_filename, 'w') as o:
+            dump_oas(openapi, o)
 
     return 1 if has_errors else 0
 
