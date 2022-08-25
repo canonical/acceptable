@@ -59,6 +59,7 @@
         "url": "/foo"
       }
     },
-    "title": "Default"
+    "title": "Default",
+    "docs": "Test case for OpenAPI specification (OAS) output."
   }
 }

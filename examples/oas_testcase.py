@@ -1,12 +1,14 @@
+"""Test case for OpenAPI specification (OAS) output."""
+
 from acceptable import AcceptableService
 
-service = AcceptableService('OpenApiSample')
+service = AcceptableService("OpenApiSample")
 
-foo_api = service.api('/foo', 'foo', introduced_at=2)
+foo_api = service.api("/foo", "foo", introduced_at=2)
 
 foo_api.request_schema = {
     "type": "object",
-    "required": ['foo', 'baz'],
+    "required": ["foo", "baz"],
     "properties": {
         "foo": {
             "description": "This is a foo.",
@@ -17,37 +19,26 @@ foo_api.request_schema = {
             "description": "Bar the door.",
             "introduced_at": 4,
             "properties": {
-                "bar": {
-                    "type": "string",
-                    "introduced_at": 5,
-                    "description": "asdf"
-                }
+                "bar": {"type": "string", "introduced_at": 5, "description": "asdf"}
             },
         },
-    }
+    },
 }
 
 foo_api.response_schema = {
     "type": "object",
     "properties": {
-        "foo_result": {
-            "description": "Result of a foo.",
-            "type": "string"
-        },
+        "foo_result": {"description": "Result of a foo.", "type": "string"},
         "bar": {
             "type": "string",
             "description": "bar bar",
             "introduced_at": 5,
         },
-    }
+    },
 }
 
-foo_api.changelog(5, """
-    Added baz field.
-""")
-foo_api.changelog(4, """
-    Added bar field
-""")
+foo_api.changelog(5, "Added baz field.")
+foo_api.changelog(4, "Added bar field")
 
 
 @foo_api

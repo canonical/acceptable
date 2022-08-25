@@ -636,12 +636,12 @@ class LintTests(testtools.TestCase):
             self.assertIn(':'.join(map(str, expected)), actual)
 
     def test_openapi_output(self):
-        self.useFixture(CleanUpModuleImport('examples.osample'))
+        self.useFixture(CleanUpModuleImport('examples.oas_testcase'))
 
-        # Given the collection of files "examples/osample.*"
+        # Given the collection of files "examples/oas_testcase.*"
         # When we perform a lint-update
         args = main.parse_args(
-            ['lint', '--update', 'examples/osample.json', 'examples.osample'],
+            ['lint', '--update', 'examples/oas_testcase_api.json', 'examples.oas_testcase'],
         )
 
         output = io.StringIO()
@@ -654,7 +654,7 @@ class LintTests(testtools.TestCase):
         self.assertEqual([], output.getvalue().splitlines())
 
         # And the OpenAPI file contains the expected value
-        with open("examples/osample.yaml", "r") as f:
+        with open("examples/oas_testcase_openapi.yaml", "r") as f:
             self.assertListEqual(EXPECTED_OPENAPI_RESULT, f.readlines())
 
         # And we implicitly assume the files have not changed
