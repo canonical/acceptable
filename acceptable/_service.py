@@ -1,8 +1,8 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
-"""acceptable - Programatic API Metadata for Flask apps."""
-from collections import OrderedDict, defaultdict
+"""acceptable - Programmatic API Metadata for Flask apps."""
+from collections import OrderedDict
 import textwrap
 
 from acceptable import _validation
@@ -17,7 +17,7 @@ class InvalidAPI(Exception):
     pass
 
 
-class APIMetadata():
+class APIMetadata:
     """Global datastructure for all services.
 
     Provides a single point to register apis against, so we can easily inspect
@@ -109,7 +109,7 @@ class APIMetadata():
                 yield service, group
 
     def serialize(self):
-        """Serialize into JSONable dict, and associated locations data."""
+        """Serialize into JSON-able dict, and associated locations data."""
         api_metadata = OrderedDict()
         # $ char makes this come first in sort ordering
         api_metadata['$version'] = self.current_version
@@ -272,7 +272,7 @@ class AcceptableService():
 
         :param name: This is the name of the django url to use.
 
-        The 'methods' paramater can be supplied as normal, you can also user
+        The 'methods' parameter can be supplied as normal, you can also user
         the @api.handler decorator to link this API to its handler.
 
         """
@@ -308,7 +308,7 @@ class AcceptableAPI():
             name,
             url,
             introduced_at,
-            options={},
+            options=None,
             location=None,
             undocumented=False,
             deprecated_at=None,
@@ -318,7 +318,7 @@ class AcceptableAPI():
         self.name = name
         self.url = url
         self.introduced_at = introduced_at
-        self.options = options
+        self.options = options or {}
         self.view_fn = None
         self.view_fn_location = None
         self.docs = None
