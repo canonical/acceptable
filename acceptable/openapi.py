@@ -2,7 +2,6 @@
 Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 """
 
-import sys
 from typing import Any
 
 import yaml
@@ -26,20 +25,13 @@ def _to_dict(source: Any):
         return source
 
 
-def dump_oas(schema, stream):
+def dump(metadata, stream):
+
+    # TODO: parse metadata as OpenAPI specification
 
     return yaml.safe_dump(
-        _to_dict(schema),
+        _to_dict(None),
         stream,
         default_flow_style=False,
         encoding=None,
     )
-
-
-def print_oas(schema):
-    dump_oas(schema, sys.stdout)
-
-
-def store_oas(schema, path):
-    with open(path, "w") as w:
-        dump_oas(schema, w)

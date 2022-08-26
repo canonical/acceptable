@@ -15,8 +15,7 @@ from jinja2 import (
     PackageLoader,
 )
 
-from acceptable import get_metadata, lint
-from acceptable.openapi_exporter import dump_oas
+from acceptable import get_metadata, lint, openapi
 from acceptable.dummy_importer import DummyImporterContext
 
 
@@ -364,7 +363,6 @@ def lint_cmd(cli_args, stream=sys.stdout):
     import_metadata(cli_args.modules)
     _metadata = get_metadata()
     current, locations = _metadata.serialize()
-    openapi = _metadata.openapi_31x()
 
     has_errors = False
     display_level = lint.WARNING
@@ -391,7 +389,7 @@ def lint_cmd(cli_args, stream=sys.stdout):
         if json_filename.endswith("api.json"):
             openapi_filename = json_filename.replace("api.json", "openapi.yaml")
             with open(openapi_filename, 'w') as o:
-                dump_oas(openapi, o)
+                openapi.dump(_metadata, o)
 
     return 1 if has_errors else 0
 
