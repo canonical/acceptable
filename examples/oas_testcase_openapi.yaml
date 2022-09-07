@@ -1,2 +1,12 @@
-null
-...
+components_schemas: {}
+info:
+  contact:
+    email: ''
+    name: ''
+  description: ''
+  tags: []
+  title: OpenApiSample
+  version: 5
+openapi: 3.1.0
+paths: {}
+servers: {}
