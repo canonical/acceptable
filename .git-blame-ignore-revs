@@ -1,2 +1,4 @@
 # Migrate code style to Black
 d0923a275476bf64bb192d792e6fead7ec49f23f
+# Make a clean slate, remove trailing commas
+240a239b0b8d0b85c7124423ace6209b2856cce0
