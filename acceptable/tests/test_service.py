@@ -6,10 +6,7 @@ import jsonschema.exceptions
 from fixtures import Fixture
 from flask import Flask
 from testtools import TestCase
-from testtools.matchers import (
-    Equals,
-    Matcher,
-)
+from testtools.matchers import Equals, Matcher
 
 from acceptable._service import (
     APIMetadata,
@@ -17,11 +14,7 @@ from acceptable._service import (
     AcceptableService,
     InvalidAPI,
 )
-from acceptable._validation import (
-    validate_body,
-    validate_output,
-    DataValidationError,
-)
+from acceptable._validation import validate_body, validate_output, DataValidationError
 
 
 class APIMetadataTestCase(TestCase):
@@ -31,13 +24,7 @@ class APIMetadataTestCase(TestCase):
         api2 = AcceptableAPI(None, "api", "/api2", 1)
         metadata.register_service("test", None)
         metadata.register_api("test", None, api1)
-        self.assertRaises(
-            InvalidAPI,
-            metadata.register_api,
-            "other",
-            None,
-            api2,
-        )
+        self.assertRaises(InvalidAPI, metadata.register_api, "other", None, api2)
 
     def test_register_api_duplicate_url(self):
         metadata = APIMetadata()
@@ -46,13 +33,7 @@ class APIMetadataTestCase(TestCase):
         metadata.register_service("test", None)
         metadata.register_service("other", None)
         metadata.register_api("test", None, api1)
-        self.assertRaises(
-            InvalidAPI,
-            metadata.register_api,
-            "other",
-            None,
-            api2,
-        )
+        self.assertRaises(InvalidAPI, metadata.register_api, "other", None, api2)
 
     def test_register_api_allow_different_methods(self):
         metadata = APIMetadata()
@@ -68,23 +49,14 @@ class APIMetadataTestCase(TestCase):
         api = AcceptableAPI(None, "api", "/api", 1)
 
         metadata.register_service("test", None)
-        self.assertEqual(
-            {},
-            metadata.services["test"][None],
-        )
+        self.assertEqual({}, metadata.services["test"][None])
 
         metadata.register_api("test", None, api)
-        self.assertEqual(
-            {"api": api},
-            metadata.services["test"][None],
-        )
+        self.assertEqual({"api": api}, metadata.services["test"][None])
 
         # register service again, shouldn't remove any apis
         metadata.register_service("test", None)
-        self.assertEqual(
-            {"api": api},
-            metadata.services["test"][None],
-        )
+        self.assertEqual({"api": api}, metadata.services["test"][None])
 
     def test_bind_works(self):
         app = Flask(__name__)
@@ -205,14 +177,8 @@ class AcceptableAPITestCase(TestCase):
         }
         api.request_schema = schema
         api.response_schema = schema
-        self.assertEqual(
-            ["1", "3", "5"],
-            list(api.request_schema["properties"]),
-        )
-        self.assertEqual(
-            ["1", "3", "5"],
-            list(api.response_schema["properties"]),
-        )
+        self.assertEqual(["1", "3", "5"], list(api.request_schema["properties"]))
+        self.assertEqual(["1", "3", "5"], list(api.response_schema["properties"]))
 
     def test_acceptable_api_changelog_is_recorded(self):
         fixture = self.useFixture(ServiceFixture())
@@ -261,8 +227,7 @@ class AcceptableAPITestCase(TestCase):
         app = fixture.bind()
 
         payload = dict(
-            data=json.dumps([]),
-            headers={"Content-Type": "application/json"},
+            data=json.dumps([]), headers={"Content-Type": "application/json"}
         )
 
         with app.test_request_context("/new", **payload):
@@ -302,21 +267,12 @@ class AcceptableAPITestCase(TestCase):
     def test_cannot_duplicate_name(self):
         fixture = self.useFixture(ServiceFixture())
 
-        self.assertRaises(
-            InvalidAPI,
-            fixture.service.api,
-            "/bar",
-            "foo_api",
-        )
+        self.assertRaises(InvalidAPI, fixture.service.api, "/bar", "foo_api")
 
     def test_cannot_duplicate_url_and_method(self):
         fixture = self.useFixture(ServiceFixture())
         self.assertRaises(
-            InvalidAPI,
-            fixture.service.api,
-            "/foo",
-            "bar",
-            methods=["POST"],
+            InvalidAPI, fixture.service.api, "/foo", "bar", methods=["POST"]
         )
 
     def test_can_duplicate_url_different_method(self):
@@ -389,10 +345,7 @@ class LegacyAcceptableAPITestCase(TestCase):
         def new_view():
             return "new view", 200
 
-        self.assertEqual(
-            schema,
-            fixture.service.apis["blah"].request_schema,
-        )
+        self.assertEqual(schema, fixture.service.apis["blah"].request_schema)
 
     def test_validate_body_records_metadata_reversed_order(self):
         fixture = self.useFixture(ServiceFixture())
@@ -404,10 +357,7 @@ class LegacyAcceptableAPITestCase(TestCase):
         def new_view():
             return "new view", 200
 
-        self.assertEqual(
-            schema,
-            fixture.service.apis["blah"].request_schema,
-        )
+        self.assertEqual(schema, fixture.service.apis["blah"].request_schema)
 
     def test_validate_output_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())
@@ -419,10 +369,7 @@ class LegacyAcceptableAPITestCase(TestCase):
         def new_view():
             return "new view", 200
 
-        self.assertEqual(
-            schema,
-            fixture.service.apis["blah"].response_schema,
-        )
+        self.assertEqual(schema, fixture.service.apis["blah"].response_schema)
 
     def test_validate_output_records_metadata_reversed(self):
         fixture = self.useFixture(ServiceFixture())
@@ -434,10 +381,7 @@ class LegacyAcceptableAPITestCase(TestCase):
         def new_view():
             return "new view", 200
 
-        self.assertEqual(
-            schema,
-            fixture.service.apis["blah"].response_schema,
-        )
+        self.assertEqual(schema, fixture.service.apis["blah"].response_schema)
 
     def test_validate_both_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())
@@ -451,14 +395,8 @@ class LegacyAcceptableAPITestCase(TestCase):
         def new_view():
             return "new view", 200
 
-        self.assertEqual(
-            schema1,
-            fixture.service.apis["blah"].request_schema,
-        )
-        self.assertEqual(
-            schema2,
-            fixture.service.apis["blah"].response_schema,
-        )
+        self.assertEqual(schema1, fixture.service.apis["blah"].request_schema)
+        self.assertEqual(schema2, fixture.service.apis["blah"].response_schema)
 
 
 class IsResponse(Matcher):

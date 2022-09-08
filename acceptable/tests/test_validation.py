@@ -10,11 +10,7 @@ import jsonschema
 
 import flask
 
-from acceptable._validation import (
-    DataValidationError,
-    validate_body,
-    validate_output,
-)
+from acceptable._validation import DataValidationError, validate_body, validate_output
 
 
 class FlaskValidateBodyFixture(Fixture):

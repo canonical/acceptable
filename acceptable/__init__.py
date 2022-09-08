@@ -2,10 +2,7 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 
-from ._service import (  # NOQA
-    AcceptableService,
-    get_metadata,
-)
+from ._service import AcceptableService, get_metadata  # NOQA
 from ._validation import (  # NOQA
     DataValidationError,
     validate_body,

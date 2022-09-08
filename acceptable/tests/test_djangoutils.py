@@ -9,10 +9,7 @@ from django import forms
 from jsonschema import Draft4Validator, FormatChecker
 from testtools import TestCase
 
-from acceptable._service import (
-    clear_metadata,
-    get_metadata,
-)
+from acceptable._service import clear_metadata, get_metadata
 from acceptable import djangoutil
 
 
@@ -76,19 +73,12 @@ class TestFormSchema(TestCase):
                     "type": "string",
                     "enum": ["A", "B", "C"],
                 },
-                "baz": {
-                    "title": "baz",
-                    "description": "baz help",
-                    "type": "number",
-                },
+                "baz": {"title": "baz", "description": "baz help", "type": "number"},
                 "multi": {
                     "title": "multi",
                     "description": "multi help",
                     "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": ["A", "B", "C"],
-                    },
+                    "items": {"type": "string", "enum": ["A", "B", "C"]},
                 },
             },
         }
@@ -133,22 +123,14 @@ class TestFormSchema(TestCase):
     def test_get_field_schema_decimal(self):
         field = forms.DecimalField(label="label", help_text="help")
         self.assertEqual(
-            {
-                "type": "number",
-                "title": "label",
-                "description": "help",
-            },
+            {"type": "number", "title": "label", "description": "help"},
             djangoutil.get_field_schema("name", field),
         )
 
     def test_get_field_schema_integer(self):
         field = forms.IntegerField(label="label", help_text="help")
         self.assertEqual(
-            {
-                "type": "integer",
-                "title": "label",
-                "description": "help",
-            },
+            {"type": "integer", "title": "label", "description": "help"},
             djangoutil.get_field_schema("name", field),
         )
 
@@ -175,10 +157,7 @@ class TestFormSchema(TestCase):
                 "type": "array",
                 "title": "label",
                 "description": "help",
-                "items": {
-                    "type": "string",
-                    "enum": ["A", "B", "C"],
-                },
+                "items": {"type": "string", "enum": ["A", "B", "C"]},
             },
             djangoutil.get_field_schema("name", field),
         )
@@ -195,10 +174,7 @@ class TestFormSchema(TestCase):
                 "type": "array",
                 "title": "label",
                 "description": "help",
-                "items": {
-                    "type": "string",
-                    "enum": ["A", "B", "C"],
-                },
+                "items": {"type": "string", "enum": ["A", "B", "C"]},
             },
             djangoutil.get_field_schema("name", field),
         )
@@ -224,12 +200,7 @@ class TestFormSchema(TestCase):
 
         form_errors, schema_errors = self.get_errors(
             TestForm,
-            {
-                "foo": "foo@example.com",
-                "bar": "A",
-                "baz": 12.34,
-                "multi": ["B", "C"],
-            },
+            {"foo": "foo@example.com", "bar": "A", "baz": 12.34, "multi": ["B", "C"]},
         )
         self.assertEqual(form_errors, {})
         self.assertEqual(schema_errors, {})
@@ -238,8 +209,7 @@ class TestFormSchema(TestCase):
         from django_app.views import TestForm
 
         form_errors, schema_errors = self.get_errors(
-            TestForm,
-            {"foo": "foo@example.com"},
+            TestForm, {"foo": "foo@example.com"}
         )
         self.assertEqual(form_errors, {})
         self.assertEqual(schema_errors, {})
@@ -255,12 +225,7 @@ class TestFormSchema(TestCase):
 
         form_errors, schema_errors = self.get_errors(
             TestForm,
-            {
-                "foo": "not an email",
-                "bar": "A",
-                "baz": 12.34,
-                "multi": ["B", "C"],
-            },
+            {"foo": "not an email", "bar": "A", "baz": 12.34, "multi": ["B", "C"]},
         )
         self.assertEqual(form_errors.keys(), schema_errors.keys())
 
@@ -297,12 +262,7 @@ class TestFormSchema(TestCase):
 
         form_errors, schema_errors = self.get_errors(
             TestForm,
-            {
-                "foo": "foo@example.com",
-                "bar": "A",
-                "baz": 12.34,
-                "multi": ["B", "XXX"],
-            },
+            {"foo": "foo@example.com", "bar": "A", "baz": 12.34, "multi": ["B", "XXX"]},
         )
         self.assertEqual(form_errors.keys(), schema_errors.keys())
 
@@ -328,7 +288,7 @@ def expected_metadata():
                     "api_group": "default",
                     "service": "django_app",
                     "title": "Test",
-                },
+                }
             },
         },
     }
@@ -348,23 +308,13 @@ class TestManagementCommands(TestCase):
     def test_metadata_command(self):
         cmd = [sys.executable, "manage.py", "acceptable", "metadata"]
         output = subprocess.check_output(
-            cmd,
-            cwd="examples/django_app",
-            universal_newlines=True,
+            cmd, cwd="examples/django_app", universal_newlines=True
         )
         self.assertEqual(expected_metadata(), json.loads(output))
 
     def test_api_version_command(self):
-        cmd = [
-            sys.executable,
-            "manage.py",
-            "acceptable",
-            "api-version",
-            "../api.json",
-        ]
+        cmd = [sys.executable, "manage.py", "acceptable", "api-version", "../api.json"]
         output = subprocess.check_output(
-            cmd,
-            cwd="examples/django_app",
-            universal_newlines=True,
+            cmd, cwd="examples/django_app", universal_newlines=True
         )
         self.assertEqual("../api.json: 2\nImported API: 1\n", output)

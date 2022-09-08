@@ -8,12 +8,7 @@ from collections import defaultdict, OrderedDict
 from importlib import import_module
 
 import yaml
-from jinja2 import (
-    ChoiceLoader,
-    Environment,
-    FileSystemLoader,
-    PackageLoader,
-)
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader, PackageLoader
 
 from acceptable import get_metadata, lint, openapi
 from acceptable.dummy_importer import DummyImporterContext
@@ -25,10 +20,7 @@ def tojson_filter(json_object, indent=4):
 
 TEMPLATES = Environment(
     loader=ChoiceLoader(
-        [
-            FileSystemLoader("./"),
-            PackageLoader("acceptable", "templates"),
-        ]
+        [FileSystemLoader("./"), PackageLoader("acceptable", "templates")]
     ),
     autoescape=False,
     trim_blocks=True,
@@ -64,9 +56,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None, stdout=None):
     if stdout is None:
         stdout = sys.stdout
 
-    parser = parser_cls(
-        description="Tool for working with acceptable metadata",
-    )
+    parser = parser_cls(description="Tool for working with acceptable metadata")
     subparser = parser.add_subparsers(dest="cmd")
     subparser.required = True
 
@@ -94,10 +84,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None, stdout=None):
         "render", help="Render markdown documentation for API metadata"
     )
     render_parser.add_argument(
-        "metadata",
-        nargs="?",
-        type=argparse.FileType("r"),
-        default=stdin,
+        "metadata", nargs="?", type=argparse.FileType("r"), default=stdin
     )
     render_parser.add_argument("--name", "-n", required=True, help="Name of service")
     render_parser.add_argument("--dir", "-d", default="docs", help="output directory")
@@ -125,18 +112,10 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None, stdout=None):
     lint_parser = subparser.add_parser(
         "lint", help="Compare current metadata against file metadata"
     )
-    lint_parser.add_argument(
-        "metadata",
-        nargs="?",
-        type=argparse.FileType("r"),
-    )
+    lint_parser.add_argument("metadata", nargs="?", type=argparse.FileType("r"))
     lint_parser.add_argument("modules", nargs="+")
     lint_parser.add_argument(
-        "-q",
-        "--quiet",
-        action="store_true",
-        default=False,
-        help="Do not emit warnings",
+        "-q", "--quiet", action="store_true", default=False, help="Do not emit warnings"
     )
     lint_parser.add_argument(
         "--strict",
@@ -192,9 +171,7 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None, stdout=None):
         help="The JSON metadata for the API",
     )
     version_parser.add_argument(
-        "modules",
-        nargs="*",
-        help="Optional modules to import for current imported API",
+        "modules", nargs="*", help="Optional modules to import for current imported API"
     )
     version_parser.set_defaults(func=version_cmd)
 
@@ -293,12 +270,7 @@ def render_cmd(cli_args):
 
 
 def render_markdown(metadata, cli_args):
-    navigation = [
-        {
-            "title": "Index",
-            "location": "index." + cli_args.extension,
-        }
-    ]
+    navigation = [{"title": "Index", "location": "index." + cli_args.extension}]
     version = metadata.pop("$version", None)
     changelog = defaultdict(dict)
 
@@ -338,28 +310,19 @@ def render_markdown(metadata, cli_args):
     yield (
         os.path.join("en", "index." + cli_args.extension),
         cli_args.index_template.render(
-            version=version,
-            service_name=cli_args.name,
-            changelog=changelog,
+            version=version, service_name=cli_args.name, changelog=changelog
         ),
     )
 
     # documentation-builder requires yaml metadata files in certain locations
     yield os.path.join("en", "metadata.yaml"), yaml.safe_dump(
-        {"navigation": navigation},
-        default_flow_style=False,
-        encoding=None,
+        {"navigation": navigation}, default_flow_style=False, encoding=None
     )
     site_meta = {
-        "site_title": "{} Documentation: version {}".format(
-            cli_args.name,
-            version,
-        )
+        "site_title": "{} Documentation: version {}".format(cli_args.name, version)
     }
     yield "metadata.yaml", yaml.safe_dump(
-        site_meta,
-        default_flow_style=False,
-        encoding=None,
+        site_meta, default_flow_style=False, encoding=None
     )
 
 
@@ -404,10 +367,7 @@ def doubles_cmd(cli_args, stream=sys.stdout):
     if cli_args.new_style:
         from . import generate_mocks
 
-        generate_mocks.generate_service_factory(
-            metadata,
-            stream=stream,
-        )
+        generate_mocks.generate_service_factory(metadata, stream=stream)
     else:
         from . import generate_doubles
 

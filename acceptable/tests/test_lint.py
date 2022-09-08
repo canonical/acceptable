@@ -476,10 +476,7 @@ class WalkSchemaTests(LintTestCase):
     def test_delete_property_is_error(self):
         old = {
             "type": "object",
-            "properties": {
-                "foo": {"type": "string"},
-                "bar": {"type": "string"},
-            },
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
         }
         new = {
             "type": "object",
@@ -488,7 +485,7 @@ class WalkSchemaTests(LintTestCase):
                     "type": "string",
                     "description": "description",
                     "introduced_at": 1,
-                },
+                }
             },
         }
 
@@ -500,16 +497,9 @@ class WalkSchemaTests(LintTestCase):
         self.assertIsInstance(msgs[1], lint.CheckChangelog)
 
     def test_missing_doc_and_introduced_when_adding_new_field(self):
-        old = {
-            "type": "object",
-        }
+        old = {"type": "object"}
 
-        new = {
-            "type": "object",
-            "properties": {
-                "foo": {"type": "object"},
-            },
-        }
+        new = {"type": "object", "properties": {"foo": {"type": "object"}}}
         msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(2, len(msgs))
 
@@ -522,33 +512,19 @@ class WalkSchemaTests(LintTestCase):
         self.assertIn("missing", msgs[1].msg)
 
     def test_no_introduced_at_when_present_in_old(self):
-        old = {
-            "type": "object",
-            "properties": {
-                "foo": {"type": "object"},
-            },
-        }
+        old = {"type": "object", "properties": {"foo": {"type": "object"}}}
 
         new = {
             "type": "object",
-            "properties": {
-                "foo": {"type": "object", "description": "description"},
-            },
+            "properties": {"foo": {"type": "object", "description": "description"}},
         }
         msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(0, len(msgs))
 
     def test_missing_introduced_at_skipped_if_new_api(self):
-        old = {
-            "type": "object",
-        }
+        old = {"type": "object"}
 
-        new = {
-            "type": "object",
-            "properties": {
-                "foo": {"type": "object"},
-            },
-        }
+        new = {"type": "object", "properties": {"foo": {"type": "object"}}}
 
         msgs = list(lint.walk_schema("name", old, new, root=True, new_api=True))
         self.assertEqual(1, len(msgs))
@@ -571,7 +547,7 @@ class WalkSchemaTests(LintTestCase):
                             "introduced_at": 2,
                         },
                     },
-                },
+                }
             },
         }
         new = {
@@ -592,7 +568,7 @@ class WalkSchemaTests(LintTestCase):
                             "introduced_at": 3,  # changed
                         },
                     },
-                },
+                }
             },
         }
 
@@ -614,9 +590,7 @@ class WalkSchemaTests(LintTestCase):
             "items": {
                 "description": "description",
                 "type": "object",
-                "properties": {
-                    "foo": {"type": "object", "description": "description"},
-                },
+                "properties": {"foo": {"type": "object", "description": "description"}},
             },
         }
         new = {

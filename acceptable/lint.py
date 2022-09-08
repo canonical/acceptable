@@ -29,10 +29,7 @@ class Message:
 
     def __str__(self):
         output = "{}: API {} at {}: {}".format(
-            self.level.name.title(),
-            self.api_name,
-            self.name,
-            self.msg,
+            self.level.name.title(), self.api_name, self.name, self.msg
         )
 
         if self.location is None:
@@ -113,9 +110,7 @@ def lint_api(api_name, old, new, locations, old_introduced_at):
     introduced_at = new.get("introduced_at")
     if introduced_at is None:
         yield LintError(
-            "introduced_at",
-            "missing introduced_at field",
-            location=api_location,
+            "introduced_at", "missing introduced_at field", location=api_location
         )
 
     if is_new_api:
@@ -246,21 +241,13 @@ def walk_schema(name, old, new, root=False, new_api=False):
     types = get_schema_types(new)
     old_types = get_schema_types(old)
     for removed in set(old_types) - set(types):
-        yield LintError(
-            name + ".type",
-            "cannot remove type {} from field",
-            removed,
-        )
+        yield LintError(name + ".type", "cannot remove type {} from field", removed)
 
     # you cannot add new required fields to an existing API.
     if not new_api:
         old_required = old.get("required", [])
         for removed in set(new.get("required", [])) - set(old_required):
-            yield LintError(
-                name + ".required",
-                "Cannot require new field {}",
-                removed,
-            )
+            yield LintError(name + ".required", "Cannot require new field {}", removed)
 
     if "object" in types:
         properties = new.get("properties", {})

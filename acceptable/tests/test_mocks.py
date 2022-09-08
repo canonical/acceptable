@@ -60,18 +60,9 @@ class ServiceTests(testtools.TestCase):
                 {"type": "number"},
                 {"type": "number"},
             ),
-            EndpointSpec(
-                "no_validation",
-                "no-validation",
-                ["GET"],
-                None,
-                None,
-            ),
+            EndpointSpec("no_validation", "no-validation", ["GET"], None, None),
         ]
-        service_factory = ServiceFactory(
-            "test-service",
-            endpoints,
-        )
+        service_factory = ServiceFactory("test-service", endpoints)
         service = service_factory("http://example.com")
         service.endpoints.test_endpoint.set_response(json=999)
         return service
