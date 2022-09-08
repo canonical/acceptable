@@ -34,18 +34,8 @@ foo_api.response_schema = {
     },
 }
 
-foo_api.changelog(
-    5,
-    """
-    Added baz field.
-""",
-)
-foo_api.changelog(
-    4,
-    """
-    Added bar field
-""",
-)
+foo_api.changelog(5, "Added baz field.")
+foo_api.changelog(4, "Added bar field")
 
 
 @foo_api
