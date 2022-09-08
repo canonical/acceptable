@@ -36,7 +36,6 @@ class SampleWithToDictMethod(object):
 
 
 class ToDictTests(testtools.TestCase):
-
     @staticmethod
     def test_convert_sample_with_to_dict_method_calls_method():
         result = openapi._to_dict(SampleWithToDictMethod())
@@ -68,7 +67,6 @@ class ToDictTests(testtools.TestCase):
 
 
 class OpenApiTests(testtools.TestCase):
-
     def test_dump_of_empty_metadata(self):
         metadata = APIMetadata()
         result = openapi.dump(metadata).splitlines(keepends=False)

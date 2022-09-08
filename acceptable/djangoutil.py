@@ -8,7 +8,7 @@ from django.forms import widgets, fields
 from acceptable._service import AcceptableAPI
 from acceptable.util import clean_docstring, sort_schema
 
-logger = logging.getLogger('acceptable')
+logger = logging.getLogger("acceptable")
 _urlmap = None
 
 if django.VERSION >= (2, 0):
@@ -17,11 +17,13 @@ if django.VERSION >= (2, 0):
         URLResolver,
         get_resolver,
     )
+
     PATTERNS = (URLPattern,)
     RESOLVERS = (URLResolver,)
 
     def get_pattern(p):
         return str(p.pattern)
+
 else:
     try:
         from django.urls import (
@@ -61,60 +63,60 @@ def urlmap(patterns):
     The urls are joined with any prefixes, and cleaned up of extraneous regex
     specific syntax."""
     for pattern in patterns:
-        group = getattr(pattern, 'namespace', None)
+        group = getattr(pattern, "namespace", None)
         if group is None:
-            group = getattr(pattern, 'app_name', None)
-        path = '/' + get_pattern(pattern).lstrip('^').rstrip('$')
+            group = getattr(pattern, "app_name", None)
+        path = "/" + get_pattern(pattern).lstrip("^").rstrip("$")
         if isinstance(pattern, PATTERNS):
             yield (group, pattern.name), path
         elif isinstance(pattern, RESOLVERS):
             subpatterns = pattern.url_patterns
             for (_, name), subpath in urlmap(subpatterns):
-                yield (group, name), path.rstrip('/') + subpath
+                yield (group, name), path.rstrip("/") + subpath
 
 
 def get_field_schema(name, field):
     """Returns a JSON Schema representation of a form field."""
     field_schema = {
-        'type': 'string',
+        "type": "string",
     }
 
     if field.label:
-        field_schema['title'] = str(field.label)  # force translation
+        field_schema["title"] = str(field.label)  # force translation
 
     if field.help_text:
-        field_schema['description'] = str(field.help_text)  # force translation
+        field_schema["description"] = str(field.help_text)  # force translation
 
     if isinstance(field, (fields.URLField, fields.FileField)):
-        field_schema['format'] = 'uri'
+        field_schema["format"] = "uri"
     elif isinstance(field, fields.EmailField):
-        field_schema['format'] = 'email'
+        field_schema["format"] = "email"
     elif isinstance(field, fields.DateTimeField):
-        field_schema['format'] = 'date-time'
+        field_schema["format"] = "date-time"
     elif isinstance(field, fields.DateField):
-        field_schema['format'] = 'date'
+        field_schema["format"] = "date"
     elif isinstance(field, (fields.DecimalField, fields.FloatField)):
-        field_schema['type'] = 'number'
+        field_schema["type"] = "number"
     elif isinstance(field, fields.IntegerField):
-        field_schema['type'] = 'integer'
+        field_schema["type"] = "integer"
     elif isinstance(field, fields.NullBooleanField):
-        field_schema['type'] = 'boolean'
+        field_schema["type"] = "boolean"
     elif isinstance(field.widget, widgets.CheckboxInput):
-        field_schema['type'] = 'boolean'
+        field_schema["type"] = "boolean"
 
-    if getattr(field, 'choices', []):
-        field_schema['enum'] = sorted([choice[0] for choice in field.choices])
+    if getattr(field, "choices", []):
+        field_schema["enum"] = sorted([choice[0] for choice in field.choices])
 
     # check for multiple values
     if isinstance(field.widget, (widgets.Select, widgets.ChoiceWidget)):
         if field.widget.allow_multiple_selected:
             # promote to array of <type>, move details into the items field
-            field_schema['items'] = {
-                'type': field_schema['type'],
+            field_schema["items"] = {
+                "type": field_schema["type"],
             }
-            if 'enum' in field_schema:
-                field_schema['items']['enum'] = field_schema.pop('enum')
-            field_schema['type'] = 'array'
+            if "enum" in field_schema:
+                field_schema["items"]["enum"] = field_schema.pop("enum")
+            field_schema["type"] = "array"
 
     return field_schema
 
@@ -122,14 +124,14 @@ def get_field_schema(name, field):
 def get_form_schema(form):
     """Return a JSON Schema object for a Django Form."""
     schema = {
-        'type': 'object',
-        'properties': {},
+        "type": "object",
+        "properties": {},
     }
 
     for name, field in form.base_fields.items():
-        schema['properties'][name] = get_field_schema(name, field)
+        schema["properties"][name] = get_field_schema(name, field)
         if field.required:
-            schema.setdefault('required', []).append(name)
+            schema.setdefault("required", []).append(name)
 
     return schema
 
@@ -142,15 +144,16 @@ class DjangoAPI(AcceptableAPI):
     """
 
     def __init__(
-            self,
-            service,
-            name,
-            introduced_at,
-            options={},
-            location=None,
-            undocumented=False,
-            deprecated_at=None,
-            title=None):
+        self,
+        service,
+        name,
+        introduced_at,
+        options={},
+        location=None,
+        undocumented=False,
+        deprecated_at=None,
+        title=None,
+    ):
         # leave url blank, as we can't know it until django has set itself up
         # properly
         super().__init__(
@@ -172,8 +175,8 @@ class DjangoAPI(AcceptableAPI):
         name = self.name
         try_default = True
 
-        if ':' in self.name:
-            group, name = self.name.split(':', 2)
+        if ":" in self.name:
+            group, name = self.name.split(":", 2)
             try_default = False  # user passed explicit group, just use that
         else:
             group = self.service.group
@@ -187,14 +190,14 @@ class DjangoAPI(AcceptableAPI):
 
     @property
     def methods(self):
-        default = ['GET']
-        if 'methods' in self.options:
-            return list(self.options.get('methods', default))
+        default = ["GET"]
+        if "methods" in self.options:
+            return list(self.options.get("methods", default))
 
         # allowed_methods works for piston handlers
         # TODO: add support for DRF? And maybe plain view functions with
         # decorators?
-        return list(getattr(self.handler_class, 'allowed_methods', default))
+        return list(getattr(self.handler_class, "allowed_methods", default))
 
     @property
     def django_form(self):

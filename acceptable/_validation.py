@@ -50,23 +50,26 @@ def validate_params(schema):
 
     """
     location = get_callsite_location()
+
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_request_params(fn, schema)
-        record_schemas(
-            fn, wrapper, location, params_schema=sort_schema(schema))
+        record_schemas(fn, wrapper, location, params_schema=sort_schema(schema))
         return wrapper
+
     return decorator
 
 
 def wrap_request_params(fn, schema):
     from flask import request
+
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         error_list = validate(request.args, schema)
         if error_list:
             raise DataValidationError(error_list)
         return fn(*args, **kwargs)
+
     return wrapper
 
 
@@ -117,8 +120,7 @@ def validate_body(schema):
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_request(fn, schema)
-        record_schemas(
-            fn, wrapper, location, request_schema=sort_schema(schema))
+        record_schemas(fn, wrapper, location, request_schema=sort_schema(schema))
         return wrapper
 
     return decorator
@@ -138,8 +140,9 @@ def wrap_request(fn, schema):
             try:
                 payload = json.loads(request.data.decode(request.charset))
             except ValueError as e:
-                raise DataValidationError([
-                    "Error decoding JSON request body: %s" % str(e)])
+                raise DataValidationError(
+                    ["Error decoding JSON request body: %s" % str(e)]
+                )
         error_list = validate(payload, schema)
         if error_list:
             raise DataValidationError(error_list)
@@ -149,10 +152,11 @@ def wrap_request(fn, schema):
 
 
 def record_schemas(
-        fn, wrapper, location, request_schema=None, response_schema=None, params_schema=None):
+    fn, wrapper, location, request_schema=None, response_schema=None, params_schema=None
+):
     """Support extracting the schema from the decorated function."""
     # have we already been decorated by an acceptable api call?
-    has_acceptable = hasattr(fn, '_acceptable_metadata')
+    has_acceptable = hasattr(fn, "_acceptable_metadata")
 
     if params_schema is not None:
         wrapper._params_schema = params_schema
@@ -210,8 +214,7 @@ def validate_output(schema):
     def decorator(fn):
         validate_schema(schema)
         wrapper = wrap_response(fn, schema)
-        record_schemas(
-            fn, wrapper, location, response_schema=sort_schema(schema))
+        record_schemas(fn, wrapper, location, response_schema=sort_schema(schema))
         return wrapper
 
     return decorator
@@ -230,19 +233,24 @@ def wrap_response(fn, schema):
         if not isinstance(resp, (list, dict)):
             raise ValueError(
                 "Unknown response type '%s'. Supported types are list "
-                "and dict." % type(resp))
+                "and dict." % type(resp)
+            )
 
-        if current_app.config.get('ACCEPTABLE_VALIDATE_OUTPUT', True):
+        if current_app.config.get("ACCEPTABLE_VALIDATE_OUTPUT", True):
             error_list = validate(resp, schema)
 
-            assert not error_list,\
-                "Response does not comply with output schema: %r.\n%s"\
-                % (error_list, resp)
+            assert (
+                not error_list
+            ), "Response does not comply with output schema: %r.\n%s" % (
+                error_list,
+                resp,
+            )
 
         if isinstance(result, tuple):
-            return (jsonify(resp), ) + result[1:]
+            return (jsonify(resp),) + result[1:]
         else:
             return jsonify(result)
+
     return wrapper
 
 
@@ -252,13 +260,12 @@ def validate(payload, schema):
     jsonschema provides lots of information in it's errors, but it can be a bit
     of work to extract all the information.
     """
-    v = jsonschema.Draft4Validator(
-        schema, format_checker=jsonschema.FormatChecker())
+    v = jsonschema.Draft4Validator(schema, format_checker=jsonschema.FormatChecker())
     error_list = []
     for error in v.iter_errors(payload):
         message = error.message
-        location = '/' + '/'.join([str(c) for c in error.absolute_path])
-        error_list.append(message + ' at ' + location)
+        location = "/" + "/".join([str(c) for c in error.absolute_path])
+        error_list.append(message + " at " + location)
     return error_list
 
 

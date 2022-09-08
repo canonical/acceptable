@@ -49,4 +49,6 @@ def dump(metadata: APIMetadata, stream=None):
     oas.info.title = service_name or ""
     oas.info.version = metadata.current_version or ""
 
-    return yaml.safe_dump(_to_dict(oas), stream, default_flow_style=False, encoding=None)
+    return yaml.safe_dump(
+        _to_dict(oas), stream, default_flow_style=False, encoding=None
+    )

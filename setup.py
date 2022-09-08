@@ -6,39 +6,39 @@
 from setuptools import find_packages, setup
 
 
-VERSION = '0.35'
+VERSION = "0.35"
 
 
 setup(
-    name='acceptable',
+    name="acceptable",
     version=VERSION,
-    description='API version negotiation for flask-based web services.',
-    author='Canonical Online Services',
-    author_email='online-services@lists.canonical.com',
-    url='https://github.com/canonical-ols/acceptable',
-    license='LGPLv3',
-    packages=find_packages(exclude=['examples', '*tests']),
-    long_description=''.join(open('README.rst').readlines()[2:]),
-    long_description_content_type='text/x-rst',
+    description="API version negotiation for flask-based web services.",
+    author="Canonical Online Services",
+    author_email="online-services@lists.canonical.com",
+    url="https://github.com/canonical-ols/acceptable",
+    license="LGPLv3",
+    packages=find_packages(exclude=["examples", "*tests"]),
+    long_description="".join(open("README.rst").readlines()[2:]),
+    long_description_content_type="text/x-rst",
     install_requires=[
-        'jsonschema',
-        'pyyaml',
-        'Jinja2',
+        "jsonschema",
+        "pyyaml",
+        "Jinja2",
     ],
     extras_require=dict(
         flask=[
-            'Flask',
+            "Flask",
         ],
         django=[
-            'django>=2.1,<3',
-        ]
+            "django>=2.1,<3",
+        ],
     ),
-    test_suite='acceptable.tests',
+    test_suite="acceptable.tests",
     include_package_data=True,
     entry_points={
-        'console_scripts': [
-            'build_service_doubles = acceptable._build_doubles:main',
-            'acceptable = acceptable.__main__:main',
+        "console_scripts": [
+            "build_service_doubles = acceptable._build_doubles:main",
+            "acceptable = acceptable.__main__:main",
         ]
     },
 )

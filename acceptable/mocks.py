@@ -26,6 +26,7 @@ class Attrs(object):
     assert a.c == 2
     assert dir(a) == ['b', 'c']
     """
+
     def __init__(self, attrs):
         # I think python name mangling is ok here to help avoid collisions
         # between instance attributes and names in attrs
@@ -89,8 +90,8 @@ for service {!r} endpoint {!r} on url {!r} errors where:
 
 
 class EndpointMock(object):
-    """Provides methods to check calls made to this endpoint mock
-    """
+    """Provides methods to check calls made to this endpoint mock"""
+
     def __init__(
         self,
         call_recorder,
@@ -140,8 +141,8 @@ class EndpointMock(object):
                     body = body.decode("utf-8")
                 try:
                     data = json_loads(body)
-                except ValueError as e :
-                    error_list = ['JSON decoding error: {}'.format(e)]
+                except ValueError as e:
+                    error_list = ["JSON decoding error: {}".format(e)]
                 else:
                     error_list = validate(data, schema)
             if error_list:
@@ -258,11 +259,13 @@ def response_callback_factory(status=200, headers=None, body=None, json=None):
         headers = CaseInsensitiveDict(headers)
     if json is not None:
         assert body is None
-        body = json_dumps(json).encode('utf-8')
-        if 'Content-Type' not in headers:
-            headers['Content-Type'] = 'application/json'
+        body = json_dumps(json).encode("utf-8")
+        if "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
     def response_callback(request):
         return status, headers, body
+
     return response_callback
 
 
@@ -275,13 +278,19 @@ class Endpoint(object):
     Callable to create a context manager which activates and returns a mock
     for this endpoint.
     """
+
     def __init__(self, base_url, service_name, endpoint_spec, response_callback=None):
         if isinstance(endpoint_spec.location, str):
             self._url = urljoin(base_url, endpoint_spec.location)
-            if self._url.find('<') > 0 and self._url.find('<') > 0:
+            if self._url.find("<") > 0 and self._url.find("<") > 0:
                 # we know that there are variable references in the url, so
                 # let's change the url in a regexp
-                self._url = self._url.replace('<', '(?P<').replace('>', '>\S+)').replace('int:', '').replace('path:', '')
+                self._url = (
+                    self._url.replace("<", "(?P<")
+                    .replace(">", ">\S+)")
+                    .replace("int:", "")
+                    .replace("path:", "")
+                )
                 self._url = re.compile(self._url)
         else:
             self._url = endpoint_spec.location
@@ -352,14 +361,15 @@ class Endpoint(object):
 class ServiceMock(object):
     """Provides access to the endpoint mocks for this service and some functions
     to get calls made to the services endpoints.
-     """
+    """
+
     def __init__(self, call_recorder, endpoints):
         self._call_recorder = call_recorder
         mocks = {}
         self._endpoint_context_managers = []
         for name, endpoint in endpoints.items():
             ecm = endpoint(call_recorder=call_recorder)
-            mocks[name]= ecm._mock
+            mocks[name] = ecm._mock
             self._endpoint_context_managers.append(ecm)
         self.endpoints = Attrs(mocks)
 
@@ -405,12 +415,15 @@ class Service(object):
     Endpoints can also be individually called to return a context manager
     which just mocks that endpoint.
     """
+
     def __init__(self, base_url, name, endpoint_specs):
         self._base_url = base_url
         self._name = name
         endpoints = {}
         for endpoint_spec in endpoint_specs:
-            endpoints[endpoint_spec.name] = Endpoint(self._base_url, self._name, endpoint_spec)
+            endpoints[endpoint_spec.name] = Endpoint(
+                self._base_url, self._name, endpoint_spec
+            )
         self.endpoints = Attrs(endpoints)
 
     @property
@@ -433,6 +446,7 @@ class ServiceFactory(object):
     You can create multiple instances of a Service and configure each
     independently.
     """
+
     def __init__(self, name, endpoint_specs):
         self._name = name
         self._endpoint_specs = endpoint_specs
@@ -445,4 +459,10 @@ class ServiceFactory(object):
         return Service(base_url, self.name, self._endpoint_specs)
 
 
-__ALL__ = ['responses_mock_context', 'response_callback_factory', 'ServiceFactory', 'EndpointSpec', 'Endpoint']
+__ALL__ = [
+    "responses_mock_context",
+    "response_callback_factory",
+    "ServiceFactory",
+    "EndpointSpec",
+    "Endpoint",
+]

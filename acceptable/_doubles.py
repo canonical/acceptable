@@ -16,10 +16,11 @@ import responses
 from acceptable._validation import validate
 from acceptable.mocks import responses_manager
 
+
 def service_mock(service, methods, url, input_schema, output_schema):
     return functools.partial(
-        ServiceMock,
-        service, methods, url, input_schema, output_schema)
+        ServiceMock, service, methods, url, input_schema, output_schema
+    )
 
 
 SERVICE_LOCATIONS = {}
@@ -39,8 +40,17 @@ class ServiceMock(Fixture):
     # Kept for backwards compatibility
     _requests_mock = responses.mock
 
-    def __init__(self, service, methods, url, input_schema, output_schema,
-                 output, output_status=200, output_headers=None):
+    def __init__(
+        self,
+        service,
+        methods,
+        url,
+        input_schema,
+        output_schema,
+        output,
+        output_status=200,
+        output_headers=None,
+    ):
         super().__init__()
         self._service = service
         self._methods = methods
@@ -61,7 +71,7 @@ class ServiceMock(Fixture):
                     "service's '{s._url}' endpoint, the specified output "
                     "does not match the service's endpoint output schema.\n\n"
                     "The errors are:\n{errors}\n\n"
-                ).format(s=self, errors='\n'.join(error_list))
+                ).format(s=self, errors="\n".join(error_list))
                 raise AssertionError(msg)
 
         config = get_service_locations()
@@ -86,15 +96,11 @@ class ServiceMock(Fixture):
                     # TODO: raise AssertionError here, since this is in a test?
                     return (
                         400,
-                        {'Content-Type': 'application/json'},
+                        {"Content-Type": "application/json"},
                         json.dumps(error_list),
                     )
 
-            return (
-                self._output_status,
-                self._output_headers,
-                json.dumps(self._output)
-            )
+            return (self._output_status, self._output_headers, json.dumps(self._output))
 
         responses_manager.attach()
         self.addCleanup(responses_manager.detach)

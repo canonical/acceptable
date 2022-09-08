@@ -25,120 +25,119 @@ from acceptable._validation import (
 
 
 class APIMetadataTestCase(TestCase):
-
     def test_register_api_duplicate_name(self):
         metadata = APIMetadata()
-        api1 = AcceptableAPI(None, 'api', '/api1', 1)
-        api2 = AcceptableAPI(None, 'api', '/api2', 1)
-        metadata.register_service('test', None)
-        metadata.register_api('test', None, api1)
+        api1 = AcceptableAPI(None, "api", "/api1", 1)
+        api2 = AcceptableAPI(None, "api", "/api2", 1)
+        metadata.register_service("test", None)
+        metadata.register_api("test", None, api1)
         self.assertRaises(
             InvalidAPI,
             metadata.register_api,
-            'other', None, api2,
+            "other",
+            None,
+            api2,
         )
 
     def test_register_api_duplicate_url(self):
         metadata = APIMetadata()
-        api1 = AcceptableAPI(None, 'api1', '/api', 1)
-        api2 = AcceptableAPI(None, 'api2', '/api', 1)
-        metadata.register_service('test', None)
-        metadata.register_service('other', None)
-        metadata.register_api('test', None, api1)
+        api1 = AcceptableAPI(None, "api1", "/api", 1)
+        api2 = AcceptableAPI(None, "api2", "/api", 1)
+        metadata.register_service("test", None)
+        metadata.register_service("other", None)
+        metadata.register_api("test", None, api1)
         self.assertRaises(
             InvalidAPI,
             metadata.register_api,
-            'other', None, api2,
+            "other",
+            None,
+            api2,
         )
 
     def test_register_api_allow_different_methods(self):
         metadata = APIMetadata()
-        api1 = AcceptableAPI(None, 'api1', '/api', 1)
-        api2 = AcceptableAPI(
-            None, 'api2', '/api', 1, options={'methods': ['POST']})
-        metadata.register_service('test', None)
-        metadata.register_service('other', None)
-        metadata.register_api('test', None, api1)
-        metadata.register_api('other', None, api2)
+        api1 = AcceptableAPI(None, "api1", "/api", 1)
+        api2 = AcceptableAPI(None, "api2", "/api", 1, options={"methods": ["POST"]})
+        metadata.register_service("test", None)
+        metadata.register_service("other", None)
+        metadata.register_api("test", None, api1)
+        metadata.register_api("other", None, api2)
 
     def test_register_service_handles_multiple(self):
         metadata = APIMetadata()
-        api = AcceptableAPI(None, 'api', '/api', 1)
+        api = AcceptableAPI(None, "api", "/api", 1)
 
-        metadata.register_service('test', None)
+        metadata.register_service("test", None)
         self.assertEqual(
             {},
-            metadata.services['test'][None],
+            metadata.services["test"][None],
         )
 
-        metadata.register_api('test', None, api)
+        metadata.register_api("test", None, api)
         self.assertEqual(
-            {'api': api},
-            metadata.services['test'][None],
+            {"api": api},
+            metadata.services["test"][None],
         )
 
         # register service again, shouldn't remove any apis
-        metadata.register_service('test', None)
+        metadata.register_service("test", None)
         self.assertEqual(
-            {'api': api},
-            metadata.services['test'][None],
+            {"api": api},
+            metadata.services["test"][None],
         )
 
     def test_bind_works(self):
         app = Flask(__name__)
         metadata = APIMetadata()
-        metadata.register_service('test', None)
-        api1 = AcceptableAPI(None, 'api1', '/api1', 1)
-        api2 = AcceptableAPI(None, 'api2', '/api2', 1)
-        metadata.register_api('test', None, api1)
-        metadata.register_api('test', None, api2)
+        metadata.register_service("test", None)
+        api1 = AcceptableAPI(None, "api1", "/api1", 1)
+        api2 = AcceptableAPI(None, "api2", "/api2", 1)
+        metadata.register_api("test", None, api1)
+        metadata.register_api("test", None, api2)
 
         @api1.view(introduced_at=1)
         def api1_impl():
-            return 'api1'
+            return "api1"
 
-        metadata.bind(app, 'test')
+        metadata.bind(app, "test")
 
-        self.assertEqual(api1_impl, app.view_functions['api1'])
-        self.assertNotIn('api2', app.view_functions)
+        self.assertEqual(api1_impl, app.view_functions["api1"])
+        self.assertNotIn("api2", app.view_functions)
 
-        resp = app.test_client().get('/api1')
-        self.assertThat(resp, IsResponse('api1'))
-
+        resp = app.test_client().get("/api1")
+        self.assertThat(resp, IsResponse("api1"))
 
     def serialize_preserves_declaration_order(self):
         metadata = APIMetadata()
-        svc = metadata.register_service('test', 'group')
-        svc.api('api5', '/api/5', 1)
-        svc.api('api1', '/api/1', 1)
-        svc.api('api3', '/api/3', 1)
-        svc.api('api2', '/api/2', 1)
+        svc = metadata.register_service("test", "group")
+        svc.api("api5", "/api/5", 1)
+        svc.api("api1", "/api/1", 1)
+        svc.api("api3", "/api/3", 1)
+        svc.api("api2", "/api/2", 1)
 
         serialized = metadata.serialize()
 
         self.assertEqual(
-            ['api5', 'api1', 'api3', 'api2'],
-            list(serialized['group']['apis'])
+            ["api5", "api1", "api3", "api2"], list(serialized["group"]["apis"])
         )
 
 
 class AcceptableServiceTestCase(TestCase):
-
     def test_can_register_url_route(self):
         def view():
             return "test view", 200
 
-        service = AcceptableService('service', metadata=APIMetadata())
-        api = service.api('/foo', 'foo_api')
-        api.register_view(view, '1.0')
+        service = AcceptableService("service", metadata=APIMetadata())
+        api = service.api("/foo", "foo_api")
+        api.register_view(view, "1.0")
 
         app = Flask(__name__)
         service.bind(app)
 
         client = app.test_client()
-        resp = client.get('/foo')
+        resp = client.get("/foo")
 
-        self.assertThat(resp, IsResponse('test view'))
+        self.assertThat(resp, IsResponse("test view"))
 
 
 class ServiceFixture(Fixture):
@@ -146,9 +145,8 @@ class ServiceFixture(Fixture):
 
     def _setUp(self):
         self.metadata = APIMetadata()
-        self.service = AcceptableService('service', metadata=self.metadata)
-        foo_api = self.service.api(
-            '/foo', 'foo_api', methods=['POST'], introduced_at=1)
+        self.service = AcceptableService("service", metadata=self.metadata)
+        foo_api = self.service.api("/foo", "foo_api", methods=["POST"], introduced_at=1)
 
         @foo_api
         def foo():
@@ -162,37 +160,33 @@ class ServiceFixture(Fixture):
 
 
 class AcceptableAPITestCase(TestCase):
-
     def test_acceptable_api_declaration_works(self):
         fixture = self.useFixture(ServiceFixture())
-        api = fixture.service.api('/new', 'blah')
+        api = fixture.service.api("/new", "blah")
 
-        self.assertEqual(api.url, '/new')
+        self.assertEqual(api.url, "/new")
         self.assertEqual(api.options, {})
-        self.assertEqual(api.name, 'blah')
-        self.assertEqual(api.methods, ['GET'])
-        self.assertEqual(
-            api, fixture.metadata.services['service'][None]['blah'])
+        self.assertEqual(api.name, "blah")
+        self.assertEqual(api.methods, ["GET"])
+        self.assertEqual(api, fixture.metadata.services["service"][None]["blah"])
 
     def test_acceptable_api_explicit_docs_works(self):
         fixture = self.useFixture(ServiceFixture())
-        api = fixture.service.api('/docs', 'blah')
+        api = fixture.service.api("/docs", "blah")
         self.assertEqual(api.docs, None)
-        api.docs = 'Documentation.'
-        self.assertEqual(api.docs, 'Documentation.')
+        api.docs = "Documentation."
+        self.assertEqual(api.docs, "Documentation.")
 
     def test_acceptable_api_schemas_are_validated(self):
         fixture = self.useFixture(ServiceFixture())
-        api = fixture.service.api('/api', 'blah')
+        api = fixture.service.api("/api", "blah")
         self.assertRaises(
-            jsonschema.exceptions.SchemaError,
-            setattr, api, 'request_schema', ""
+            jsonschema.exceptions.SchemaError, setattr, api, "request_schema", ""
         )
         self.assertRaises(
-            jsonschema.exceptions.SchemaError,
-            setattr, api, 'response_schema', ""
+            jsonschema.exceptions.SchemaError, setattr, api, "response_schema", ""
         )
-        schema = {'type': 'object'}
+        schema = {"type": "object"}
         api.request_schema = schema
         api.response_schema = schema
         self.assertEqual(api.request_schema, schema)
@@ -200,41 +194,44 @@ class AcceptableAPITestCase(TestCase):
 
     def test_acceptable_api_schemas_are_sorted(self):
         fixture = self.useFixture(ServiceFixture())
-        api = fixture.service.api('/api', 'blah')
+        api = fixture.service.api("/api", "blah")
         schema = {
-            'type': 'object',
-            'properties': {
-                '5': {'type': 'string'},
-                '1': {'type': 'string'},
-                '3': {'type': 'string'},
-            }
+            "type": "object",
+            "properties": {
+                "5": {"type": "string"},
+                "1": {"type": "string"},
+                "3": {"type": "string"},
+            },
         }
         api.request_schema = schema
         api.response_schema = schema
         self.assertEqual(
-            ['1', '3', '5'],
-            list(api.request_schema['properties']),
+            ["1", "3", "5"],
+            list(api.request_schema["properties"]),
         )
         self.assertEqual(
-            ['1', '3', '5'],
-            list(api.response_schema['properties']),
+            ["1", "3", "5"],
+            list(api.response_schema["properties"]),
         )
 
     def test_acceptable_api_changelog_is_recorded(self):
         fixture = self.useFixture(ServiceFixture())
-        api = fixture.service.api('/api', 'blah')
-        api.changelog(5, """
+        api = fixture.service.api("/api", "blah")
+        api.changelog(
+            5,
+            """
             Changelog for version 5
-        """)
+        """,
+        )
         api.changelog(4, "Changelog for version 4")
 
-        self.assertEqual('Changelog for version 5', api._changelog[5])
-        self.assertEqual('Changelog for version 4', api._changelog[4])
+        self.assertEqual("Changelog for version 5", api._changelog[5])
+        self.assertEqual("Changelog for version 4", api._changelog[4])
 
     def test_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'blah')
+        new_api = fixture.service.api("/new", "blah")
 
         @new_api
         def new_view():
@@ -244,18 +241,18 @@ class AcceptableAPITestCase(TestCase):
         app = fixture.bind()
 
         client = app.test_client()
-        resp = client.get('/new')
+        resp = client.get("/new")
 
         self.assertThat(resp, IsResponse("new view"))
-        view = app.view_functions['blah']
-        self.assertEqual(view.__name__, 'new_view')
-        self.assertEqual(new_api.docs, 'Documentation.')
+        view = app.view_functions["blah"]
+        self.assertEqual(view.__name__, "new_view")
+        self.assertEqual(new_api.docs, "Documentation.")
 
     def test_decorator_validates_bad_request(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'new', methods=['POST'])
-        new_api.request_schema = {'type': 'object'}
+        new_api = fixture.service.api("/new", "new", methods=["POST"])
+        new_api.request_schema = {"type": "object"}
 
         @new_api
         def new_view():
@@ -265,17 +262,17 @@ class AcceptableAPITestCase(TestCase):
 
         payload = dict(
             data=json.dumps([]),
-            headers={'Content-Type': 'application/json'},
+            headers={"Content-Type": "application/json"},
         )
 
-        with app.test_request_context('/new', **payload):
+        with app.test_request_context("/new", **payload):
             self.assertRaises(DataValidationError, new_view)
 
     def test_decorator_validates_bad_response(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'new')
-        new_api.response_schema = {'type': 'object'}
+        new_api = fixture.service.api("/new", "new")
+        new_api.response_schema = {"type": "object"}
 
         @new_api
         def new_view():
@@ -283,20 +280,20 @@ class AcceptableAPITestCase(TestCase):
 
         app = fixture.bind()
 
-        with app.test_request_context('/new'):
+        with app.test_request_context("/new"):
             self.assertRaises(AssertionError, new_view)
 
     def test_can_still_call_view_directly(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'namegoeshere')
+        new_api = fixture.service.api("/new", "namegoeshere")
 
         @new_api
         def new_view():
             return "new view", 200
 
         app = fixture.bind()
-        with app.test_request_context('/new'):
+        with app.test_request_context("/new"):
             content, status = new_view()
 
         self.assertEqual(content, "new view")
@@ -308,8 +305,8 @@ class AcceptableAPITestCase(TestCase):
         self.assertRaises(
             InvalidAPI,
             fixture.service.api,
-            '/bar',
-            'foo_api',
+            "/bar",
+            "foo_api",
         )
 
     def test_cannot_duplicate_url_and_method(self):
@@ -317,15 +314,15 @@ class AcceptableAPITestCase(TestCase):
         self.assertRaises(
             InvalidAPI,
             fixture.service.api,
-            '/foo',
-            'bar',
-            methods=['POST'],
+            "/foo",
+            "bar",
+            methods=["POST"],
         )
 
     def test_can_duplicate_url_different_method(self):
         fixture = self.useFixture(ServiceFixture())
 
-        alt_api = fixture.service.api('/foo', 'foo_alt', methods=['GET'])
+        alt_api = fixture.service.api("/foo", "foo_alt", methods=["GET"])
 
         @alt_api.view(introduced_at=1)
         def foo_alt():
@@ -333,7 +330,7 @@ class AcceptableAPITestCase(TestCase):
 
         app = fixture.bind()
         client = app.test_client()
-        resp = client.get('/foo')
+        resp = client.get("/foo")
 
         self.assertThat(resp, IsResponse("alt foo"))
 
@@ -342,7 +339,7 @@ class LegacyAcceptableAPITestCase(TestCase):
     def test_view_decorator_and_bind_works(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'blah')
+        new_api = fixture.service.api("/new", "blah")
 
         @new_api.view(introduced_at=1)
         def new_view():
@@ -352,20 +349,20 @@ class LegacyAcceptableAPITestCase(TestCase):
         app = fixture.bind()
 
         client = app.test_client()
-        resp = client.get('/new')
+        resp = client.get("/new")
 
         self.assertThat(resp, IsResponse("new view"))
-        view = app.view_functions['blah']
-        self.assertEqual(view.__name__, 'new_view')
-        self.assertEqual(new_api.docs, 'Documentation.')
+        view = app.view_functions["blah"]
+        self.assertEqual(view.__name__, "new_view")
+        self.assertEqual(new_api.docs, "Documentation.")
 
     def test_view_introduced_at_string(self):
         fixture = self.useFixture(ServiceFixture())
 
-        new_api = fixture.service.api('/new', 'blah')
+        new_api = fixture.service.api("/new", "blah")
         self.assertEqual(new_api.introduced_at, None)
 
-        @new_api.view(introduced_at='1')
+        @new_api.view(introduced_at="1")
         def new_view():
             return "new view", 200
 
@@ -373,10 +370,10 @@ class LegacyAcceptableAPITestCase(TestCase):
 
     def test_view_introduced_at_1_0_string(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
+        new_api = fixture.service.api("/new", "blah")
         self.assertEqual(new_api.introduced_at, None)
 
-        @new_api.view(introduced_at='1.0')
+        @new_api.view(introduced_at="1.0")
         def new_view():
             return "new view", 200
 
@@ -384,8 +381,8 @@ class LegacyAcceptableAPITestCase(TestCase):
 
     def test_validate_body_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
-        schema = {'type': 'object'}
+        new_api = fixture.service.api("/new", "blah")
+        schema = {"type": "object"}
 
         @new_api.view(introduced_at=1)
         @validate_body(schema)
@@ -394,13 +391,13 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah'].request_schema,
+            fixture.service.apis["blah"].request_schema,
         )
 
     def test_validate_body_records_metadata_reversed_order(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
-        schema = {'type': 'object'}
+        new_api = fixture.service.api("/new", "blah")
+        schema = {"type": "object"}
 
         @validate_body(schema)
         @new_api.view(introduced_at=1)
@@ -409,13 +406,13 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah'].request_schema,
+            fixture.service.apis["blah"].request_schema,
         )
 
     def test_validate_output_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
-        schema = {'type': 'object'}
+        new_api = fixture.service.api("/new", "blah")
+        schema = {"type": "object"}
 
         @new_api.view(introduced_at=1)
         @validate_output(schema)
@@ -424,13 +421,13 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah'].response_schema,
+            fixture.service.apis["blah"].response_schema,
         )
 
     def test_validate_output_records_metadata_reversed(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
-        schema = {'type': 'object'}
+        new_api = fixture.service.api("/new", "blah")
+        schema = {"type": "object"}
 
         @validate_output(schema)
         @new_api.view(introduced_at=1)
@@ -439,14 +436,14 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema,
-            fixture.service.apis['blah'].response_schema,
+            fixture.service.apis["blah"].response_schema,
         )
 
     def test_validate_both_records_metadata(self):
         fixture = self.useFixture(ServiceFixture())
-        new_api = fixture.service.api('/new', 'blah')
-        schema1 = {'type': 'object'}
-        schema2 = {'type': 'array'}
+        new_api = fixture.service.api("/new", "blah")
+        schema1 = {"type": "object"}
+        schema2 = {"type": "array"}
 
         @new_api.view(introduced_at=1)
         @validate_body(schema1)
@@ -456,16 +453,15 @@ class LegacyAcceptableAPITestCase(TestCase):
 
         self.assertEqual(
             schema1,
-            fixture.service.apis['blah'].request_schema,
+            fixture.service.apis["blah"].request_schema,
         )
         self.assertEqual(
             schema2,
-            fixture.service.apis['blah'].response_schema,
+            fixture.service.apis["blah"].response_schema,
         )
 
 
 class IsResponse(Matcher):
-
     def __init__(self, expected_content, expected_code=200, decode=None):
         """Construct a new IsResponse matcher.
 
@@ -504,5 +500,4 @@ class IsResponse(Matcher):
         return self.expected_content.match(data)
 
     def __str__(self):
-        return "IsResponse(%r, %r)" % (
-            self.expected_content, self.expected_code)
+        return "IsResponse(%r, %r)" % (self.expected_content, self.expected_code)
