@@ -1,3 +1,4 @@
+black < 23.0.0
 coveralls
 fixtures
 testscenarios
