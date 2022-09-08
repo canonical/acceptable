@@ -36,8 +36,8 @@ class TemporaryModuleFixture(fixtures.Fixture):
 
     def _setUp(self):
         tempdir = self.useFixture(fixtures.TempDir()).path
-        self.path = os.path.join(tempdir, '{}.py'.format(self.name))
-        with open(self.path, 'w') as f:
+        self.path = os.path.join(tempdir, "{}.py".format(self.name))
+        with open(self.path, "w") as f:
             f.write(self.code)
 
         # preserve state

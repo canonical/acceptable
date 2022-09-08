@@ -37,7 +37,7 @@ class APIMetadata:
         if group not in self.services[service]:
             self.services[service][group] = APIGroup(group, docs, title)
         elif docs is not None:
-            additional_docs = '\n' + clean_docstring(docs)
+            additional_docs = "\n" + clean_docstring(docs)
             self.services[service][group].docs += additional_docs
 
         return self.services[service][group]
@@ -47,8 +47,7 @@ class APIMetadata:
         # FIXME: this should probably be per service?
         if api.name in self.api_names:
             raise InvalidAPI(
-                'API {} is already registered in service {}'.format(
-                    api.name, service)
+                "API {} is already registered in service {}".format(api.name, service)
             )
         self.api_names.add(api.name)
 
@@ -56,8 +55,9 @@ class APIMetadata:
             url_key = (api.url, tuple(api.methods))
             if url_key in self.urls:
                 raise InvalidAPI(
-                    'URL {} {} is already in service {}'.format(
-                        '|'.join(api.methods), api.url, service)
+                    "URL {} {} is already in service {}".format(
+                        "|".join(api.methods), api.url, service
+                    )
                 )
             self.urls.add(url_key)
 
@@ -81,8 +81,7 @@ class APIMetadata:
         """Bind the service API urls to a flask app."""
         if group not in self.services[service]:
             raise RuntimeError(
-                'API group {} does not exist in service {}'.format(
-                    group, service)
+                "API group {} does not exist in service {}".format(group, service)
             )
         for name, api in self.services[service][group].items():
             # only bind APIs that have views associated with them
@@ -90,7 +89,8 @@ class APIMetadata:
                 continue
             if name not in flask_app.view_functions:
                 flask_app.add_url_rule(
-                    api.url, name, view_func=api.view_fn, **api.options)
+                    api.url, name, view_func=api.view_fn, **api.options
+                )
 
     def bind_all(self, flask_app):
         for service, groups in self.services.items():
@@ -112,51 +112,51 @@ class APIMetadata:
         """Serialize into JSON-able dict, and associated locations data."""
         api_metadata = OrderedDict()
         # $ char makes this come first in sort ordering
-        api_metadata['$version'] = self.current_version
+        api_metadata["$version"] = self.current_version
         locations = {}
 
         for svc_name, group in self.groups():
             group_apis = OrderedDict()
             group_metadata = OrderedDict()
-            group_metadata['apis'] = group_apis
-            group_metadata['title'] = group.title
+            group_metadata["apis"] = group_apis
+            group_metadata["title"] = group.title
             api_metadata[group.name] = group_metadata
 
             if group.docs is not None:
-                group_metadata['docs'] = group.docs
+                group_metadata["docs"] = group.docs
 
             for name, api in group.items():
                 group_apis[name] = OrderedDict()
-                group_apis[name]['service'] = svc_name
-                group_apis[name]['api_group'] = group.name
-                group_apis[name]['api_name'] = api.name
-                group_apis[name]['introduced_at'] = api.introduced_at
-                group_apis[name]['methods'] = api.methods
-                group_apis[name]['request_schema'] = api.request_schema
-                group_apis[name]['response_schema'] = api.response_schema
-                group_apis[name]['params_schema'] = api.params_schema
-                group_apis[name]['doc'] = api.docs
-                group_apis[name]['changelog'] = api._changelog
+                group_apis[name]["service"] = svc_name
+                group_apis[name]["api_group"] = group.name
+                group_apis[name]["api_name"] = api.name
+                group_apis[name]["introduced_at"] = api.introduced_at
+                group_apis[name]["methods"] = api.methods
+                group_apis[name]["request_schema"] = api.request_schema
+                group_apis[name]["response_schema"] = api.response_schema
+                group_apis[name]["params_schema"] = api.params_schema
+                group_apis[name]["doc"] = api.docs
+                group_apis[name]["changelog"] = api._changelog
                 if api.title:
-                    group_apis[name]['title'] = api.title
+                    group_apis[name]["title"] = api.title
                 else:
-                    title = name.replace('-', ' ').replace('_', ' ').title()
-                    group_apis[name]['title'] = title
+                    title = name.replace("-", " ").replace("_", " ").title()
+                    group_apis[name]["title"] = title
 
-                group_apis[name]['url'] = api.resolve_url()
+                group_apis[name]["url"] = api.resolve_url()
 
                 if api.undocumented:
-                    group_apis[name]['undocumented'] = True
+                    group_apis[name]["undocumented"] = True
                 if api.deprecated_at is not None:
-                    group_apis[name]['deprecated_at'] = api.deprecated_at
+                    group_apis[name]["deprecated_at"] = api.deprecated_at
 
                 locations[name] = {
-                    'api': api.location,
-                    'request_schema': api._request_schema_location,
-                    'response_schema': api._response_schema_location,
-                    'params_schema': api._params_schema_location,
-                    'changelog': api._changelog_locations,
-                    'view': api.view_fn_location,
+                    "api": api.location,
+                    "request_schema": api._request_schema_location,
+                    "response_schema": api._response_schema_location,
+                    "params_schema": api._params_schema_location,
+                    "changelog": api._changelog_locations,
+                    "view": api.view_fn_location,
                 }
 
         return api_metadata, locations
@@ -179,19 +179,20 @@ def clear_metadata():
 
 class APIGroup(OrderedDict):
     """Wrapper for collection of APIs, with associated documentation."""
+
     def __init__(self, name=None, docs=None, title=None):
         self.name = name
         self.title = title
         if self.name is None:
-            self.name = 'default'
-            self.title = 'Default'
+            self.name = "default"
+            self.title = "Default"
         elif title is None:
-            self.title = name.replace('-', ' ').title()
+            self.title = name.replace("-", " ").title()
         self.docs = docs
         super().__init__()
 
 
-class AcceptableService():
+class AcceptableService:
     """User facing API for a service using acceptable to manage API versions.
 
     This provides a nicer interface to manage the global API metadata within
@@ -216,7 +217,7 @@ class AcceptableService():
 
         self.location = get_callsite_location()
         self.doc = None
-        module = self.location['module']
+        module = self.location["module"]
         docs = None
         if module and module.__doc__:
             docs = clean_docstring(module.__doc__)
@@ -226,14 +227,16 @@ class AcceptableService():
     def apis(self):
         return self.metadata.services[self.name][self.group]
 
-    def api(self,
-            url,
-            name,
-            introduced_at=None,
-            undocumented=False,
-            deprecated_at=None,
-            title=None,
-            **options):
+    def api(
+        self,
+        url,
+        name,
+        introduced_at=None,
+        undocumented=False,
+        deprecated_at=None,
+        title=None,
+        **options
+    ):
         """Add an API to the service.
 
         :param url: This is the url that the API should be registered at.
@@ -261,13 +264,14 @@ class AcceptableService():
         return api
 
     def django_api(
-            self,
-            name,
-            introduced_at,
-            undocumented=False,
-            deprecated_at=None,
-            title=None,
-            **options):
+        self,
+        name,
+        introduced_at,
+        undocumented=False,
+        deprecated_at=None,
+        title=None,
+        **options
+    ):
         """Add a django API handler to the service.
 
         :param name: This is the name of the django url to use.
@@ -277,6 +281,7 @@ class AcceptableService():
 
         """
         from acceptable.djangoutil import DjangoAPI
+
         location = get_callsite_location()
         api = DjangoAPI(
             self,
@@ -299,20 +304,21 @@ class AcceptableService():
     initialise = bind
 
 
-class AcceptableAPI():
+class AcceptableAPI:
     """Metadata about an api endpoint."""
 
     def __init__(
-            self,
-            service,
-            name,
-            url,
-            introduced_at,
-            options=None,
-            location=None,
-            undocumented=False,
-            deprecated_at=None,
-            title=None):
+        self,
+        service,
+        name,
+        url,
+        introduced_at,
+        options=None,
+        location=None,
+        undocumented=False,
+        deprecated_at=None,
+        title=None,
+    ):
 
         self.service = service
         self.name = name
@@ -340,7 +346,7 @@ class AcceptableAPI():
 
     @property
     def methods(self):
-        return list(self.options.get('methods', ['GET']))
+        return list(self.options.get("methods", ["GET"]))
 
     def resolve_url(self):
         return self.url
@@ -396,13 +402,13 @@ class AcceptableAPI():
         location = get_callsite_location()
         # this will be the lineno of the last decorator, so we want one
         # below it for the actual function
-        location['lineno'] += 1
+        location["lineno"] += 1
         self.register_view(wrapped, location)
         return wrapped
 
     def register_view(self, view_fn, location=None, introduced_at=None):
         if self.view_fn is not None:
-            raise InvalidAPI('api already has view registered')
+            raise InvalidAPI("api already has view registered")
         self.view_fn = view_fn
         self.view_fn_location = location
         if self.introduced_at is None:
@@ -412,15 +418,14 @@ class AcceptableAPI():
 
     # legacy view decorator
     def view(self, introduced_at):
-
         def decorator(fn):
             location = get_callsite_location()
             # this will be the lineno of the last decorator, so we want one
             # below it for the actual function
-            location['lineno'] += 1
+            location["lineno"] += 1
 
             # convert older style version strings
-            if introduced_at == '1.0':
+            if introduced_at == "1.0":
                 self.introduced_at = 1
             elif introduced_at is not None:
                 self.introduced_at = int(introduced_at)
@@ -433,17 +438,20 @@ class AcceptableAPI():
             # they are already validated, so we set directly.
             fn._acceptable_metadata = self
             if self._request_schema is None:
-                self._request_schema = getattr(fn, '_request_schema', None)
+                self._request_schema = getattr(fn, "_request_schema", None)
                 self._request_schema_location = getattr(
-                    fn, '_request_schema_location', None)
+                    fn, "_request_schema_location", None
+                )
             if self._response_schema is None:
-                self._response_schema = getattr(fn, '_response_schema', None)
+                self._response_schema = getattr(fn, "_response_schema", None)
                 self._response_schema_location = getattr(
-                    fn, '_response_schema_location', None)
+                    fn, "_response_schema_location", None
+                )
             if self._params_schema is None:
-                self._params_schema = getattr(fn, '_params_schema', None)
+                self._params_schema = getattr(fn, "_params_schema", None)
                 self._params_schema_location = getattr(
-                    fn, '_params_schema_location', None)
+                    fn, "_params_schema_location", None
+                )
             return fn
 
         return decorator

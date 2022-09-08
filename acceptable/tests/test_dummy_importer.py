@@ -19,18 +19,20 @@ class DummyImporterContextTests(testtools.TestCase):
                 self.module = object()
 
             def find_module(self, fullname, path=None):
-                if fullname == 'zzzxxxvvv.test':
+                if fullname == "zzzxxxvvv.test":
                     return self
 
             def load_module(self, fullname):
                 self.imported = True
                 sys.modules[fullname] = self.module
                 return self.module
+
         fml = FakeModuleLoader()
         sys.meta_path.insert(0, fml)
-        with DummyImporterContext('zzzxxxvvv.test'):
+        with DummyImporterContext("zzzxxxvvv.test"):
             import zzzxxxvvv.test
+
             assert_that(fml.module, Is(zzzxxxvvv.test))
-        assert_that(sys.modules, Not(Contains('zzzxxxvvv.test')))
+        assert_that(sys.modules, Not(Contains("zzzxxxvvv.test")))
         assert_that(fml.imported, Is(True))
         sys.meta_path.remove(fml)

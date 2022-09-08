@@ -13,8 +13,7 @@ from acceptable import lint
 
 
 class LintTestCase(testtools.TestCase):
-
-    def get_metadata(self, code='', module='service', locations=True):
+    def get_metadata(self, code="", module="service", locations=True):
         fixture = self.useFixture(TemporaryModuleFixture(module, code))
         import_metadata([module])
         metadata, locations = get_metadata().serialize()
@@ -23,7 +22,8 @@ class LintTestCase(testtools.TestCase):
 
 class LintTests(LintTestCase):
     def test_not_modify(self):
-        metadata, locations, path = self.get_metadata("""
+        metadata, locations, path = self.get_metadata(
+            """
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api')
@@ -31,15 +31,17 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """
+        )
 
-        self.assertIn('$version', metadata)
+        self.assertIn("$version", metadata)
         orig = metadata.copy()
         list(lint.metadata_lint(metadata, metadata, locations))
         self.assertEqual(metadata, orig)
 
     def test_missing_api_documentation(self):
-        metadata, locations, path = self.get_metadata("""
+        metadata, locations, path = self.get_metadata(
+            """
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -47,27 +49,27 @@ class LintTests(LintTestCase):
             @api
             def view():
                 pass
-        """)
+        """
+        )
 
         msgs = list(lint.metadata_lint(metadata, metadata, locations))
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('doc', msgs[0].name)
-        self.assertEqual('api', msgs[0].api_name)
-        self.assertEqual(msgs[0].location['filename'], path)
-        self.assertEqual(
-            msgs[0].location['lineno'], lineno_per_py_version(6, 7))
+        self.assertEqual("doc", msgs[0].name)
+        self.assertEqual("api", msgs[0].api_name)
+        self.assertEqual(msgs[0].location["filename"], path)
+        self.assertEqual(msgs[0].location["lineno"], lineno_per_py_version(6, 7))
 
         # test with new api
         msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('doc', msgs[0].name)
-        self.assertEqual('api', msgs[0].api_name)
-        self.assertEqual(msgs[0].location['filename'], path)
-        self.assertEqual(
-            msgs[0].location['lineno'], lineno_per_py_version(6, 7))
+        self.assertEqual("doc", msgs[0].name)
+        self.assertEqual("api", msgs[0].api_name)
+        self.assertEqual(msgs[0].location["filename"], path)
+        self.assertEqual(msgs[0].location["lineno"], lineno_per_py_version(6, 7))
 
     def test_missing_introduced_at(self):
-        metadata, locations, path = self.get_metadata("""
+        metadata, locations, path = self.get_metadata(
+            """
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api')
@@ -75,17 +77,20 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """
+        )
 
         msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('introduced_at', msgs[0].name)
-        self.assertEqual('api', msgs[0].api_name)
-        self.assertEqual(msgs[0].location['filename'], path)
-        self.assertEqual(msgs[0].location['lineno'], 3)
+        self.assertEqual("introduced_at", msgs[0].name)
+        self.assertEqual("api", msgs[0].api_name)
+        self.assertEqual(msgs[0].location["filename"], path)
+        self.assertEqual(msgs[0].location["lineno"], 3)
 
     def test_changed_introduced_at(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -93,9 +98,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=2)
@@ -103,19 +111,22 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
         msgs = list(lint.metadata_lint(old, new, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('introduced_at', msgs[0].name)
-        self.assertIn('changed from 1 to 2', msgs[0].msg)
+        self.assertEqual("introduced_at", msgs[0].name)
+        self.assertIn("changed from 1 to 2", msgs[0].msg)
 
         # new api shouldn't warn about introduced at
         msgs = list(lint.metadata_lint({}, new, locations))
         self.assertEqual(0, len(msgs))
 
     def test_method_added_is_ok(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -123,9 +134,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api(
@@ -134,12 +148,15 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
         self.assertEqual([], list(lint.metadata_lint(old, new, locations)))
 
     def test_method_removed_is_error(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -147,9 +164,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api(
@@ -158,15 +178,18 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
         msgs = list(lint.metadata_lint(old, new, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('methods', msgs[0].name)
-        self.assertIn('GET removed', msgs[0].msg)
+        self.assertEqual("methods", msgs[0].name)
+        self.assertIn("GET removed", msgs[0].msg)
 
     def test_url_changed_is_error(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -174,9 +197,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/other', 'api', introduced_at=1)
@@ -184,20 +210,26 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
         msgs = list(lint.metadata_lint(old, new, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('url', msgs[0].name)
-        self.assertIn('/other', msgs[0].msg)
+        self.assertEqual("url", msgs[0].name)
+        self.assertIn("/other", msgs[0].msg)
 
     def test_required_on_new_api_ok(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/other', 'api', introduced_at=1)
@@ -212,14 +244,14 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
-        self.assertEqual(
-            [],
-            [str(i) for i in lint.metadata_lint(old, new, locations)]
+        """,
         )
+        self.assertEqual([], [str(i) for i in lint.metadata_lint(old, new, locations)])
 
     def test_required_on_existing_api_is_error(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
 
@@ -228,9 +260,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/other', 'api', introduced_at=1)
@@ -250,14 +285,17 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
         self.assertEqual(
-            ['Cannot require new field context'],
-            [i.msg for i in lint.metadata_lint(old, new, locations)]
+            ["Cannot require new field context"],
+            [i.msg for i in lint.metadata_lint(old, new, locations)],
         )
 
     def test_schema_removed_is_error(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/other', 'api', introduced_at=1)
@@ -272,9 +310,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/other', 'api', introduced_at=1)
@@ -282,17 +323,23 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
         self.assertEqual(
-            ['Request schema removed'],
-            [i.msg for i in lint.metadata_lint(old, new, locations)]
+            ["Request schema removed"],
+            [i.msg for i in lint.metadata_lint(old, new, locations)],
         )
 
     def test_changelog_required_for_revision_new_api(self):
-        old, _, _ = self.get_metadata(module='old', code="""
-        """)
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
 
@@ -311,14 +358,17 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
         self.assertEqual(
-            ['No changelog entry for revision 2'],
-            [i.msg for i in lint.metadata_lint(old, new, locations)]
+            ["No changelog entry for revision 2"],
+            [i.msg for i in lint.metadata_lint(old, new, locations)],
         )
 
     def test_changelog_required_for_revision_existing_api(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
 
@@ -332,9 +382,12 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
 
@@ -353,256 +406,260 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """)
+        """,
+        )
         self.assertEqual(
-            ['No changelog entry for revision 2'],
-            [i.msg for i in lint.metadata_lint(old, new, locations)]
+            ["No changelog entry for revision 2"],
+            [i.msg for i in lint.metadata_lint(old, new, locations)],
         )
 
+
 class WalkSchemaTests(LintTestCase):
-
     def test_type_changed_is_error(self):
-        old = {'type': 'string'}
-        new = {'type': 'object'}
+        old = {"type": "string"}
+        new = {"type": "object"}
 
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(1, len(msgs))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('name.type', msgs[0].name)
-        self.assertIn('remove type string', msgs[0].msg)
+        self.assertEqual("name.type", msgs[0].name)
+        self.assertIn("remove type string", msgs[0].msg)
 
     def test_type_changed_is_error_multiple_types(self):
-        old = {'type': ['string', 'object']}
-        new = {'type': 'object'}
+        old = {"type": ["string", "object"]}
+        new = {"type": "object"}
 
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(1, len(msgs))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('name.type', msgs[0].name)
-        self.assertIn('remove type string', msgs[0].msg)
+        self.assertEqual("name.type", msgs[0].name)
+        self.assertIn("remove type string", msgs[0].msg)
 
     def test_added_required_is_error(self):
         old = {
-            'type': 'object',
-            'required': ['foo'],
-            'properties': {
-                'foo': {
-                    'type': 'string',
-                    'description': 'description',
-                    'introduced_at': 1,
+            "type": "object",
+            "required": ["foo"],
+            "properties": {
+                "foo": {
+                    "type": "string",
+                    "description": "description",
+                    "introduced_at": 1,
                 },
-                'bar': {
-                    'type': 'string',
-                    'description': 'description',
-                    'introduced_at': 1,
+                "bar": {
+                    "type": "string",
+                    "description": "description",
+                    "introduced_at": 1,
                 },
-            }
+            },
         }
         new = {
-            'type': 'object',
-            'required': ['foo', 'bar'],
-            'properties': {
-                'foo': {
-                    'type': 'string',
-                    'description': 'description',
-                    'introduced_at': 1,
+            "type": "object",
+            "required": ["foo", "bar"],
+            "properties": {
+                "foo": {
+                    "type": "string",
+                    "description": "description",
+                    "introduced_at": 1,
                 },
-                'bar': {
-                    'type': 'string',
-                    'description': 'description',
-                    'introduced_at': 1,
+                "bar": {
+                    "type": "string",
+                    "description": "description",
+                    "introduced_at": 1,
                 },
-            }
+            },
         }
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(3, len(msgs))
-        self.assertEqual('name.required', msgs[0].name)
-        self.assertIn('bar', msgs[0].msg)
+        self.assertEqual("name.required", msgs[0].name)
+        self.assertIn("bar", msgs[0].msg)
 
         self.assertIsInstance(msgs[1], lint.CheckChangelog)
         self.assertIsInstance(msgs[2], lint.CheckChangelog)
 
     def test_delete_property_is_error(self):
         old = {
-            'type': 'object',
-            'properties': {
-                'foo': {'type': 'string'},
-                'bar': {'type': 'string'},
-            }
+            "type": "object",
+            "properties": {
+                "foo": {"type": "string"},
+                "bar": {"type": "string"},
+            },
         }
         new = {
-            'type': 'object',
-            'properties': {
-                'foo': {
-                    'type': 'string',
-                    'description': 'description',
-                    'introduced_at': 1,
+            "type": "object",
+            "properties": {
+                "foo": {
+                    "type": "string",
+                    "description": "description",
+                    "introduced_at": 1,
                 },
-            }
+            },
         }
 
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(2, len(msgs))
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('name.bar', msgs[0].name)
+        self.assertEqual("name.bar", msgs[0].name)
 
         self.assertIsInstance(msgs[1], lint.CheckChangelog)
 
     def test_missing_doc_and_introduced_when_adding_new_field(self):
         old = {
-            'type': 'object',
+            "type": "object",
         }
 
         new = {
-            'type': 'object',
-            'properties': {
-                'foo': {'type': 'object'},
+            "type": "object",
+            "properties": {
+                "foo": {"type": "object"},
             },
         }
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(2, len(msgs))
 
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.foo.description', msgs[0].name)
-        self.assertIn('missing', msgs[0].msg)
+        self.assertEqual("name.foo.description", msgs[0].name)
+        self.assertIn("missing", msgs[0].msg)
 
         self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
-        self.assertEqual('name.foo.introduced_at', msgs[1].name)
-        self.assertIn('missing', msgs[1].msg)
+        self.assertEqual("name.foo.introduced_at", msgs[1].name)
+        self.assertIn("missing", msgs[1].msg)
 
     def test_no_introduced_at_when_present_in_old(self):
         old = {
-            'type': 'object',
-            'properties': {
-                'foo': {'type': 'object'},
+            "type": "object",
+            "properties": {
+                "foo": {"type": "object"},
             },
         }
 
         new = {
-            'type': 'object',
-            'properties': {
-                'foo': {'type': 'object', 'description': 'description'},
+            "type": "object",
+            "properties": {
+                "foo": {"type": "object", "description": "description"},
             },
         }
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(0, len(msgs))
 
     def test_missing_introduced_at_skipped_if_new_api(self):
         old = {
-            'type': 'object',
+            "type": "object",
         }
 
         new = {
-            'type': 'object',
-            'properties': {
-                'foo': {'type': 'object'},
+            "type": "object",
+            "properties": {
+                "foo": {"type": "object"},
             },
         }
 
-        msgs = list(lint.walk_schema(
-            'name', old, new, root=True, new_api=True
-        ))
+        msgs = list(lint.walk_schema("name", old, new, root=True, new_api=True))
         self.assertEqual(1, len(msgs))
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.foo.description', msgs[0].name)
-        self.assertIn('missing', msgs[0].msg)
+        self.assertEqual("name.foo.description", msgs[0].name)
+        self.assertIn("missing", msgs[0].msg)
 
     def test_nested_objects(self):
         old = {
-            'type': 'object',
-            'properties': {
-                'foo': {
-                    'type': 'object',
-                    'required': ['bar'],
-                    'properties': {
-                        'bar': {'type': 'string'},
-                        'baz': {
-                            'type': 'string',
-                            'description': 'description',
-                            'introduced_at': 2,
+            "type": "object",
+            "properties": {
+                "foo": {
+                    "type": "object",
+                    "required": ["bar"],
+                    "properties": {
+                        "bar": {"type": "string"},
+                        "baz": {
+                            "type": "string",
+                            "description": "description",
+                            "introduced_at": 2,
                         },
                     },
                 },
             },
         }
         new = {
-            'type': 'object',
-            'properties': {
-                'foo': {
-                    'description': 'description',
-                    'type': 'object',
-                    'required': ['bar', 'foo'],  # error for required change
-                    'properties': {
-                        'bar': {
-                            'type': 'object',  # type changed
-                            'description': 'description'
+            "type": "object",
+            "properties": {
+                "foo": {
+                    "description": "description",
+                    "type": "object",
+                    "required": ["bar", "foo"],  # error for required change
+                    "properties": {
+                        "bar": {
+                            "type": "object",  # type changed
+                            "description": "description",
                         },
-                        'baz': {
-                            'type': 'string',
-                            'description': 'description',
-                            'introduced_at': 3,  # changed
+                        "baz": {
+                            "type": "string",
+                            "description": "description",
+                            "introduced_at": 3,  # changed
                         },
                     },
                 },
             },
         }
 
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
         self.assertEqual(3, len(msgs))
 
         self.assertEqual(msgs[0].level, lint.ERROR)
-        self.assertEqual('name.foo.required', msgs[0].name)
+        self.assertEqual("name.foo.required", msgs[0].name)
 
         self.assertEqual(msgs[1].level, lint.ERROR)
-        self.assertEqual('name.foo.bar.type', msgs[1].name)
+        self.assertEqual("name.foo.bar.type", msgs[1].name)
 
         self.assertEqual(msgs[2].level, lint.ERROR)
-        self.assertEqual('name.foo.baz.introduced_at', msgs[2].name)
+        self.assertEqual("name.foo.baz.introduced_at", msgs[2].name)
 
     def test_arrays(self):
         old = {
-            'type': 'array',
-            'items': {
-                'description': 'description',
-                'type': 'object',
-                'properties': {
-                    'foo': {'type': 'object', 'description': 'description'},
+            "type": "array",
+            "items": {
+                "description": "description",
+                "type": "object",
+                "properties": {
+                    "foo": {"type": "object", "description": "description"},
                 },
             },
         }
         new = {
-            'type': 'array',
-            'items': {
-                'description': 'description',
-                'type': 'object',
-                'properties': {
-                    'foo': {'type': 'object', 'description': 'description'},
-                    'bar': {'type': 'object'},
+            "type": "array",
+            "items": {
+                "description": "description",
+                "type": "object",
+                "properties": {
+                    "foo": {"type": "object", "description": "description"},
+                    "bar": {"type": "object"},
                 },
             },
         }
 
-        msgs = list(lint.walk_schema('name', old, new, root=True))
+        msgs = list(lint.walk_schema("name", old, new, root=True))
 
         self.assertEqual(2, len(msgs))
 
         self.assertEqual(msgs[0].level, lint.WARNING)
-        self.assertEqual('name.items.bar.description', msgs[0].name)
+        self.assertEqual("name.items.bar.description", msgs[0].name)
 
         self.assertEqual(msgs[1].level, lint.DOCUMENTATION)
-        self.assertEqual('name.items.bar.introduced_at', msgs[1].name)
+        self.assertEqual("name.items.bar.introduced_at", msgs[1].name)
 
     def test_new_api_introduced_at_enforced(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
             api1 = service.api('/api1', 'api1', introduced_at=1)
             @api1
             def view():
                 "Docs"
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
             api1 = service.api('/api1', 'api1', introduced_at=1)
@@ -614,27 +671,34 @@ class WalkSchemaTests(LintTestCase):
             @api2
             def view2():
                 "Docs"
-        """)
+        """,
+        )
         self.assertEqual(
-            ['introduced_at should be > 1'],
-            [i.msg for i in lint.metadata_lint(old, new, locations)]
+            ["introduced_at should be > 1"],
+            [i.msg for i in lint.metadata_lint(old, new, locations)],
         )
 
     def test_new_api_introduced_at_is_int(self):
-        old, _, _ = self.get_metadata(module='old', code="""
+        old, _, _ = self.get_metadata(
+            module="old",
+            code="""
             from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
-        """)
+        """,
+        )
 
-        new, locations, _ = self.get_metadata(module='new', code="""
+        new, locations, _ = self.get_metadata(
+            module="new",
+            code="""
             from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
             api1 = service.api('/api1', 'api1', introduced_at="1")
             @api1
             def view1():
                 "Docs"
-        """)
+        """,
+        )
         self.assertEqual(
-            ['introduced_at should be an integer'],
-            [i.msg for i in lint.metadata_lint(old, new, locations)]
+            ["introduced_at should be an integer"],
+            [i.msg for i in lint.metadata_lint(old, new, locations)],
         )

@@ -24,7 +24,7 @@ class EventMockTests(testtools.TestCase):
             call_recorder,
             "service",
             "api",
-            ['GET'],
+            ["GET"],
             "http://example.com",
             request_schema={"type": "string"},
             response_schema={"type": "number"},
@@ -39,7 +39,7 @@ class EventMockTests(testtools.TestCase):
             call_recorder,
             "service",
             "api",
-            ['GET'],
+            ["GET"],
             "http://example.com",
             request_schema={"type": "number"},
             response_schema=None,
@@ -66,7 +66,7 @@ class ServiceTests(testtools.TestCase):
                 ["GET"],
                 None,
                 None,
-            )
+            ),
         ]
         service_factory = ServiceFactory(
             "test-service",
@@ -99,29 +99,44 @@ class ServiceTests(testtools.TestCase):
         service = self.make_test_service()
         with service() as service_mock:
             with responses_mock_context() as responses_mock:
-                responses_mock.add('GET', 'http://example.com/responses-test', b'test')
+                responses_mock.add("GET", "http://example.com/responses-test", b"test")
                 requests.get("http://example.com/test-endpoint", json=888)
                 requests.get("http://example.com/responses-test")
-                assert_that(responses_mock.calls, HasLength(2), 'RequestMock call count inside 2')
-            assert_that(responses_mock.calls, HasLength(2), 'RequestMock call count inside 1')
-        assert_that(responses_mock.calls, HasLength(0), 'RequestMock call count outside')
+                assert_that(
+                    responses_mock.calls,
+                    HasLength(2),
+                    "RequestMock call count inside 2",
+                )
+            assert_that(
+                responses_mock.calls, HasLength(2), "RequestMock call count inside 1"
+            )
+        assert_that(
+            responses_mock.calls, HasLength(0), "RequestMock call count outside"
+        )
 
     def test_calls_matching(self):
         service = self.make_test_service()
         with service() as service_mock:
             requests.get("http://example.com/test-endpoint", json=888)
             requests.get("http://example.com/no-validation")
-            assert_that(service_mock.get_calls_matching('no-validation$'), HasLength(1))
+            assert_that(service_mock.get_calls_matching("no-validation$"), HasLength(1))
 
     def test_endpoint_missing_body(self):
-        ep = Endpoint('http://example.com', 'test', EndpointSpec('endpoint', 'endpoint', ['GET'], True, None))
+        ep = Endpoint(
+            "http://example.com",
+            "test",
+            EndpointSpec("endpoint", "endpoint", ["GET"], True, None),
+        )
         with ep() as mock:
             with ExpectedException(AssertionError):
                 requests.get("http://example.com/endpoint")
 
     def test_endpoint_empty_body_json_decoding_error(self):
-        ep = Endpoint('http://example.com', 'test', EndpointSpec('endpoint', 'endpoint', ['GET'], True, None))
+        ep = Endpoint(
+            "http://example.com",
+            "test",
+            EndpointSpec("endpoint", "endpoint", ["GET"], True, None),
+        )
         with ep() as mock:
             with ExpectedException(AssertionError):
-                requests.get("http://example.com/endpoint", data=b'')
-
+                requests.get("http://example.com/endpoint", data=b"")

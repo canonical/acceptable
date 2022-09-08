@@ -15,6 +15,7 @@ class ResponsesManager(object):
     instance `responses.mock`. This allows us to start, stop and reset
     the it at the right time.
     """
+
     def __init__(self):
         self._attached = 0
 
@@ -59,6 +60,7 @@ class responses_mock_context(object):
         def blah():
             ,,,
     """
+
     def __enter__(self):
         responses_manager.attach()
         return responses.mock
@@ -75,7 +77,7 @@ def wrapper%(signature)s:
     with responses_mock_context:
         return func%(funcargs)s
 """
-        namespace = {'responses_mock_context': self, 'func': func}
+        namespace = {"responses_mock_context": self, "func": func}
         try:
             return responses.get_wrapped(func, wrapper_template, namespace)
         except (TypeError, AttributeError):
