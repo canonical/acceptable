@@ -1,19 +1,19 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import argparse
-from collections import OrderedDict
 import contextlib
-from functools import partial
 import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
-import yaml
+from collections import OrderedDict
+from functools import partial
 
-import testtools
 import fixtures
+import testtools
+import yaml
 
 from acceptable import __main__ as main
 from acceptable import get_metadata
@@ -148,7 +148,7 @@ class MetadataTests(testtools.TestCase):
                         'request_schema': {'type': 'object'},
                         'response_schema': {'type': 'object'},
                         'params_schema': {'type': 'object'},
-                        'introduced_at':  1,
+                        'introduced_at': 1,
                         'title': 'Root',
                     }
                 }
@@ -234,7 +234,7 @@ class MetadataTests(testtools.TestCase):
                         'request_schema': {'type': 'object'},
                         'response_schema': {'type': 'object'},
                         'params_schema': {'type': 'object', 'properties': {'test': {'type': 'string'}}},
-                        'introduced_at':  1,
+                        'introduced_at': 1,
                         'title': 'Root',
                     }
                 }
@@ -299,7 +299,7 @@ class LoadMetadataTests(testtools.TestCase):
             },
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
-            'introduced_at':  1,
+            'introduced_at': 1,
             'title': 'Api1',
         }
         return metadata
@@ -349,7 +349,7 @@ class RenderMarkdownTests(testtools.TestCase):
             },
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
-            'introduced_at':  1,
+            'introduced_at': 1,
             'title': 'Api1',
         }
         metadata['group']['apis']['api2'] = {
@@ -363,7 +363,7 @@ class RenderMarkdownTests(testtools.TestCase):
             },
             'request_schema': {'request_schema': 1},
             'response_schema': {'response_schema': 2},
-            'introduced_at':  1,
+            'introduced_at': 1,
             'title': 'Api2',
         }
         return metadata
@@ -376,14 +376,7 @@ class RenderMarkdownTests(testtools.TestCase):
             iterator = main.render_markdown(self.metadata(), args)
             output = OrderedDict((str(k), v) for k, v in iterator)
 
-            self.assertEqual(set([
-                    'en/group.md',
-                    'en/index.md',
-                    'en/metadata.yaml',
-                    'metadata.yaml',
-                ]),
-                set(output),
-            )
+            self.assertEqual({'en/group.md', 'en/index.md', 'en/metadata.yaml', 'metadata.yaml'}, set(output))
 
             top_level_md = yaml.safe_load(output['metadata.yaml'])
             self.assertEqual(
@@ -393,11 +386,11 @@ class RenderMarkdownTests(testtools.TestCase):
 
             md = yaml.safe_load(output['en/metadata.yaml'])
             self.assertEqual({
-                    'navigation': [
-                        {'location': 'index.md', 'title': 'Index'},
-                        {'location': 'group.md', 'title': 'Group'},
-                    ],
-                },
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'group.md', 'title': 'Group'},
+                ],
+            },
                 md
             )
 
@@ -410,24 +403,17 @@ class RenderMarkdownTests(testtools.TestCase):
             iterator = main.render_markdown(m, args)
             output = OrderedDict((str(k), v) for k, v in iterator)
 
-            self.assertEqual(set([
-                    'en/group.md',
-                    'en/index.md',
-                    'en/metadata.yaml',
-                    'metadata.yaml',
-                ]),
-                set(output),
-            )
+            self.assertEqual({'en/group.md', 'en/index.md', 'en/metadata.yaml', 'metadata.yaml'}, set(output))
 
             self.assertNotIn('api2', output['en/group.md'])
 
             md = yaml.safe_load(output['en/metadata.yaml'])
             self.assertEqual({
-                    'navigation': [
-                        {'location': 'index.md', 'title': 'Index'},
-                        {'location': 'group.md', 'title': 'Group'},
-                    ],
-                },
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'group.md', 'title': 'Group'},
+                ],
+            },
                 md
             )
 
@@ -440,22 +426,15 @@ class RenderMarkdownTests(testtools.TestCase):
             iterator = main.render_markdown(m, args)
             output = OrderedDict((str(k), v) for k, v in iterator)
 
-            self.assertEqual(set([
-                    'en/group.md',
-                    'en/index.md',
-                    'en/metadata.yaml',
-                    'metadata.yaml',
-                ]),
-                set(output),
-            )
+            self.assertEqual({'en/group.md', 'en/index.md', 'en/metadata.yaml', 'metadata.yaml'}, set(output))
 
             md = yaml.safe_load(output['en/metadata.yaml'])
             self.assertEqual({
-                    'navigation': [
-                        {'location': 'index.md', 'title': 'Index'},
-                        {'location': 'group.md', 'title': 'Group'},
-                    ],
-                },
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'group.md', 'title': 'Group'},
+                ],
+            },
                 md
             )
 
@@ -472,15 +451,8 @@ class RenderMarkdownTests(testtools.TestCase):
             iterator = main.render_markdown(metadata, args)
             output = OrderedDict((str(k), v) for k, v in iterator)
 
-            self.assertEqual(set([
-                    'en/group.md',
-                    'en/group2.md',
-                    'en/index.md',
-                    'en/metadata.yaml',
-                    'metadata.yaml',
-                ]),
-                set(output),
-            )
+            self.assertEqual({'en/group.md', 'en/group2.md', 'en/index.md', 'en/metadata.yaml', 'metadata.yaml'},
+                             set(output))
 
             top_level_md = yaml.safe_load(output['metadata.yaml'])
             self.assertEqual(
@@ -490,12 +462,12 @@ class RenderMarkdownTests(testtools.TestCase):
 
             md = yaml.safe_load(output['en/metadata.yaml'])
             self.assertEqual({
-                    'navigation': [
-                        {'location': 'index.md', 'title': 'Index'},
-                        {'location': 'group.md', 'title': 'Group'},
-                        {'location': 'group2.md', 'title': 'Group2'},
-                    ],
-                },
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'group.md', 'title': 'Group'},
+                    {'location': 'group2.md', 'title': 'Group2'},
+                ],
+            },
                 md
             )
 
@@ -513,14 +485,7 @@ class RenderMarkdownTests(testtools.TestCase):
             iterator = main.render_markdown(metadata, args)
             output = OrderedDict((str(k), v) for k, v in iterator)
 
-            self.assertEqual(set([
-                    'en/group.md',
-                    'en/index.md',
-                    'en/metadata.yaml',
-                    'metadata.yaml',
-                ]),
-                set(output),
-            )
+            self.assertEqual({'en/group.md', 'en/index.md', 'en/metadata.yaml', 'metadata.yaml'}, set(output))
 
             top_level_md = yaml.safe_load(output['metadata.yaml'])
             self.assertEqual(
@@ -530,11 +495,11 @@ class RenderMarkdownTests(testtools.TestCase):
 
             md = yaml.safe_load(output['en/metadata.yaml'])
             self.assertEqual({
-                    'navigation': [
-                        {'location': 'index.md', 'title': 'Index'},
-                        {'location': 'group.md',  'title': 'Group'},
-                    ],
-                },
+                'navigation': [
+                    {'location': 'index.md', 'title': 'Index'},
+                    {'location': 'group.md', 'title': 'Group'},
+                ],
+            },
                 md
             )
 
@@ -612,11 +577,6 @@ EXPECTED_LINT_OUTPUT = [
      ' Documentation: API foo at response_schema.foo_result.introduced_at'),
 ]
 
-EXPECTED_OPENAPI_RESULT = [
-    "null\n",
-    "...\n",
-]
-
 
 class LintTests(testtools.TestCase):
 
@@ -654,8 +614,13 @@ class LintTests(testtools.TestCase):
         self.assertEqual([], output.getvalue().splitlines())
 
         # And the OpenAPI file contains the expected value
-        with open("examples/oas_testcase_openapi.yaml", "r") as f:
-            self.assertListEqual(EXPECTED_OPENAPI_RESULT, f.readlines())
+        with open("examples/oas_testcase_openapi.yaml", "r") as _result:
+            result = _result.readlines()
+
+        with open("examples/oas_expected.yaml", "r") as _expected:
+            expected = _expected.readlines()
+
+        self.assertListEqual(expected, result)
 
         # And we implicitly assume the files have not changed
 
