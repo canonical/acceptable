@@ -6,7 +6,6 @@ import io
 import json
 import os
 import subprocess
-import sys
 import tempfile
 from collections import OrderedDict
 from functools import partial
@@ -21,18 +20,6 @@ from acceptable.tests._fixtures import (
     CleanUpModuleImport,
     TemporaryModuleFixture,
 )
-
-
-def lineno_per_py_version(old, new):
-    # Becasue https://bugs.python.org/issue38283
-    # "sys._getframe(1).f_lineno changed behavior in 3.8"
-    # when calling get_callsite_location in different python version we get
-    # different line numbers.
-    if sys.version_info < (3, 8):
-        result = old
-    else:
-        result = new
-    return result
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -189,7 +176,7 @@ class MetadataTests(testtools.TestCase):
                     },
                     "view": {
                         "filename": fixture.path,
-                        "lineno": lineno_per_py_version(11, 12),
+                        "lineno": 12,
                         "module": svc_mod,
                     },
                 }
@@ -283,7 +270,7 @@ class MetadataTests(testtools.TestCase):
                     },
                     "view": {
                         "filename": fixture.path,
-                        "lineno": lineno_per_py_version(11, 12),
+                        "lineno": 12,
                         "module": svc_mod,
                     },
                 }
@@ -604,22 +591,22 @@ class RenderMarkdownTests(testtools.TestCase):
 EXPECTED_LINT_OUTPUT = [
     (
         "examples/api.py",
-        lineno_per_py_version(22, 7),
+        7,
         " Error: API foo at request_schema.required",
     ),
     (
         "examples/api.py",
-        lineno_per_py_version(22, 7),
+        7,
         " Warning: API foo at request_schema.foo.description",
     ),
     (
         "examples/api.py",
-        lineno_per_py_version(36, 29),
+        29,
         " Warning: API foo at response_schema.foo_result.description",
     ),
     (
         "examples/api.py",
-        lineno_per_py_version(36, 29),
+        29,
         " Documentation: API foo at response_schema.foo_result.introduced_at",
     ),
 ]
