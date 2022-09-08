@@ -71,6 +71,6 @@ class OpenApiTests(testtools.TestCase):
 
     def test_dump_of_empty_metadata(self):
         metadata = APIMetadata()
-        result = openapi.dump(metadata, None).splitlines(keepends=False)
+        result = openapi.dump(metadata).splitlines(keepends=False)
         expected = EXPECTED_EMPTY_METADATA.splitlines(keepends=False)
         self.assertListEqual(expected, result)

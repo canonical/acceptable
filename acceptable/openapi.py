@@ -40,7 +40,7 @@ class OasRoot31(object):
     components_schemas: dict = field(default_factory=lambda: {})
 
 
-def dump(metadata: APIMetadata, stream):
+def dump(metadata: APIMetadata, stream=None):
     service_name = None
     if len(metadata.services) == 1:
         service_name = list(metadata.services.keys())[0]
@@ -49,5 +49,4 @@ def dump(metadata: APIMetadata, stream):
     oas.info.title = service_name or ""
     oas.info.version = metadata.current_version or ""
 
-    oas_to_dict = _to_dict(oas)
-    return yaml.safe_dump(oas_to_dict, stream, default_flow_style=False, encoding=None, )
+    return yaml.safe_dump(_to_dict(oas), stream, default_flow_style=False, encoding=None)
