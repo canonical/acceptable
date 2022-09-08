@@ -1,8 +1,6 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 from collections import defaultdict
-import json
-import textwrap
 from sys import stdout
 
 
@@ -17,7 +15,7 @@ def write_service_begin(stream, service_name):
 
 
 def write_service_end(stream):
-    stream.write("    ]\n" ")\n" "\n")
+    stream.write("    ]\n)\n\n")
 
 
 def write_endpoint_spec(stream, api_data):
