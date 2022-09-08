@@ -6,11 +6,7 @@ from collections import OrderedDict
 import textwrap
 
 from acceptable import _validation
-from acceptable.util import (
-    clean_docstring,
-    get_callsite_location,
-    sort_schema,
-)
+from acceptable.util import clean_docstring, get_callsite_location, sort_schema
 
 
 class InvalidAPI(Exception):

@@ -508,10 +508,7 @@ class RenderValueTests(BuildDoubleTestCase):
     def test_dict(self):
         value = {
             "type": "object",
-            "properties": {
-                "foo": {"type": "string"},
-                "bar": {"type": "integer"},
-            },
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "integer"}},
             "required": ["foo"],
         }
         rendered = (
@@ -563,10 +560,7 @@ class RenderServiceDoubleTests(BuildDoubleTestCase):
         schema = _build_doubles.ViewSchema(
             view_name="some_view",
             version="1.3",
-            input_schema={
-                "type": "object",
-                "properties": {"item": {"type": "string"}},
-            },
+            input_schema={"type": "object", "properties": {"item": {"type": "string"}}},
             output_schema={
                 "type": "object",
                 "properties": {"item": {"type": "string"}},

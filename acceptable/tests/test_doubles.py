@@ -7,11 +7,7 @@ from testtools import TestCase
 from testtools.matchers import Contains
 
 
-from acceptable._doubles import (
-    ServiceMock,
-    service_mock,
-    set_service_locations,
-)
+from acceptable._doubles import ServiceMock, service_mock, set_service_locations
 
 
 class ServiceMockTests(TestCase):

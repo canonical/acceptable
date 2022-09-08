@@ -20,19 +20,8 @@ setup(
     packages=find_packages(exclude=["examples", "*tests"]),
     long_description="".join(open("README.rst").readlines()[2:]),
     long_description_content_type="text/x-rst",
-    install_requires=[
-        "jsonschema",
-        "pyyaml",
-        "Jinja2",
-    ],
-    extras_require=dict(
-        flask=[
-            "Flask",
-        ],
-        django=[
-            "django>=2.1,<3",
-        ],
-    ),
+    install_requires=["jsonschema", "pyyaml", "Jinja2"],
+    extras_require=dict(flask=["Flask"], django=["django>=2.1,<3"]),
     test_suite="acceptable.tests",
     include_package_data=True,
     entry_points={

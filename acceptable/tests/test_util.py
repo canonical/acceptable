@@ -7,13 +7,7 @@ from acceptable import util
 
 class UtilsTestCase(testtools.TestCase):
     def test_sort_schema_simple(self):
-        srtd = util.sort_schema(
-            {
-                "5": "5",
-                "1": "1",
-                "3": "3",
-            }
-        )
+        srtd = util.sort_schema({"5": "5", "1": "1", "3": "3"})
         self.assertEqual(["1", "3", "5"], list(srtd))
 
     def test_sort_schema_simple(self):

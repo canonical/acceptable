@@ -16,10 +16,7 @@ import yaml
 
 from acceptable import __main__ as main
 from acceptable import get_metadata
-from acceptable.tests._fixtures import (
-    CleanUpModuleImport,
-    TemporaryModuleFixture,
-)
+from acceptable.tests._fixtures import CleanUpModuleImport, TemporaryModuleFixture
 
 
 # sys.exit on error, but rather throws an exception, so we can catch that in
@@ -129,9 +126,7 @@ class MetadataTests(testtools.TestCase):
                             "methods": ["GET"],
                             "url": "/",
                             "doc": "Documentation.",
-                            "changelog": {
-                                4: "changelog",
-                            },
+                            "changelog": {4: "changelog"},
                             "request_schema": {"type": "object"},
                             "response_schema": {"type": "object"},
                             "params_schema": {"type": "object"},
@@ -147,17 +142,9 @@ class MetadataTests(testtools.TestCase):
         self.assertEqual(
             {
                 "root": {
-                    "api": {
-                        "filename": fixture.path,
-                        "lineno": 4,
-                        "module": svc_mod,
-                    },
+                    "api": {"filename": fixture.path, "lineno": 4, "module": svc_mod},
                     "changelog": {
-                        4: {
-                            "filename": fixture.path,
-                            "lineno": 8,
-                            "module": svc_mod,
-                        },
+                        4: {"filename": fixture.path, "lineno": 8, "module": svc_mod}
                     },
                     "request_schema": {
                         "filename": fixture.path,
@@ -174,11 +161,7 @@ class MetadataTests(testtools.TestCase):
                         "lineno": 7,
                         "module": svc_mod,
                     },
-                    "view": {
-                        "filename": fixture.path,
-                        "lineno": 12,
-                        "module": svc_mod,
-                    },
+                    "view": {"filename": fixture.path, "lineno": 12, "module": svc_mod},
                 }
             },
             locations,
@@ -220,9 +203,7 @@ class MetadataTests(testtools.TestCase):
                             "methods": ["GET"],
                             "url": "/",
                             "doc": "Documentation.",
-                            "changelog": {
-                                4: "changelog",
-                            },
+                            "changelog": {4: "changelog"},
                             "request_schema": {"type": "object"},
                             "response_schema": {"type": "object"},
                             "params_schema": {
@@ -241,17 +222,9 @@ class MetadataTests(testtools.TestCase):
         self.assertEqual(
             {
                 "root": {
-                    "api": {
-                        "filename": fixture.path,
-                        "lineno": 4,
-                        "module": svc_mod,
-                    },
+                    "api": {"filename": fixture.path, "lineno": 4, "module": svc_mod},
                     "changelog": {
-                        4: {
-                            "filename": fixture.path,
-                            "lineno": 5,
-                            "module": svc_mod,
-                        }
+                        4: {"filename": fixture.path, "lineno": 5, "module": svc_mod}
                     },
                     "request_schema": {
                         "filename": fixture.path,
@@ -268,11 +241,7 @@ class MetadataTests(testtools.TestCase):
                         "lineno": 10,
                         "module": svc_mod,
                     },
-                    "view": {
-                        "filename": fixture.path,
-                        "lineno": 12,
-                        "module": svc_mod,
-                    },
+                    "view": {"filename": fixture.path, "lineno": 12, "module": svc_mod},
                 }
             },
             locations,
@@ -290,10 +259,7 @@ class LoadMetadataTests(testtools.TestCase):
             "methods": ["GET"],
             "url": "/",
             "doc": "doc1",
-            "changelog": {
-                2: "change 2",
-                1: "change 1",
-            },
+            "changelog": {2: "change 2", 1: "change 1"},
             "request_schema": {"request_schema": 1},
             "response_schema": {"response_schema": 2},
             "introduced_at": 1,
@@ -311,21 +277,14 @@ class LoadMetadataTests(testtools.TestCase):
             json_dict = json.load(fd)
         self.assertEqual(
             json_dict["group"]["apis"]["api1"]["changelog"],
-            {
-                "1": "change 1",
-                "2": "change 2",
-            },
+            {"1": "change 1", "2": "change 2"},
         )
 
         with open(json_file.name) as fd:
             result = main.load_metadata(fd)
 
         self.assertEqual(
-            result["group"]["apis"]["api1"]["changelog"],
-            {
-                1: "change 1",
-                2: "change 2",
-            },
+            result["group"]["apis"]["api1"]["changelog"], {1: "change 1", 2: "change 2"}
         )
 
 
@@ -347,9 +306,7 @@ class RenderMarkdownTests(testtools.TestCase):
             "methods": ["GET"],
             "url": "/",
             "doc": "doc1",
-            "changelog": {
-                "1": "change",
-            },
+            "changelog": {"1": "change"},
             "request_schema": {"request_schema": 1},
             "response_schema": {"response_schema": 2},
             "introduced_at": 1,
@@ -361,9 +318,7 @@ class RenderMarkdownTests(testtools.TestCase):
             "methods": ["GET"],
             "url": "/",
             "doc": "doc2",
-            "changelog": {
-                "2": "2nd change",
-            },
+            "changelog": {"2": "2nd change"},
             "request_schema": {"request_schema": 1},
             "response_schema": {"response_schema": 2},
             "introduced_at": 1,
@@ -385,8 +340,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
             top_level_md = yaml.safe_load(output["metadata.yaml"])
             self.assertEqual(
-                {"site_title": "SERVICE Documentation: version 2"},
-                top_level_md,
+                {"site_title": "SERVICE Documentation: version 2"}, top_level_md
             )
 
             md = yaml.safe_load(output["en/metadata.yaml"])
@@ -395,7 +349,7 @@ class RenderMarkdownTests(testtools.TestCase):
                     "navigation": [
                         {"location": "index.md", "title": "Index"},
                         {"location": "group.md", "title": "Group"},
-                    ],
+                    ]
                 },
                 md,
             )
@@ -421,7 +375,7 @@ class RenderMarkdownTests(testtools.TestCase):
                     "navigation": [
                         {"location": "index.md", "title": "Index"},
                         {"location": "group.md", "title": "Group"},
-                    ],
+                    ]
                 },
                 md,
             )
@@ -445,7 +399,7 @@ class RenderMarkdownTests(testtools.TestCase):
                     "navigation": [
                         {"location": "index.md", "title": "Index"},
                         {"location": "group.md", "title": "Group"},
-                    ],
+                    ]
                 },
                 md,
             )
@@ -473,8 +427,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
             top_level_md = yaml.safe_load(output["metadata.yaml"])
             self.assertEqual(
-                {"site_title": "SERVICE Documentation: version 2"},
-                top_level_md,
+                {"site_title": "SERVICE Documentation: version 2"}, top_level_md
             )
 
             md = yaml.safe_load(output["en/metadata.yaml"])
@@ -484,7 +437,7 @@ class RenderMarkdownTests(testtools.TestCase):
                         {"location": "index.md", "title": "Index"},
                         {"location": "group.md", "title": "Group"},
                         {"location": "group2.md", "title": "Group2"},
-                    ],
+                    ]
                 },
                 md,
             )
@@ -507,8 +460,7 @@ class RenderMarkdownTests(testtools.TestCase):
 
             top_level_md = yaml.safe_load(output["metadata.yaml"])
             self.assertEqual(
-                {"site_title": "SERVICE Documentation: version 2"},
-                top_level_md,
+                {"site_title": "SERVICE Documentation: version 2"}, top_level_md
             )
 
             md = yaml.safe_load(output["en/metadata.yaml"])
@@ -517,7 +469,7 @@ class RenderMarkdownTests(testtools.TestCase):
                     "navigation": [
                         {"location": "index.md", "title": "Index"},
                         {"location": "group.md", "title": "Group"},
-                    ],
+                    ]
                 },
                 md,
             )
@@ -608,9 +560,7 @@ class LintTests(testtools.TestCase):
     def test_basic_api_changes(self):
         self.useFixture(CleanUpModuleImport("examples.api"))
 
-        args = main.parse_args(
-            ["lint", "examples/api.json", "examples.api"],
-        )
+        args = main.parse_args(["lint", "examples/api.json", "examples.api"])
 
         output = io.StringIO()
         result = main.lint_cmd(args, stream=output)
@@ -631,7 +581,7 @@ class LintTests(testtools.TestCase):
                 "--update",
                 "examples/oas_testcase_api.json",
                 "examples.oas_testcase",
-            ],
+            ]
         )
 
         output = io.StringIO()
@@ -659,14 +609,9 @@ class VersionTests(testtools.TestCase):
     def test_version(self):
         self.useFixture(CleanUpModuleImport("examples.api"))
 
-        args = main.parse_args(
-            ["api-version", "examples/api.json", "examples.api"],
-        )
+        args = main.parse_args(["api-version", "examples/api.json", "examples.api"])
 
         output = io.StringIO()
         result = main.version_cmd(args, stream=output)
         self.assertEqual(0, result)
-        self.assertEqual(
-            "examples/api.json: 2\nexamples.api: 5\n",
-            output.getvalue(),
-        )
+        self.assertEqual("examples/api.json: 2\nexamples.api: 5\n", output.getvalue())

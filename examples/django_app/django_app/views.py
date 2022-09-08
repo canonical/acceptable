@@ -9,38 +9,22 @@ service = AcceptableService("django_app")
 
 
 class TestForm(forms.Form):
-    foo = forms.EmailField(
-        required=True,
-        label=_("foo"),
-        help_text=_("foo help"),
-    )
+    foo = forms.EmailField(required=True, label=_("foo"), help_text=_("foo help"))
 
     bar = forms.ChoiceField(
         required=False,
         label=_("bar"),
         help_text=_("bar help"),
-        choices=[
-            ("A", "AAA"),
-            ("B", "BBB"),
-            ("C", "CCC"),
-        ],
+        choices=[("A", "AAA"), ("B", "BBB"), ("C", "CCC")],
     )
 
-    baz = forms.DecimalField(
-        required=False,
-        label=_("baz"),
-        help_text=_("baz help"),
-    )
+    baz = forms.DecimalField(required=False, label=_("baz"), help_text=_("baz help"))
 
     multi = forms.MultipleChoiceField(
         label=_("multi"),
         required=False,
         help_text=_("multi help"),
-        choices=[
-            ("A", "AAA"),
-            ("B", "BBB"),
-            ("C", "CCC"),
-        ],
+        choices=[("A", "AAA"), ("B", "BBB"), ("C", "CCC")],
     )
 
 

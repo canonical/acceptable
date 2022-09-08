@@ -12,11 +12,7 @@ logger = logging.getLogger("acceptable")
 _urlmap = None
 
 if django.VERSION >= (2, 0):
-    from django.urls import (
-        URLPattern,
-        URLResolver,
-        get_resolver,
-    )
+    from django.urls import URLPattern, URLResolver, get_resolver
 
     PATTERNS = (URLPattern,)
     RESOLVERS = (URLResolver,)
@@ -77,9 +73,7 @@ def urlmap(patterns):
 
 def get_field_schema(name, field):
     """Returns a JSON Schema representation of a form field."""
-    field_schema = {
-        "type": "string",
-    }
+    field_schema = {"type": "string"}
 
     if field.label:
         field_schema["title"] = str(field.label)  # force translation
@@ -111,9 +105,7 @@ def get_field_schema(name, field):
     if isinstance(field.widget, (widgets.Select, widgets.ChoiceWidget)):
         if field.widget.allow_multiple_selected:
             # promote to array of <type>, move details into the items field
-            field_schema["items"] = {
-                "type": field_schema["type"],
-            }
+            field_schema["items"] = {"type": field_schema["type"]}
             if "enum" in field_schema:
                 field_schema["items"]["enum"] = field_schema.pop("enum")
             field_schema["type"] = "array"
@@ -123,10 +115,7 @@ def get_field_schema(name, field):
 
 def get_form_schema(form):
     """Return a JSON Schema object for a Django Form."""
-    schema = {
-        "type": "object",
-        "properties": {},
-    }
+    schema = {"type": "object", "properties": {}}
 
     for name, field in form.base_fields.items():
         schema["properties"][name] = get_field_schema(name, field)

@@ -309,8 +309,7 @@ def render_service_double(service_name, schemas, regenerate_args):
 
         from acceptable._doubles import service_mock
         """.format(
-            progname=os.path.basename(sys.argv[0]),
-            regenerate_args=regenerate_args,
+            progname=os.path.basename(sys.argv[0]), regenerate_args=regenerate_args
         )
     )
 
