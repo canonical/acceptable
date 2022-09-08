@@ -82,13 +82,11 @@ Acceptable will generate a JSON schema representation of the form for documentat
 To generate API metadata, you should add 'acceptable' to INSTALLED_APPS. This
 will provide an 'acceptable' management command::
 
-
     ./manage.py acceptable metadata > api.json   # generate metadata
 
 And also::
 
     ./manage.py acceptable api-version api.json  # inspect the current version
-
 
 
 Documentation (beta)
@@ -108,6 +106,7 @@ This markdown is designed to rendered to html by
 `documentation-builder <https://docs.ubuntu.com/documentation-builder/en/>`::
 
     documentation-builder --base-directory docs
+
 
 Includable Makefile
 -------------------
@@ -150,3 +149,13 @@ Development
 -----------
 
 ``make test`` and ``make tox`` should run without errors.
+
+To run a single test module invoke::
+
+    python setup.py test --test-suite acceptable.tests.test_module
+
+or::
+
+    tox -epy38 -- --test-suite acceptable.tests.test_module
+
+...the latter runs "test_module" against Python 3.8 only.
