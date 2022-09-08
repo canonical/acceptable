@@ -577,20 +577,6 @@ EXPECTED_LINT_OUTPUT = [
      ' Documentation: API foo at response_schema.foo_result.introduced_at'),
 ]
 
-EXPECTED_OPENAPI_RESULT = """components_schemas: {}
-info:
-  contact:
-    email: ''
-    name: ''
-  description: ''
-  tags: []
-  title: OpenApiSample
-  version: 5
-openapi: 3.1.0
-paths: {}
-servers: {}
-"""
-
 
 class LintTests(testtools.TestCase):
 
@@ -628,10 +614,12 @@ class LintTests(testtools.TestCase):
         self.assertEqual([], output.getvalue().splitlines())
 
         # And the OpenAPI file contains the expected value
-        with open("examples/oas_testcase_openapi.yaml", "r") as f:
-            result = f.readlines()
+        with open("examples/oas_testcase_openapi.yaml", "r") as _result:
+            result = _result.readlines()
 
-        expected = EXPECTED_OPENAPI_RESULT.splitlines(keepends=True)
+        with open("examples/oas_expected.yaml", "r") as _expected:
+            expected = _expected.readlines()
+
         self.assertListEqual(expected, result)
 
         # And we implicitly assume the files have not changed
