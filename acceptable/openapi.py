@@ -13,20 +13,11 @@ def _to_dict(source: Any):
     if hasattr(source, "_to_dict"):
         return source._to_dict()  # noqa
     elif type(source) == dict:
-        source_dict = {}
-        for key, value in source.items():
-            source_dict[key] = _to_dict(value)
-        return source_dict
+        return {key: _to_dict(value) for key, value in source.items()}
     elif type(source) == list:
-        source_list = []
-        for item in source:
-            source_list.append(_to_dict(item))
-        return source_list
+        return [_to_dict(value) for value in source]
     elif hasattr(source, "__dict__"):
-        source_dict = {}
-        for key, value in source.__dict__.items():
-            source_dict[key] = _to_dict(value)
-        return source_dict
+        return {key: _to_dict(value) for key, value in source.__dict__.items()}
     else:
         return source
 
