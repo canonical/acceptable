@@ -589,24 +589,16 @@ class RenderMarkdownTests(testtools.TestCase):
 
 
 EXPECTED_LINT_OUTPUT = [
+    ("examples/api.py", 7, " Error: API foo at request_schema.required"),
+    ("examples/api.py", 7, " Warning: API foo at request_schema.foo.description"),
     (
         "examples/api.py",
-        7,
-        " Error: API foo at request_schema.required",
-    ),
-    (
-        "examples/api.py",
-        7,
-        " Warning: API foo at request_schema.foo.description",
-    ),
-    (
-        "examples/api.py",
-        29,
+        25,
         " Warning: API foo at response_schema.foo_result.description",
     ),
     (
         "examples/api.py",
-        29,
+        25,
         " Documentation: API foo at response_schema.foo_result.introduced_at",
     ),
 ]
