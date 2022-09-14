@@ -597,7 +597,7 @@ class LintTests(testtools.TestCase):
         with open("examples/oas_testcase_openapi.yaml", "r") as _result:
             result = _result.readlines()
 
-        with open("examples/oas_expected.yaml", "r") as _expected:
+        with open("examples/oas_testcase_expected.yaml", "r") as _expected:
             expected = _expected.readlines()
 
         self.assertListEqual(expected, result)
