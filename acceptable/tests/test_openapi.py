@@ -7,20 +7,6 @@ import testtools
 from acceptable import openapi
 from acceptable._service import APIMetadata
 
-EXPECTED_EMPTY_METADATA = """components_schemas: {}
-info:
-  contact:
-    email: ''
-    name: ''
-  description: ''
-  tags: []
-  title: ''
-  version: ''
-openapi: 3.1.0
-paths: {}
-servers: {}
-"""
-
 
 @dataclass
 class SampleWithImplicitDunderDict(object):
@@ -69,6 +55,7 @@ class ToDictTests(testtools.TestCase):
 class OpenApiTests(testtools.TestCase):
     def test_dump_of_empty_metadata(self):
         metadata = APIMetadata()
-        result = openapi.dump(metadata).splitlines(keepends=False)
-        expected = EXPECTED_EMPTY_METADATA.splitlines(keepends=False)
+        result = openapi.dump(metadata).splitlines(keepends=True)
+        with open("examples/oas_empty_expected.yaml", "r") as _expected:
+            expected = _expected.readlines()
         self.assertListEqual(expected, result)
