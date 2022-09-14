@@ -3,7 +3,7 @@ Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 """
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any
 
 import yaml
 
@@ -23,11 +23,8 @@ def _to_dict(source: Any):
         return source
 
 
-def tidy_string(untidy: Union[None, str]):
-    if untidy is None:
-        return None
-
-    tidy = untidy.replace("\n", " ")
+def tidy_string(untidy: str):
+    tidy = str(untidy).replace("\n", " ")
     while "  " in tidy:
         tidy = tidy.replace("  ", " ")
     return tidy.strip()
