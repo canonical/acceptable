@@ -146,7 +146,7 @@ def dump(metadata: APIMetadata, stream=None):
         or "None."
     )
     oas.info.description = oas.info.title
-    oas.info.version = "2.0." + str(metadata.current_version)
+    oas.info.version = "0.0." + str(metadata.current_version)
     tags = set()
 
     for _, service_group in metadata.services.items():

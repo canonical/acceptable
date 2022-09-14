@@ -1,6 +1,17 @@
+Version Next
+
+ * Codebase is blackened
+ * `lint --create` will also generate a valid but incomplete `openapi.yaml`:
+
+   * includes all paths and methods
+   * operations include operationId, description and summary (if found)
+   * group names are included as tags
+   * dummy values for requestBody, responses and schemas
+   * version is given as 0.0.V where V is the version number
+
 Version 0.33
 
-  * Drop support for python < 3.8, so only Ubuntu 20.04 LTS and 22.04 LTS.
+ * Drop support for Python < 3.8, so only Ubuntu 20.04 LTS and 22.04 LTS.
 
 Version 0.27
 
