@@ -5,7 +5,16 @@ from dataclasses import dataclass
 import testtools
 
 from acceptable import openapi
-from acceptable._service import APIMetadata, AcceptableAPI, AcceptableService
+from acceptable._service import (
+    APIMetadata,
+    AcceptableAPI,
+    AcceptableService,
+    clear_metadata,
+)
+
+
+def tearDownModule():
+    clear_metadata()
 
 
 @dataclass
