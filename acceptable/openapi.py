@@ -113,7 +113,7 @@ def _to_dict(source: Any):
         return source
 
 
-def tidy_string(untidy: str):
+def tidy_string(untidy: Any):
     tidy = str(untidy).replace("\n", " ")
     while "  " in tidy:
         tidy = tidy.replace("  ", " ")
