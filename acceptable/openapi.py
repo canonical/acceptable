@@ -10,35 +10,6 @@ import yaml
 from acceptable._service import APIMetadata, AcceptableAPI
 
 
-def _to_dict(source: Any):
-    if hasattr(source, "_to_dict"):
-        return source._to_dict()  # noqa
-    elif type(source) == dict:
-        return {key: _to_dict(value) for key, value in source.items()}
-    elif type(source) == list:
-        return [_to_dict(value) for value in source]
-    elif hasattr(source, "__dict__"):
-        return {key: _to_dict(value) for key, value in source.__dict__.items()}
-    else:
-        return source
-
-
-def tidy_string(untidy: str):
-    tidy = str(untidy).replace("\n", " ")
-    while "  " in tidy:
-        tidy = tidy.replace("  ", " ")
-    return tidy.strip()
-
-
-def convert_endpoint_to_operation(endpoint: AcceptableAPI):
-    return OasOperation(
-        tags=[endpoint.service.group] if endpoint.service.group else ["none"],
-        summary=endpoint.title,
-        description=tidy_string(endpoint.docs),
-        operation_id=endpoint.name,
-    )
-
-
 @dataclass
 class OasOperation:
     tags: list
@@ -127,6 +98,35 @@ class OasRoot31:
                 }
             },
         }
+
+
+def _to_dict(source: Any):
+    if hasattr(source, "_to_dict"):
+        return source._to_dict()  # noqa
+    elif type(source) == dict:
+        return {key: _to_dict(value) for key, value in source.items()}
+    elif type(source) == list:
+        return [_to_dict(value) for value in source]
+    elif hasattr(source, "__dict__"):
+        return {key: _to_dict(value) for key, value in source.__dict__.items()}
+    else:
+        return source
+
+
+def tidy_string(untidy: str):
+    tidy = str(untidy).replace("\n", " ")
+    while "  " in tidy:
+        tidy = tidy.replace("  ", " ")
+    return tidy.strip()
+
+
+def convert_endpoint_to_operation(endpoint: AcceptableAPI):
+    return OasOperation(
+        tags=[endpoint.service.group] if endpoint.service.group else ["none"],
+        summary=endpoint.title,
+        description=tidy_string(endpoint.docs),
+        operation_id=endpoint.name,
+    )
 
 
 def dump(metadata: APIMetadata, stream=None):
