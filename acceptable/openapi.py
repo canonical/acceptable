@@ -30,17 +30,6 @@ def tidy_string(untidy: str):
     return tidy.strip()
 
 
-def get_head_of_single_item_list(item_list, item_name):
-    count = len(item_list)
-    if count == 1:
-        return item_list[0]
-    else:
-        logging.warning(
-            f"Encountered {item_name} list with {count} items. Treating as empty."
-        )
-        return None
-
-
 def convert_endpoint_to_operation(endpoint: AcceptableAPI):
     return OasOperation(
         tags=[endpoint.service.group] if endpoint.service.group else ["none"],
@@ -84,7 +73,8 @@ class OasOperation:
             },
         }
 
-        if self.summary is None or self.summary == "":
+        # drop empty summary
+        if not self.summary:
             result.pop("summary")
 
         return result
@@ -141,19 +131,26 @@ class OasRoot31:
 
 def dump(metadata: APIMetadata, stream=None):
     oas = OasRoot31()
-    oas.info.title = (
-        get_head_of_single_item_list(list(metadata.services.keys()), "service")
-        or "None."
-    )
-    oas.info.description = oas.info.title
+
+    try:
+        [_title] = list(metadata.services.keys())
+    except (TypeError, ValueError):
+        _title = "None"
+        logging.warning(
+            "Could not extract service title from metadata. Expected exactly one valid title."
+        )
+    finally:
+        oas.info.title = _title
+        oas.info.description = _title
+
     oas.info.version = "0.0." + str(metadata.current_version)
     tags = set()
 
-    for _, service_group in metadata.services.items():
-        for _, api_group in service_group.items():
-            for _, endpoint in api_group.items():
-                method = get_head_of_single_item_list(endpoint.methods, "method")
-                if method is not None:
+    for service_group in metadata.services.values():
+        for api_group in service_group.values():
+            for endpoint in api_group.values():
+                try:
+                    [method] = endpoint.methods
                     method = str.lower(method)
                     url = endpoint.url  # TODO: tidy and extract parameters
                     operation = convert_endpoint_to_operation(endpoint)
@@ -161,6 +158,11 @@ def dump(metadata: APIMetadata, stream=None):
                     path = OasPath()
                     path.operation[method] = operation
                     oas.paths[url] = path
+                except (TypeError, ValueError):
+                    logging.warning(
+                        f"Skipping {service_group}, {api_group}, {endpoint} because method is invalid."
+                        f" Expected exactly one method."
+                    )
 
     for tag in tags:
         oas.tags.append({"name": tag})

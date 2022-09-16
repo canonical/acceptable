@@ -75,6 +75,10 @@ class TidyStringTests(testtools.TestCase):
         assert "simple" == openapi.tidy_string("simple")
 
     @staticmethod
+    def test_collapse_newline():
+        assert "hello world" == openapi.tidy_string("hello\nworld")
+
+    @staticmethod
     def test_collapse_two_spaces():
         assert "hello world" == openapi.tidy_string("hello  world")
 
@@ -86,19 +90,9 @@ class TidyStringTests(testtools.TestCase):
     def test_strip_trailing_spaces():
         assert "hello world" == openapi.tidy_string(" hello world ")
 
-
-class GetHeadTests(testtools.TestCase):
-    def test_empty(self):
-        self.assertIsNone(openapi.get_head_of_single_item_list([], "item"))
-
     @staticmethod
-    def test_single_item_list():
-        assert "HEAD" == openapi.get_head_of_single_item_list(["HEAD"], "item")
-
-    def test_multiple_item_list_returns_none(self):
-        self.assertIsNone(
-            openapi.get_head_of_single_item_list(["HEAD", "TAIL"], "item")
-        )
+    def test_collapse_edge_case():
+        assert "hello world" == openapi.tidy_string("hello\n world ")
 
 
 class EndpointToOperationTests(testtools.TestCase):
