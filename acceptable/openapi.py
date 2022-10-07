@@ -2,8 +2,9 @@
 Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 """
 import logging
+import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Tuple
 
 import yaml
 
@@ -122,6 +123,42 @@ def convert_endpoint_to_operation(endpoint: AcceptableAPI):
     )
 
 
+def extract_parameters(url: str) -> Tuple[str, dict]:
+
+    # convert URL from metadata-style to openapi-style
+    url = url.replace("<", "{").replace(">", "}")
+
+    # get individual instances of `{...}`
+    raw_parameters = set(re.findall(r"\{.*?}", url))
+
+    # extract types from parameters, then
+    # re-insert parameters into openapi-style url
+    parameters = {}
+    for raw in raw_parameters:
+        p = raw[1:-1]
+        c = p.count(":")
+
+        # skip duplicate parameter names
+        if p in parameters.keys():
+            continue
+
+        # if no type is defined, use str
+        if c == 0:
+            parameters[p] = "str"
+
+        # if type is defined, use that
+        elif c == 1:
+            [_param, _type] = p.split(":")
+            parameters[_param] = _type
+            url = url.replace(raw, "{" + _param + "}")
+
+        # otherwise, skip badly formed parameters
+        else:
+            continue
+
+    return url, parameters
+
+
 def dump(metadata: APIMetadata, stream=None):
     oas = OasRoot31()
 
@@ -145,7 +182,7 @@ def dump(metadata: APIMetadata, stream=None):
                 try:
                     [method] = endpoint.methods
                     method = str.lower(method)
-                    url = endpoint.url  # TODO: tidy and extract parameters
+                    url, _ = extract_parameters(endpoint.url)
                     operation = convert_endpoint_to_operation(endpoint)
                     tags.update(set(operation.tags))
                     path = OasPath()
