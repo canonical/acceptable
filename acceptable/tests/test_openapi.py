@@ -117,8 +117,7 @@ class EndpointToOperationTests(testtools.TestCase):
             introduced_at=1,
             name="test name",  # maps to operation.operation_id
             service=AcceptableService(
-                name="test service",
-                group="test group",  # maps to operation.tags
+                name="test service", group="test group"  # maps to operation.tags
             ),
             title="test title",  # maps to operation.summary
             url="https://test.example",

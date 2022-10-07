@@ -8,9 +8,7 @@ foo_api.request_schema = {
     "type": "object",
     "required": ["foo", "baz"],
     "properties": {
-        "foo": {
-            "type": "string",
-        },
+        "foo": {"type": "string"},
         "baz": {
             "type": "object",
             "description": "Bar the door.",
@@ -26,11 +24,7 @@ foo_api.response_schema = {
     "type": "object",
     "properties": {
         "foo_result": {"type": "string"},
-        "bar": {
-            "type": "string",
-            "description": "bar bar",
-            "introduced_at": 5,
-        },
+        "bar": {"type": "string", "description": "bar bar", "introduced_at": 5},
     },
 }
 

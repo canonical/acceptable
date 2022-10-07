@@ -35,12 +35,10 @@ class OasOperation:
                     "description": "OK",
                     "content": {
                         "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/Default",
-                            }
+                            "schema": {"$ref": "#/components/schemas/Default"}
                         }
                     },
-                },
+                }
             },
         }
 
@@ -88,12 +86,7 @@ class OasRoot31:
                 "schemas": {
                     "Default": {
                         "type": "object",
-                        "properties": {
-                            "code": {
-                                "type": "integer",
-                                "format": "int32",
-                            }
-                        },
+                        "properties": {"code": {"type": "integer", "format": "int32"}},
                     }
                 }
             },
