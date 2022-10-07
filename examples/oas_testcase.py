@@ -10,10 +10,7 @@ foo_api.request_schema = {
     "type": "object",
     "required": ["foo", "baz"],
     "properties": {
-        "foo": {
-            "description": "This is a foo.",
-            "type": "string",
-        },
+        "foo": {"description": "This is a foo.", "type": "string"},
         "baz": {
             "type": "object",
             "description": "Bar the door.",
@@ -29,11 +26,7 @@ foo_api.response_schema = {
     "type": "object",
     "properties": {
         "foo_result": {"description": "Result of a foo.", "type": "string"},
-        "bar": {
-            "type": "string",
-            "description": "bar bar",
-            "introduced_at": 5,
-        },
+        "bar": {"type": "string", "description": "bar bar", "introduced_at": 5},
     },
 }
 
