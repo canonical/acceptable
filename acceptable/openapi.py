@@ -19,8 +19,10 @@ class OasOperation:
     operation_id: str
     path_parameters: dict
 
-    def _parameters_to_dict(self):
-        for key, value in self.path_parameters.items():
+    def _parameters_to_openapi(self):
+        # To ensure a stable output we sort the parameter dictionary.
+
+        for key, value in sorted(self.path_parameters.items()):
             yield {
                 "name": key,
                 "in": "path",
@@ -34,7 +36,7 @@ class OasOperation:
             "summary": self.summary,
             "description": tidy_string(self.description) or "None.",
             "operationId": self.operation_id,
-            "parameters": list(self._parameters_to_dict()),
+            "parameters": list(self._parameters_to_openapi()),
             "requestBody": {
                 "content": {
                     "application/json": {

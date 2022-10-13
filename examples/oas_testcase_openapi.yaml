@@ -21,15 +21,15 @@ paths:
       operationId: foo
       parameters:
       - in: path
-        name: q
-        required: true
-        schema:
-          type: str
-      - in: path
         name: p
         required: true
         schema:
           type: int
+      - in: path
+        name: q
+        required: true
+        schema:
+          type: str
       requestBody:
         content:
           application/json:
