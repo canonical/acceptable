@@ -23,13 +23,39 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Default'
+              $ref:
+                properties:
+                  baz:
+                    description: Bar the door.
+                    introduced_at: 4
+                    properties:
+                      bar:
+                        description: asdf
+                        introduced_at: 5
+                        type: string
+                    type: object
+                  foo:
+                    description: This is a foo.
+                    type: string
+                required:
+                - foo
+                - baz
+                type: object
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Default'
+                $ref:
+                  properties:
+                    bar:
+                      description: bar bar
+                      introduced_at: 5
+                      type: string
+                    foo_result:
+                      description: Result of a foo.
+                      type: string
+                  type: object
           description: OK
       tags:
       - none

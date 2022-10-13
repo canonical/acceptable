@@ -1,6 +1,7 @@
 """
 Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 """
+import json
 import logging
 from dataclasses import dataclass, field
 from typing import Any
@@ -16,6 +17,8 @@ class OasOperation:
     summary: str
     description: str
     operation_id: str
+    request_schema: Any
+    response_schema: Any
 
     def _to_dict(self):
         result = {
@@ -25,18 +28,14 @@ class OasOperation:
             "operationId": self.operation_id,
             "requestBody": {
                 "content": {
-                    "application/json": {
-                        "schema": {"$ref": "#/components/schemas/Default"}
-                    }
+                    "application/json": {"schema": {"$ref": self.request_schema}}
                 }
             },
             "responses": {
                 "200": {
-                    "description": "OK",
+                    "description": self.summary or "OK",
                     "content": {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/Default"}
-                        }
+                        "application/json": {"schema": {"$ref": self.response_schema}}
                     },
                 }
             },
@@ -114,11 +113,24 @@ def tidy_string(untidy: Any):
 
 
 def convert_endpoint_to_operation(endpoint: AcceptableAPI):
+
+    if endpoint.request_schema is None:
+        _request_schema = "#/components/schemas/Default"
+    else:
+        _request_schema = json.loads(json.dumps(endpoint.request_schema))
+
+    if endpoint.response_schema is None:
+        _response_schema = "#/components/schemas/Default"
+    else:
+        _response_schema = json.loads(json.dumps(endpoint.response_schema))
+
     return OasOperation(
         tags=[endpoint.service.group] if endpoint.service.group else ["none"],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=endpoint.name,
+        request_schema=_request_schema,
+        response_schema=_response_schema,
     )
 
 
