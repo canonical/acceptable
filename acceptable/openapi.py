@@ -129,7 +129,10 @@ def extract_parameters(url: str) -> Tuple[str, dict]:
     url = url.replace("<", "{").replace(">", "}")
 
     # get individual instances of `{...}`
-    raw_parameters = set(re.findall(r"\{.*?}", url))
+    raw_parameters = set(re.findall(r"\{[^}]*}", url))
+    # originally the simpler r"\{.*?}" but SonarLint tells me this approach is safer
+    # it translates as open-curly, zero-or-more-not-close-curly, close-curly
+    # https://rules.sonarsource.com/python/type/Code%20Smell/RSPEC-5857
 
     # extract types from parameters, then
     # re-insert parameters into openapi-style url
