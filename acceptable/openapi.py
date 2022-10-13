@@ -17,6 +17,18 @@ class OasOperation:
     summary: str
     description: str
     operation_id: str
+    parameters: dict
+
+    def _parameters_to_dict(self):
+        for key, value in self.parameters:
+            yield {
+                "name": key,
+                "schema": {
+                    "type": {
+                        value
+                    }
+                }
+            }
 
     def _to_dict(self):
         result = {
@@ -24,6 +36,7 @@ class OasOperation:
             "summary": self.summary,
             "description": tidy_string(self.description) or "None.",
             "operationId": self.operation_id,
+            "parameters": list(self._parameters_to_dict()),
             "requestBody": {
                 "content": {
                     "application/json": {
@@ -114,12 +127,13 @@ def tidy_string(untidy: Any):
     return tidy.strip()
 
 
-def convert_endpoint_to_operation(endpoint: AcceptableAPI):
+def convert_endpoint_to_operation(endpoint: AcceptableAPI, parameters: dict):
     return OasOperation(
         tags=[endpoint.service.group] if endpoint.service.group else ["none"],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=endpoint.name,
+        parameters=parameters,
     )
 
 
@@ -185,8 +199,8 @@ def dump(metadata: APIMetadata, stream=None):
                 try:
                     [method] = endpoint.methods
                     method = str.lower(method)
-                    url, _ = extract_parameters(endpoint.url)
-                    operation = convert_endpoint_to_operation(endpoint)
+                    url, parameters = extract_parameters(endpoint.url)
+                    operation = convert_endpoint_to_operation(endpoint, parameters)
                     tags.update(set(operation.tags))
                     path = OasPath()
                     path.operation[method] = operation

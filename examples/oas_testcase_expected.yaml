@@ -19,6 +19,7 @@ paths:
     get:
       description: Documentation goes here.
       operationId: foo
+      parameters: []
       requestBody:
         content:
           application/json:
