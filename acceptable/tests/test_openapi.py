@@ -142,7 +142,7 @@ class EndpointToOperationTests(testtools.TestCase):
             service=AcceptableService(name="test service"),
             url="https://test.example",
         )
-        operation = openapi.convert_endpoint_to_operation(endpoint)
+        operation = openapi.convert_endpoint_to_operation(endpoint, {})
         assert "None" == operation.description
         assert "test name" == operation.operation_id
         assert operation.summary is None
@@ -161,7 +161,7 @@ class EndpointToOperationTests(testtools.TestCase):
             url="https://test.example",
         )
         endpoint.docs = "test docs"  # maps to operation.description
-        operation = openapi.convert_endpoint_to_operation(endpoint)
+        operation = openapi.convert_endpoint_to_operation(endpoint, {})
         assert "test docs" == operation.description
         assert "test name" == operation.operation_id
         assert "test title" == operation.summary
