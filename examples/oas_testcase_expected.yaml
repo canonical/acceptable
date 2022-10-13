@@ -15,11 +15,21 @@ info:
   version: 0.0.5
 openapi: 3.1.0
 paths:
-  /foo:
+  /foo/{p}/{q}:
     get:
       description: Documentation goes here.
       operationId: foo
-      parameters: []
+      parameters:
+      - in: path
+        name: q
+        required: true
+        schema:
+          type: str
+      - in: path
+        name: p
+        required: true
+        schema:
+          type: int
       requestBody:
         content:
           application/json:

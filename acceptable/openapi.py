@@ -17,16 +17,16 @@ class OasOperation:
     summary: str
     description: str
     operation_id: str
-    parameters: dict
+    path_parameters: dict
 
     def _parameters_to_dict(self):
-        for key, value in self.parameters:
+        for key, value in self.path_parameters.items():
             yield {
                 "name": key,
+                "in": "path",
+                "required": True,
                 "schema": {
-                    "type": {
-                        value
-                    }
+                    "type": value
                 }
             }
 
@@ -127,17 +127,17 @@ def tidy_string(untidy: Any):
     return tidy.strip()
 
 
-def convert_endpoint_to_operation(endpoint: AcceptableAPI, parameters: dict):
+def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict):
     return OasOperation(
         tags=[endpoint.service.group] if endpoint.service.group else ["none"],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=endpoint.name,
-        parameters=parameters,
+        path_parameters=path_parameters,
     )
 
 
-def extract_parameters(url: str) -> Tuple[str, dict]:
+def extract_path_parameters(url: str) -> Tuple[str, dict]:
 
     # convert URL from metadata-style to openapi-style
     url = url.replace("<", "{").replace(">", "}")
@@ -199,12 +199,12 @@ def dump(metadata: APIMetadata, stream=None):
                 try:
                     [method] = endpoint.methods
                     method = str.lower(method)
-                    url, parameters = extract_parameters(endpoint.url)
-                    operation = convert_endpoint_to_operation(endpoint, parameters)
+                    tidy_url, path_parameters = extract_path_parameters(endpoint.url)
+                    operation = convert_endpoint_to_operation(endpoint, path_parameters)
                     tags.update(set(operation.tags))
                     path = OasPath()
                     path.operation[method] = operation
-                    oas.paths[url] = path
+                    oas.paths[tidy_url] = path
                 except (TypeError, ValueError):
                     logging.warning(
                         f"Skipping {service_group}, {api_group}, {endpoint} because method is invalid."

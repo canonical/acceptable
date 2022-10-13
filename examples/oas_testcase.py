@@ -4,7 +4,7 @@ from acceptable import AcceptableService
 
 service = AcceptableService("OpenApiSample")
 
-foo_api = service.api("/foo", "foo", introduced_at=2)
+foo_api = service.api("/foo/<p:int>/<q>", "foo", introduced_at=2)
 
 foo_api.request_schema = {
     "type": "object",

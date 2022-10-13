@@ -56,7 +56,7 @@
           "4": "Added bar field"
         },
         "title": "Foo",
-        "url": "/foo"
+        "url": "/foo/<p:int>/<q>"
       }
     },
     "title": "Default",
