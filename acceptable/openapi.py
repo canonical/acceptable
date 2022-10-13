@@ -165,10 +165,10 @@ def extract_parameters(url: str) -> Tuple[str, dict]:
 def dump(metadata: APIMetadata, stream=None):
     oas = OasRoot31()
 
+    _title = "None"
     try:
         [_title] = list(metadata.services.keys())
     except (TypeError, ValueError):
-        _title = "None"
         logging.warning(
             "Could not extract service title from metadata. Expected exactly one valid title."
         )
