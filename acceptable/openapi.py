@@ -25,9 +25,7 @@ class OasOperation:
                 "name": key,
                 "in": "path",
                 "required": True,
-                "schema": {
-                    "type": value
-                }
+                "schema": {"type": value},
             }
 
     def _to_dict(self):
