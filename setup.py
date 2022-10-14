@@ -15,7 +15,7 @@ setup(
     description="API version negotiation for flask-based web services.",
     author="Canonical Online Services",
     author_email="online-services@lists.canonical.com",
-    url="https://github.com/canonical-ols/acceptable",
+    url="https://github.com/canonical/acceptable",
     license="LGPLv3",
     packages=find_packages(exclude=["examples", "*tests"]),
     long_description="".join(open("README.rst").readlines()[2:]),
