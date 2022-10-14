@@ -95,6 +95,46 @@ class TidyStringTests(testtools.TestCase):
         assert "hello world" == openapi.tidy_string("hello\n world ")
 
 
+class ParameterExtractionTests(testtools.TestCase):
+    def test_blank(self):
+        url, parameters = openapi.extract_path_parameters("")
+        assert url == ""
+        assert parameters == {}
+
+    def test_no_parameters(self):
+        url, parameters = openapi.extract_path_parameters("https://www.example.com")
+        assert url == "https://www.example.com"
+        assert parameters == {}
+
+    def test_simple_parameter(self):
+        url, parameters = openapi.extract_path_parameters(
+            "https://www.example.com/<test>"
+        )
+        assert url == "https://www.example.com/{test}"
+        assert parameters == {"test": "str"}
+
+    def test_typed_parameter(self):
+        url, parameters = openapi.extract_path_parameters(
+            "https://www.example.com/<test:int>"
+        )
+        assert url == "https://www.example.com/{test}"
+        assert parameters == {"test": "int"}
+
+    def test_multiple_typed_parameters(self):
+        url, parameters = openapi.extract_path_parameters(
+            "https://www.example.com/<test:int>...<test2:float>"
+        )
+        assert url == "https://www.example.com/{test}...{test2}"
+        assert parameters == {"test": "int", "test2": "float"}
+
+    def test_ignore_bad_parameter(self):
+        url, parameters = openapi.extract_path_parameters(
+            "https://www.example.com/<test:int:float>"
+        )
+        assert url == "https://www.example.com/{test:int:float}"
+        assert parameters == {}
+
+
 class EndpointToOperationTests(testtools.TestCase):
     @staticmethod
     def test_blank():
@@ -104,7 +144,7 @@ class EndpointToOperationTests(testtools.TestCase):
             service=AcceptableService(name="test service"),
             url="https://test.example",
         )
-        operation = openapi.convert_endpoint_to_operation(endpoint)
+        operation = openapi.convert_endpoint_to_operation(endpoint, {})
         assert "None" == operation.description
         assert "test name" == operation.operation_id
         assert operation.summary is None
@@ -123,7 +163,7 @@ class EndpointToOperationTests(testtools.TestCase):
             url="https://test.example",
         )
         endpoint.docs = "test docs"  # maps to operation.description
-        operation = openapi.convert_endpoint_to_operation(endpoint)
+        operation = openapi.convert_endpoint_to_operation(endpoint, {})
         assert "test docs" == operation.description
         assert "test name" == operation.operation_id
         assert "test title" == operation.summary

@@ -3,8 +3,9 @@ Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 """
 import json
 import logging
+import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Tuple
 
 import yaml
 
@@ -19,6 +20,18 @@ class OasOperation:
     operation_id: str
     request_schema: Any
     response_schema: Any
+    path_parameters: dict
+
+    def _parameters_to_openapi(self):
+        # To ensure a stable output we sort the parameter dictionary.
+
+        for key, value in sorted(self.path_parameters.items()):
+            yield {
+                "name": key,
+                "in": "path",
+                "required": True,
+                "schema": {"type": value},
+            }
 
     def _to_dict(self):
         result = {
@@ -26,6 +39,7 @@ class OasOperation:
             "summary": self.summary,
             "description": tidy_string(self.description) or "None.",
             "operationId": self.operation_id,
+            "parameters": list(self._parameters_to_openapi()),
             "requestBody": {
                 "content": {
                     "application/json": {"schema": {"$ref": self.request_schema}}
@@ -112,7 +126,7 @@ def tidy_string(untidy: Any):
     return tidy.strip()
 
 
-def convert_endpoint_to_operation(endpoint: AcceptableAPI):
+def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict):
 
     if endpoint.request_schema is None:
         _request_schema = "#/components/schemas/Default"
@@ -129,18 +143,58 @@ def convert_endpoint_to_operation(endpoint: AcceptableAPI):
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=endpoint.name,
+        path_parameters=path_parameters,
         request_schema=_request_schema,
         response_schema=_response_schema,
     )
 
 
+def extract_path_parameters(url: str) -> Tuple[str, dict]:
+
+    # convert URL from metadata-style to openapi-style
+    url = url.replace("<", "{").replace(">", "}")
+
+    # get individual instances of `{...}`
+    raw_parameters = set(re.findall(r"\{[^}]*}", url))
+    # originally the simpler r"\{.*?}" but SonarLint tells me this approach is safer
+    # it translates as open-curly, zero-or-more-not-close-curly, close-curly
+    # https://rules.sonarsource.com/python/type/Code%20Smell/RSPEC-5857
+
+    # extract types from parameters, then
+    # re-insert parameters into openapi-style url
+    parameters = {}
+    for raw in raw_parameters:
+        p = raw[1:-1]
+        c = p.count(":")
+
+        # skip duplicate parameter names
+        if p in parameters.keys():
+            continue
+
+        # if no type is defined, use str
+        if c == 0:
+            parameters[p] = "str"
+
+        # if type is defined, use that
+        elif c == 1:
+            [_param, _type] = p.split(":")
+            parameters[_param] = _type
+            url = url.replace(raw, "{" + _param + "}")
+
+        # otherwise, skip badly formed parameters
+        else:
+            continue
+
+    return url, parameters
+
+
 def dump(metadata: APIMetadata, stream=None):
     oas = OasRoot31()
 
+    _title = "None"
     try:
         [_title] = list(metadata.services.keys())
     except (TypeError, ValueError):
-        _title = "None"
         logging.warning(
             "Could not extract service title from metadata. Expected exactly one valid title."
         )
@@ -157,12 +211,12 @@ def dump(metadata: APIMetadata, stream=None):
                 try:
                     [method] = endpoint.methods
                     method = str.lower(method)
-                    url = endpoint.url  # TODO: tidy and extract parameters
-                    operation = convert_endpoint_to_operation(endpoint)
+                    tidy_url, path_parameters = extract_path_parameters(endpoint.url)
+                    operation = convert_endpoint_to_operation(endpoint, path_parameters)
                     tags.update(set(operation.tags))
                     path = OasPath()
                     path.operation[method] = operation
-                    oas.paths[url] = path
+                    oas.paths[tidy_url] = path
                 except (TypeError, ValueError):
                     logging.warning(
                         f"Skipping {service_group}, {api_group}, {endpoint} because method is invalid."
