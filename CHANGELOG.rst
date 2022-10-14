@@ -1,12 +1,15 @@
 Version Next
 
+ * ...
+
+Version 0.36
+
  * Codebase is blackened
  * `lint --create` will also generate a valid but incomplete `openapi.yaml`:
 
-   * includes all paths and methods
+   * includes paths, methods, path parameters, request schema, response schema
    * operations include operationId, description and summary (if found)
    * group names are included as tags
-   * dummy values for requestBody, responses and schemas
    * version is given as 0.0.V where V is the version number
 
 Version 0.33
