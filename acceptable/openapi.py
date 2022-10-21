@@ -223,7 +223,7 @@ def dump(metadata: APIMetadata, stream=None):
                         f" Expected exactly one method."
                     )
 
-    for tag in tags:
+    for tag in sorted(tags):
         oas.tags.append({"name": tag})
 
     return yaml.safe_dump(
