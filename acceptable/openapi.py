@@ -4,6 +4,7 @@ Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 import json
 import logging
 import re
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Tuple
 
@@ -63,14 +64,6 @@ class OasOperation:
 
 
 @dataclass
-class OasPath:
-    operation: dict = field(default_factory=lambda: {})
-
-    def _to_dict(self):
-        return _to_dict(self.operation)
-
-
-@dataclass
 class OasInfo:
     description: str = ""
     version: str = ""
@@ -86,7 +79,7 @@ class OasRoot31:
     info: OasInfo = OasInfo()
     tags: list = field(default_factory=lambda: [])
     servers: list = field(default_factory=lambda: [{"url": "http://localhost"}])
-    paths: dict = field(default_factory=lambda: {})
+    paths: dict = field(default_factory=lambda: defaultdict(dict))
 
     def _to_dict(self):
         return {
@@ -109,7 +102,7 @@ class OasRoot31:
 def _to_dict(source: Any):
     if hasattr(source, "_to_dict"):
         return source._to_dict()  # noqa
-    elif type(source) == dict:
+    elif isinstance(source, dict):
         return {key: _to_dict(value) for key, value in source.items()}
     elif type(source) == list:
         return [_to_dict(value) for value in source]
@@ -127,7 +120,6 @@ def tidy_string(untidy: Any):
 
 
 def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict):
-
     if endpoint.request_schema is None:
         _request_schema = "#/components/schemas/Default"
     else:
@@ -150,7 +142,6 @@ def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict
 
 
 def extract_path_parameters(url: str) -> Tuple[str, dict]:
-
     # convert URL from metadata-style to openapi-style
     url = url.replace("<", "{").replace(">", "}")
 
@@ -214,9 +205,7 @@ def dump(metadata: APIMetadata, stream=None):
                     tidy_url, path_parameters = extract_path_parameters(endpoint.url)
                     operation = convert_endpoint_to_operation(endpoint, path_parameters)
                     tags.update(set(operation.tags))
-                    path = OasPath()
-                    path.operation[method] = operation
-                    oas.paths[tidy_url] = path
+                    oas.paths[tidy_url][method] = operation
                 except (TypeError, ValueError):
                     logging.warning(
                         f"Skipping {service_group}, {api_group}, {endpoint} because method is invalid."

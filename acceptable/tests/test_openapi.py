@@ -1,8 +1,10 @@
 # Copyright 2022 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from collections import defaultdict
 from dataclasses import dataclass
 
 import testtools
+import yaml
 
 from acceptable import openapi
 from acceptable._service import (
@@ -39,6 +41,13 @@ class ToDictTests(testtools.TestCase):
     @staticmethod
     def test_convert_dict_returns_new_dict():
         source = {"foo": "bar"}
+        result = openapi._to_dict(source)
+        assert source == result
+        assert id(source) != id(result)
+
+    @staticmethod
+    def test_convert_defaultdict_returns_new_dict():
+        source = defaultdict(foo="bar")
         result = openapi._to_dict(source)
         assert source == result
         assert id(source) != id(result)
@@ -178,3 +187,15 @@ class OpenApiTests(testtools.TestCase):
         with open("examples/oas_empty_expected.yaml", "r") as _expected:
             expected = _expected.readlines()
         self.assertListEqual(expected, result)
+
+    def test_single_endpoint_with_multiple_methods(self):
+        metadata = APIMetadata()
+        service = AcceptableService("service", metadata=metadata)
+        foo_api_get = service.api("/foo", "get_foo", methods=["GET"])
+        foo_api_post = service.api("/foo", "create_foo", methods=["POST"])
+
+        result = openapi.dump(metadata)
+        spec = yaml.safe_load(result)
+
+        assert list(spec["paths"].keys()) == ["/foo"]
+        assert list(spec["paths"]["/foo"].keys()) == ["get", "post"]
