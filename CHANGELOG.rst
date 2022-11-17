@@ -2,6 +2,11 @@ Version Next
 
  * ...
 
+Version 0.37
+
+ * Sort tags to stabilise YAML order
+ * Fix OpenAPI spec output when a single endpoint supports multiple methods
+
 Version 0.36
 
  * Codebase is blackened
