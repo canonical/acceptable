@@ -1,5 +1,6 @@
 Version Next
 
+ * Add new Django command ``openapi``. Generates ``openapi.yaml``
  * ...
 
 Version 0.37
@@ -10,7 +11,7 @@ Version 0.37
 Version 0.36
 
  * Codebase is blackened
- * `lint --create` will also generate a valid but incomplete `openapi.yaml`:
+ * ``lint --create`` will also generate a valid but incomplete ``openapi.yaml``:
 
    * includes paths, methods, path parameters, request schema, response schema
    * operations include operationId, description and summary (if found)
