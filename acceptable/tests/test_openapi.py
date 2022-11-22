@@ -107,7 +107,7 @@ class TidyStringTests(testtools.TestCase):
 class ParameterExtractionTests(testtools.TestCase):
     def test_blank(self):
         url, parameters = openapi.extract_path_parameters("")
-        assert url == ""
+        assert url == "/"
         assert parameters == {}
 
     def test_no_parameters(self):

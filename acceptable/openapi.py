@@ -143,6 +143,8 @@ def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict
 
 def extract_path_parameters(url: str) -> Tuple[str, dict]:
     # convert URL from metadata-style to openapi-style
+    if url is None or url == "":
+        url = "/"
     url = url.replace("<", "{").replace(">", "}")
 
     # get individual instances of `{...}`
