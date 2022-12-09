@@ -149,13 +149,13 @@ class EndpointToOperationTests(testtools.TestCase):
     def test_blank():
         endpoint = AcceptableAPI(
             introduced_at=1,
-            name="test name",  # maps to operation.operation_id
+            name="test-name",  # maps to operation.operation_id
             service=AcceptableService(name="test service"),
             url="https://test.example",
         )
-        operation = openapi.convert_endpoint_to_operation(endpoint, {})
+        operation = openapi.convert_endpoint_to_operation(endpoint, "get", {})
         assert "None" == operation.description
-        assert "test name" == operation.operation_id
+        assert "test-name-get" == operation.operation_id
         assert operation.summary is None
         assert 1 == len(operation.tags)
         assert "none" == operation.tags[0]
@@ -164,7 +164,7 @@ class EndpointToOperationTests(testtools.TestCase):
     def test_populated():
         endpoint = AcceptableAPI(
             introduced_at=1,
-            name="test name",  # maps to operation.operation_id
+            name="test-name",  # maps to operation.operation_id
             service=AcceptableService(
                 name="test service", group="test group"  # maps to operation.tags
             ),
@@ -172,9 +172,9 @@ class EndpointToOperationTests(testtools.TestCase):
             url="https://test.example",
         )
         endpoint.docs = "test docs"  # maps to operation.description
-        operation = openapi.convert_endpoint_to_operation(endpoint, {})
+        operation = openapi.convert_endpoint_to_operation(endpoint, "get", {})
         assert "test docs" == operation.description
-        assert "test name" == operation.operation_id
+        assert "test-name-get" == operation.operation_id
         assert "test title" == operation.summary
         assert 1 == len(operation.tags)
         assert "test group" == operation.tags[0]

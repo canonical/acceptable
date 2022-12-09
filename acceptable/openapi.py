@@ -119,7 +119,7 @@ def tidy_string(untidy: Any):
     return tidy.strip()
 
 
-def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict):
+def convert_endpoint_to_operation(endpoint: AcceptableAPI, method: str, path_parameters: dict):
     if endpoint.request_schema is None:
         _request_schema = "#/components/schemas/Default"
     else:
@@ -134,7 +134,7 @@ def convert_endpoint_to_operation(endpoint: AcceptableAPI, path_parameters: dict
         tags=[endpoint.service.group] if endpoint.service.group else ["none"],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
-        operation_id=endpoint.name,
+        operation_id=f"{endpoint.name}-{method}",
         path_parameters=path_parameters,
         request_schema=_request_schema,
         response_schema=_response_schema,
@@ -201,18 +201,12 @@ def dump(metadata: APIMetadata, stream=None):
     for service_group in metadata.services.values():
         for api_group in service_group.values():
             for endpoint in api_group.values():
-                try:
-                    [method] = endpoint.methods
+                for method in endpoint.methods:
                     method = str.lower(method)
                     tidy_url, path_parameters = extract_path_parameters(endpoint.url)
-                    operation = convert_endpoint_to_operation(endpoint, path_parameters)
+                    operation = convert_endpoint_to_operation(endpoint, method, path_parameters)
                     tags.update(set(operation.tags))
                     oas.paths[tidy_url][method] = operation
-                except (TypeError, ValueError):
-                    logging.warning(
-                        f"Skipping {service_group}, {api_group}, {endpoint} because method is invalid."
-                        f" Expected exactly one method."
-                    )
 
     for tag in sorted(tags):
         oas.tags.append({"name": tag})

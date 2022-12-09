@@ -1,6 +1,8 @@
 Version Next
 
  * Add new Django command ``openapi``. Generates ``openapi.yaml``
+ * Update format when a single endpoint supports multiple methods.
+ * 📢 Please note! operationId now includes both the endpoint name and the method. For example, ``validation-get`` instead of ``validation``. This allows multiple methods on a single endpoint, such as ``validation-post`` and ``validation-get``.
  * ...
 
 Version 0.37
