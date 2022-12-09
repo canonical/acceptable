@@ -18,7 +18,7 @@ paths:
   /foo/{p}/{q}:
     get:
       description: Documentation goes here.
-      operationId: foo
+      operationId: foo-get
       parameters:
       - in: path
         name: p
