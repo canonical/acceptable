@@ -119,7 +119,9 @@ def tidy_string(untidy: Any):
     return tidy.strip()
 
 
-def convert_endpoint_to_operation(endpoint: AcceptableAPI, method: str, path_parameters: dict):
+def convert_endpoint_to_operation(
+    endpoint: AcceptableAPI, method: str, path_parameters: dict
+):
     if endpoint.request_schema is None:
         _request_schema = "#/components/schemas/Default"
     else:
@@ -204,7 +206,9 @@ def dump(metadata: APIMetadata, stream=None):
                 for method in endpoint.methods:
                     method = str.lower(method)
                     tidy_url, path_parameters = extract_path_parameters(endpoint.url)
-                    operation = convert_endpoint_to_operation(endpoint, method, path_parameters)
+                    operation = convert_endpoint_to_operation(
+                        endpoint, method, path_parameters
+                    )
                     tags.update(set(operation.tags))
                     oas.paths[tidy_url][method] = operation
 
