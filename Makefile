@@ -13,7 +13,7 @@ env/.done: requirements-dev.txt setup.py
 	touch $@
 
 env/bin/tox: env/.done
-	env/bin/pip install tox
+	env/bin/pip install "tox<4"
 
 .PHONY: lint
 lint: env/.done
