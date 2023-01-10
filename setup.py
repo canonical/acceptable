@@ -6,13 +6,13 @@
 from setuptools import find_packages, setup
 
 
-VERSION = "0.37"
+VERSION = "0.38"
 
 
 setup(
     name="acceptable",
     version=VERSION,
-    description="API version negotiation for flask-based web services.",
+    description="API metadata and schema tool for generating tests and documentation",
     author="Canonical Online Services",
     author_email="online-services@lists.canonical.com",
     url="https://github.com/canonical/acceptable",
