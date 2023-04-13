@@ -22,16 +22,23 @@ class OasOperation:
     request_schema: Any
     response_schema: Any
     path_parameters: dict
+    query_parameters: dict
 
     def _parameters_to_openapi(self):
         # To ensure a stable output we sort the parameter dictionary.
-
         for key, value in sorted(self.path_parameters.items()):
             yield {
                 "name": key,
                 "in": "path",
                 "required": True,
                 "schema": {"type": value},
+            }
+        for key, value in sorted(self.query_parameters.get("properties", {}).items()):
+            yield {
+                "name": key,
+                "in": "query",
+                "required": key in self.query_parameters.get("required", {}),
+                "schema": value,
             }
 
     def _to_dict(self):
@@ -118,12 +125,17 @@ def convert_endpoint_to_operation(
     if endpoint.response_schema:
         _response_schema = json.loads(json.dumps(endpoint.response_schema))
 
+    query_parameters = {}
+    if endpoint.params_schema:
+        query_parameters = json.loads(json.dumps(endpoint.params_schema))
+
     return OasOperation(
         tags=[endpoint.service.group] if endpoint.service.group else [],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=f"{endpoint.name}-{method}",
         path_parameters=path_parameters,
+        query_parameters=query_parameters,
         request_schema=_request_schema,
         response_schema=_response_schema,
     )
