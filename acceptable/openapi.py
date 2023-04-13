@@ -37,15 +37,13 @@ class OasOperation:
     def _to_dict(self):
         result = {
             "tags": self.tags,
-            "summary": self.summary,
             "description": tidy_string(self.description) or "None.",
             "operationId": self.operation_id,
             "parameters": list(self._parameters_to_openapi()),
         }
 
-        # drop empty summary
-        if not self.summary:
-            result.pop("summary")
+        if self.summary:
+            result["summary"] = self.summary
 
         if self.request_schema:
             result["requestBody"] = {
