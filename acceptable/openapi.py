@@ -82,14 +82,6 @@ class OasRoot31:
             "servers": _to_dict(self.servers),
             "tags": _to_dict(self.tags),
             "paths": _to_dict(self.paths),
-            "components": {
-                "schemas": {
-                    "Default": {
-                        "type": "object",
-                        "properties": {"code": {"type": "integer", "format": "int32"}},
-                    }
-                }
-            },
         }
 
 
