@@ -37,28 +37,24 @@ class OasOperation:
     def _to_dict(self):
         result = {
             "tags": self.tags,
-            "summary": self.summary,
             "description": tidy_string(self.description) or "None.",
             "operationId": self.operation_id,
             "parameters": list(self._parameters_to_openapi()),
-            "requestBody": {
-                "content": {
-                    "application/json": {"schema": {"$ref": self.request_schema}}
-                }
-            },
-            "responses": {
-                "200": {
-                    "description": self.summary or "OK",
-                    "content": {
-                        "application/json": {"schema": {"$ref": self.response_schema}}
-                    },
-                }
-            },
         }
 
-        # drop empty summary
-        if not self.summary:
-            result.pop("summary")
+        if self.summary:
+            result["summary"] = self.summary
+
+        if self.request_schema:
+            result["requestBody"] = {
+                "content": {"application/json": {"schema": self.request_schema}}
+            }
+
+        result["responses"] = {"200": {"description": self.summary or "OK"}}
+        if self.response_schema:
+            result["responses"]["200"]["content"] = {
+                "application/json": {"schema": self.response_schema}
+            }
 
         return result
 
@@ -88,14 +84,6 @@ class OasRoot31:
             "servers": _to_dict(self.servers),
             "tags": _to_dict(self.tags),
             "paths": _to_dict(self.paths),
-            "components": {
-                "schemas": {
-                    "Default": {
-                        "type": "object",
-                        "properties": {"code": {"type": "integer", "format": "int32"}},
-                    }
-                }
-            },
         }
 
 
@@ -122,18 +110,16 @@ def tidy_string(untidy: Any):
 def convert_endpoint_to_operation(
     endpoint: AcceptableAPI, method: str, path_parameters: dict
 ):
-    if endpoint.request_schema is None:
-        _request_schema = "#/components/schemas/Default"
-    else:
+    _request_schema = None
+    if endpoint.request_schema:
         _request_schema = json.loads(json.dumps(endpoint.request_schema))
 
-    if endpoint.response_schema is None:
-        _response_schema = "#/components/schemas/Default"
-    else:
+    _response_schema = None
+    if endpoint.response_schema:
         _response_schema = json.loads(json.dumps(endpoint.response_schema))
 
     return OasOperation(
-        tags=[endpoint.service.group] if endpoint.service.group else ["none"],
+        tags=[endpoint.service.group] if endpoint.service.group else [],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=f"{endpoint.name}-{method}",

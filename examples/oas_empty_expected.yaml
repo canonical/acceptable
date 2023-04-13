@@ -1,11 +1,3 @@
-components:
-  schemas:
-    Default:
-      properties:
-        code:
-          format: int32
-          type: integer
-      type: object
 info:
   contact:
     email: example@example.example
