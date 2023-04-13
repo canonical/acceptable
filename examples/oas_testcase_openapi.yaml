@@ -58,9 +58,7 @@ paths:
                     type: string
                 type: object
           description: OK
-      tags:
-      - none
+      tags: []
 servers:
 - url: http://localhost
-tags:
-- name: none
+tags: []

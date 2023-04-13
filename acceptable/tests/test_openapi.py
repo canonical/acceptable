@@ -157,8 +157,7 @@ class EndpointToOperationTests(testtools.TestCase):
         assert "None" == operation.description
         assert "test-name-get" == operation.operation_id
         assert operation.summary is None
-        assert 1 == len(operation.tags)
-        assert "none" == operation.tags[0]
+        assert 0 == len(operation.tags)
 
     @staticmethod
     def test_populated():

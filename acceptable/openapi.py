@@ -117,7 +117,7 @@ def convert_endpoint_to_operation(
         _response_schema = json.loads(json.dumps(endpoint.response_schema))
 
     return OasOperation(
-        tags=[endpoint.service.group] if endpoint.service.group else ["none"],
+        tags=[endpoint.service.group] if endpoint.service.group else [],
         summary=endpoint.title,
         description=tidy_string(endpoint.docs),
         operation_id=f"{endpoint.name}-{method}",
