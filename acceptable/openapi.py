@@ -43,14 +43,14 @@ class OasOperation:
             "parameters": list(self._parameters_to_openapi()),
             "requestBody": {
                 "content": {
-                    "application/json": {"schema": {"$ref": self.request_schema}}
+                    "application/json": {"schema": self.request_schema}
                 }
             },
             "responses": {
                 "200": {
                     "description": self.summary or "OK",
                     "content": {
-                        "application/json": {"schema": {"$ref": self.response_schema}}
+                        "application/json": {"schema": self.response_schema}
                     },
                 }
             },
