@@ -52,7 +52,9 @@ class OasOperation:
 
         result["responses"] = {"200": {"description": self.summary or "OK"}}
         if self.response_schema:
-            result["responses"]["200"]["content"] = {"application/json": {"schema": self.response_schema}}
+            result["responses"]["200"]["content"] = {
+                "application/json": {"schema": self.response_schema}
+            }
 
         return result
 
