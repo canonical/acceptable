@@ -9,10 +9,7 @@ foo_api = service.api("/foo/<p:int>/<q>", "foo", introduced_at=2)
 foo_api.params_schema = {
     "type": "object",
     "required": ["param1"],
-    "properties": {
-        "param1": {"type": "string"},
-        "param2": {"type": "integer"},
-    },
+    "properties": {"param1": {"type": "string"}, "param2": {"type": "integer"}},
 }
 
 foo_api.request_schema = {
