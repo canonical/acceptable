@@ -1,5 +1,6 @@
 black < 23.0.0
 coveralls
+flake8
 fixtures
 isort
 testscenarios

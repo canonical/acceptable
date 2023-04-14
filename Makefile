@@ -25,6 +25,7 @@ env/bin/tox: env/.done
 
 .PHONY: lint
 lint: env/.done
+	env/bin/flake8 .
 	env/bin/black . --check
 	env/bin/isort . --check
 
