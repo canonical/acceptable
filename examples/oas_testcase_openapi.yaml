@@ -22,6 +22,16 @@ paths:
         required: true
         schema:
           type: str
+      - in: query
+        name: param1
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: param2
+        required: false
+        schema:
+          type: integer
       requestBody:
         content:
           application/json:

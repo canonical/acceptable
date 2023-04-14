@@ -49,7 +49,20 @@
           },
           "type": "object"
         },
-        "params_schema": null,
+        "params_schema": {
+          "properties": {
+            "param1": {
+              "type": "string"
+            },
+            "param2": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "param1"
+          ],
+          "type": "object"
+        },
         "doc": "Documentation goes here.",
         "changelog": {
           "5": "Added baz field.",
