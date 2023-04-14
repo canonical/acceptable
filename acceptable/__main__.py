@@ -197,12 +197,12 @@ def import_or_exec(path):
         try:
             with open(path) as fd:
                 exec(fd.read(), {}, {})
-        except:
+        except Exception:
             raise Exception("Could not exec {!r}".format(path))
     else:
         try:
             import_module(path)
-        except:
+        except Exception:
             raise Exception(
                 "{!r} did not look like a filepath and could not be "
                 "loaded as a module".format(path)

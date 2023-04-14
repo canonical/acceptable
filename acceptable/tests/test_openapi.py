@@ -190,8 +190,8 @@ class OpenApiTests(testtools.TestCase):
     def test_single_endpoint_with_multiple_methods(self):
         metadata = APIMetadata()
         service = AcceptableService("service", metadata=metadata)
-        foo_api_get = service.api("/foo", "get_foo", methods=["GET"])
-        foo_api_post = service.api("/foo", "create_foo", methods=["POST"])
+        service.api("/foo", "get_foo", methods=["GET"])
+        service.api("/foo", "create_foo", methods=["POST"])
 
         result = openapi.dump(metadata)
         spec = yaml.safe_load(result)

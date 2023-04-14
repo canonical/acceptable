@@ -1,7 +1,6 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 from collections import namedtuple
-import copy
 from json import dumps as json_dumps
 from json import loads as json_loads
 from urllib.parse import urljoin
@@ -287,7 +286,7 @@ class Endpoint(object):
                 # let's change the url in a regexp
                 self._url = (
                     self._url.replace("<", "(?P<")
-                    .replace(">", ">\S+)")
+                    .replace(">", r">\S+)")
                     .replace("int:", "")
                     .replace("path:", "")
                 )

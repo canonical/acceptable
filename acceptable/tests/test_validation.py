@@ -1,7 +1,6 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import json
-import sys
 
 from fixtures import Fixture
 from testtools import TestCase

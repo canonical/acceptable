@@ -50,7 +50,7 @@ def _sort_schema(schema):
             else:
                 yield v
     else:
-        yield d
+        yield schema
 
 
 def sort_schema(schema):

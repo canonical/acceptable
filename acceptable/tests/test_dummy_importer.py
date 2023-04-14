@@ -2,7 +2,7 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 from acceptable.dummy_importer import DummyImporterContext
 import testtools
-from testtools.matchers import Not, Contains, Equals, Is
+from testtools.matchers import Not, Contains, Is
 from testtools.assertions import assert_that
 import sys
 
@@ -10,7 +10,7 @@ import sys
 class DummyImporterContextTests(testtools.TestCase):
     def test_mock_fake_import(self):
         with DummyImporterContext():
-            import zzzxxxvvv
+            import zzzxxxvvv  # noqa
 
     def test_allowed_real_modules(self):
         class FakeModuleLoader(object):

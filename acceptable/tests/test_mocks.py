@@ -5,7 +5,6 @@ from acceptable.mocks import (
     Endpoint,
     EndpointMock,
     EndpointSpec,
-    Service,
     ServiceFactory,
 )
 from acceptable.responses import responses_mock_context
@@ -88,7 +87,7 @@ class ServiceTests(testtools.TestCase):
 
     def test_responses_manager_resets_responses_mock(self):
         service = self.make_test_service()
-        with service() as service_mock:
+        with service():
             with responses_mock_context() as responses_mock:
                 responses_mock.add("GET", "http://example.com/responses-test", b"test")
                 requests.get("http://example.com/test-endpoint", json=888)
@@ -118,7 +117,7 @@ class ServiceTests(testtools.TestCase):
             "test",
             EndpointSpec("endpoint", "endpoint", ["GET"], True, None),
         )
-        with ep() as mock:
+        with ep():
             with ExpectedException(AssertionError):
                 requests.get("http://example.com/endpoint")
 
@@ -128,6 +127,6 @@ class ServiceTests(testtools.TestCase):
             "test",
             EndpointSpec("endpoint", "endpoint", ["GET"], True, None),
         )
-        with ep() as mock:
+        with ep():
             with ExpectedException(AssertionError):
                 requests.get("http://example.com/endpoint", data=b"")
