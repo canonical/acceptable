@@ -3,7 +3,7 @@
 import logging
 
 import django
-from django.forms import widgets, fields
+from django.forms import fields, widgets
 
 from acceptable._service import AcceptableAPI
 from acceptable.util import clean_docstring, sort_schema

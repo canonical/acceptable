@@ -1,10 +1,12 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-from acceptable.dummy_importer import DummyImporterContext
-import testtools
-from testtools.matchers import Not, Contains, Is
-from testtools.assertions import assert_that
 import sys
+
+import testtools
+from testtools.assertions import assert_that
+from testtools.matchers import Contains, Is, Not
+
+from acceptable.dummy_importer import DummyImporterContext
 
 
 class DummyImporterContextTests(testtools.TestCase):

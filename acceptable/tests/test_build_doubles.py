@@ -1,7 +1,7 @@
 # Copyright 2017-2018 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-import ast
 import argparse
+import ast
 import os.path
 import sys
 from textwrap import dedent
@@ -9,7 +9,6 @@ from textwrap import dedent
 import fixtures
 from testtools import TestCase
 from testtools.matchers import Contains
-
 
 from acceptable import _build_doubles
 

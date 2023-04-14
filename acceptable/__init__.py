@@ -10,7 +10,6 @@ from ._validation import (  # NOQA
     validate_params,
 )
 
-
 # __all__ strings must be bytes in py2 and unicode in py3
 __all__ = [
     "AcceptableService",

@@ -10,7 +10,7 @@ from typing import Any, Tuple
 
 import yaml
 
-from acceptable._service import APIMetadata, AcceptableAPI
+from acceptable._service import AcceptableAPI, APIMetadata
 
 
 @dataclass

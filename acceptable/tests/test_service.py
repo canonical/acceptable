@@ -9,12 +9,12 @@ from testtools import TestCase
 from testtools.matchers import Equals, Matcher
 
 from acceptable._service import (
-    APIMetadata,
     AcceptableAPI,
     AcceptableService,
+    APIMetadata,
     InvalidAPI,
 )
-from acceptable._validation import validate_body, validate_output, DataValidationError
+from acceptable._validation import DataValidationError, validate_body, validate_output
 
 
 class APIMetadataTestCase(TestCase):

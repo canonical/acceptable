@@ -2,11 +2,9 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import testtools
 
-from acceptable import get_metadata
-from acceptable.tests.test_main import TemporaryModuleFixture
+from acceptable import get_metadata, lint
 from acceptable.__main__ import import_metadata
-
-from acceptable import lint
+from acceptable.tests.test_main import TemporaryModuleFixture
 
 
 class LintTestCase(testtools.TestCase):

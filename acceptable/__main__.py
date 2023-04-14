@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 import sys
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 from importlib import import_module
 
 import yaml

@@ -1,5 +1,11 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+import requests
+import testtools
+from testtools import ExpectedException
+from testtools.assertions import assert_that
+from testtools.matchers import Equals, HasLength
+
 from acceptable.mocks import (
     CallRecorder,
     Endpoint,
@@ -8,11 +14,6 @@ from acceptable.mocks import (
     ServiceFactory,
 )
 from acceptable.responses import responses_mock_context
-import requests
-import testtools
-from testtools import ExpectedException
-from testtools.matchers import Equals, HasLength
-from testtools.assertions import assert_that
 
 
 class EventMockTests(testtools.TestCase):

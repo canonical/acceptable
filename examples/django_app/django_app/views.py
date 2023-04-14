@@ -1,6 +1,5 @@
 from django import forms
-from django.conf.urls import url, include
-
+from django.conf.urls import include, url
 from django.utils.translation import ugettext_lazy as _
 
 from acceptable import AcceptableService

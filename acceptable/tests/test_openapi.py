@@ -8,9 +8,9 @@ import yaml
 
 from acceptable import openapi
 from acceptable._service import (
-    APIMetadata,
     AcceptableAPI,
     AcceptableService,
+    APIMetadata,
     clear_metadata,
 )
 

@@ -2,8 +2,8 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 
 """acceptable - Programmatic API Metadata for Flask apps."""
-from collections import OrderedDict
 import textwrap
+from collections import OrderedDict
 
 from acceptable import _validation
 from acceptable.util import clean_docstring, get_callsite_location, sort_schema
