@@ -2,6 +2,11 @@
 black: env/.done
 	env/bin/black .
 
+.PHONY: isort
+isort: env/.done
+	env/bin/isort .
+
+.PHONY: clean
 clean:
 	rm -rf env docs html .tox .eggs build
 
@@ -18,6 +23,7 @@ env/bin/tox: env/.done
 .PHONY: lint
 lint: env/.done
 	env/bin/black . --check
+	env/bin/isort . --check
 
 .PHONY: test
 test: env/.done
