@@ -6,6 +6,9 @@ black: env/.done
 isort: env/.done
 	env/bin/isort .
 
+.PHONY: fmt
+fmt: isort black
+
 .PHONY: clean
 clean:
 	rm -rf env docs html .tox .eggs build
