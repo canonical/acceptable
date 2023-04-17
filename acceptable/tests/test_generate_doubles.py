@@ -3,8 +3,9 @@
 import json
 from io import StringIO
 
-from acceptable import generate_doubles
 import testtools
+
+from acceptable import generate_doubles
 
 
 class GenerateDoublesTests(testtools.TestCase):

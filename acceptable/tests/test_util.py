@@ -10,10 +10,10 @@ class UtilsTestCase(testtools.TestCase):
         srtd = util.sort_schema({"5": "5", "1": "1", "3": "3"})
         self.assertEqual(["1", "3", "5"], list(srtd))
 
-    def test_sort_schema_simple(self):
+    def test_sort_schema(self):
         d = {"5": "5", "1": "1", "3": "3"}
-        l = [5, 1, 3]
-        srtd = util.sort_schema({"foo": {"b": [d], "a": [l]}})
+        ll = [5, 1, 3]
+        srtd = util.sort_schema({"foo": {"b": [d], "a": [ll]}})
 
         # check we sort nested dicts
         self.assertEqual(["a", "b"], list(srtd["foo"]))

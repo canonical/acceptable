@@ -1,0 +1,7 @@
+[tool.black]
+skip-string-normalization = true
+skip-magic-trailing-comma = true
+
+[tool.isort]
+profile = "black"
+skip = ["env", ".tox"]
