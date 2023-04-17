@@ -1,16 +1,16 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import json
+import os
 import subprocess
 import sys
-import os
 
 from django import forms
 from jsonschema import Draft4Validator, FormatChecker
 from testtools import TestCase
 
-from acceptable._service import clear_metadata, get_metadata
 from acceptable import djangoutil
+from acceptable._service import clear_metadata, get_metadata
 
 
 def setUpModule():

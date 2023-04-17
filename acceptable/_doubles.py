@@ -10,8 +10,8 @@ import functools
 import json
 from urllib.parse import urljoin
 
-from fixtures import Fixture
 import responses
+from fixtures import Fixture
 
 from acceptable._validation import validate
 from acceptable.mocks import responses_manager

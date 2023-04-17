@@ -6,8 +6,15 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: psf/black@stable
         with:
           options: "--check --verbose --skip-magic-trailing-comma"
           version: "~= 22.0"
+      - uses: actions/setup-python@v4
+      - uses: py-actions/flake8@v2
+        with:
+          max-line-length: "88"
+      - uses: isort/isort-action@v1
+        with:
+          configuration: "--profile=black --check"

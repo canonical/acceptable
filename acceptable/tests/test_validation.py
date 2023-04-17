@@ -1,14 +1,12 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 import json
-import sys
 
+import flask
+import jsonschema
 from fixtures import Fixture
 from testtools import TestCase
 from testtools.matchers import StartsWith
-import jsonschema
-
-import flask
 
 from acceptable._validation import DataValidationError, validate_body, validate_output
 

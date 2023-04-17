@@ -1,7 +1,7 @@
 # Copyright 2017-2020 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
-import json
 import functools
+import json
 
 import jsonschema
 

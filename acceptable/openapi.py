@@ -10,7 +10,7 @@ from typing import Any, Tuple
 
 import yaml
 
-from acceptable._service import APIMetadata, AcceptableAPI
+from acceptable._service import AcceptableAPI, APIMetadata
 
 
 @dataclass
@@ -189,7 +189,8 @@ def dump(metadata: APIMetadata, stream=None):
         [_title] = list(metadata.services.keys())
     except (TypeError, ValueError):
         logging.warning(
-            "Could not extract service title from metadata. Expected exactly one valid title."
+            "Could not extract service title from metadata. "
+            "Expected exactly one valid title."
         )
     finally:
         oas.info.title = _title

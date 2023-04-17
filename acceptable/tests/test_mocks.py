@@ -1,19 +1,19 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+import requests
+import testtools
+from testtools import ExpectedException
+from testtools.assertions import assert_that
+from testtools.matchers import Equals, HasLength
+
 from acceptable.mocks import (
     CallRecorder,
     Endpoint,
     EndpointMock,
     EndpointSpec,
-    Service,
     ServiceFactory,
 )
 from acceptable.responses import responses_mock_context
-import requests
-import testtools
-from testtools import ExpectedException
-from testtools.matchers import Equals, HasLength
-from testtools.assertions import assert_that
 
 
 class EventMockTests(testtools.TestCase):
@@ -88,7 +88,7 @@ class ServiceTests(testtools.TestCase):
 
     def test_responses_manager_resets_responses_mock(self):
         service = self.make_test_service()
-        with service() as service_mock:
+        with service():
             with responses_mock_context() as responses_mock:
                 responses_mock.add("GET", "http://example.com/responses-test", b"test")
                 requests.get("http://example.com/test-endpoint", json=888)
@@ -118,7 +118,7 @@ class ServiceTests(testtools.TestCase):
             "test",
             EndpointSpec("endpoint", "endpoint", ["GET"], True, None),
         )
-        with ep() as mock:
+        with ep():
             with ExpectedException(AssertionError):
                 requests.get("http://example.com/endpoint")
 
@@ -128,6 +128,6 @@ class ServiceTests(testtools.TestCase):
             "test",
             EndpointSpec("endpoint", "endpoint", ["GET"], True, None),
         )
-        with ep() as mock:
+        with ep():
             with ExpectedException(AssertionError):
                 requests.get("http://example.com/endpoint", data=b"")

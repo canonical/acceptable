@@ -179,7 +179,9 @@ class MetadataTests(testtools.TestCase):
             @root_api.view(introduced_at='1.0')
             @validate_body({'type': 'object'})
             @validate_output({'type': 'object'})
-            @validate_params({'type': 'object', 'properties': {'test': {'type': 'string'}}})
+            @validate_params(
+                {'type': 'object', 'properties': {'test': {'type': 'string'}}}
+            )
             def my_view():
                 "Documentation."
         """
@@ -241,7 +243,7 @@ class MetadataTests(testtools.TestCase):
                         "lineno": 10,
                         "module": svc_mod,
                     },
-                    "view": {"filename": fixture.path, "lineno": 12, "module": svc_mod},
+                    "view": {"filename": fixture.path, "lineno": 14, "module": svc_mod},
                 }
             },
             locations,

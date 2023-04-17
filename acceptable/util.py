@@ -1,9 +1,9 @@
-from collections import OrderedDict
 import difflib
 import inspect
 import pprint
 import sys
 import textwrap
+from collections import OrderedDict
 
 
 def get_callsite_location(depth=1):
@@ -50,7 +50,7 @@ def _sort_schema(schema):
             else:
                 yield v
     else:
-        yield d
+        yield schema
 
 
 def sort_schema(schema):
