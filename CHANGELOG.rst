@@ -2,6 +2,13 @@ Version Next
 
  * ...
 
+Version 0.39
+
+ * Assorted fixes and improvements in generated OpenAPI specs
+ * Extend generated OpenAPI specs with support for query params (fixes #149)
+ * Code cleanup with `flake8`
+ * Reformat code with `isort`
+
 Version 0.38
 
  * Add new Django command ``openapi``. Generates ``openapi.yaml``
