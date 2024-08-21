@@ -22,9 +22,5 @@ setup(
     extras_require=dict(flask=["Flask"], django=["django>=2.1,<3"]),
     test_suite="acceptable.tests",
     include_package_data=True,
-    entry_points={
-        "console_scripts": [
-            "acceptable = acceptable.__main__:main",
-        ]
-    },
+    entry_points={"console_scripts": ["acceptable = acceptable.__main__:main"]},
 )
