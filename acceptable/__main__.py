@@ -141,23 +141,6 @@ def parse_args(raw_args=None, parser_cls=None, stdin=None, stdout=None):
 
     lint_parser.set_defaults(func=lint_cmd)
 
-    doubles_parser = subparser.add_parser("doubles", help="Generate test doubles")
-    doubles_parser.add_argument(
-        "metadata",
-        nargs="?",
-        type=argparse.FileType("r"),
-        default=stdin,
-        help="metadata file path, uses stdin if omitted",
-    )
-    doubles_parser.add_argument(
-        "-n",
-        "--new-style",
-        action="store_true",
-        default=False,
-        help="Generate new style ServiceFactory mocks",
-    )
-    doubles_parser.set_defaults(func=doubles_cmd)
-
     version_parser = subparser.add_parser(
         "api-version",
         help="Get the current API version from JSON meta, and "
@@ -360,18 +343,6 @@ def lint_cmd(cli_args, stream=sys.stdout):
                 openapi.dump(_metadata, o)
 
     return 1 if has_errors else 0
-
-
-def doubles_cmd(cli_args, stream=sys.stdout):
-    metadata = json.load(cli_args.metadata)
-    if cli_args.new_style:
-        from . import generate_mocks
-
-        generate_mocks.generate_service_factory(metadata, stream=stream)
-    else:
-        from . import generate_doubles
-
-        generate_doubles.generate_service_mock_doubles(metadata, stream=stream)
 
 
 def version_cmd(cli_args, stream=sys.stdout):

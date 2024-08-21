@@ -1,6 +1,6 @@
 Version Next
 
- * ...
+ * Drop service doubles and mocks, and ``acceptable doubles``. Use the OpenAPI spec with tools such as Connexion instead.
 
 Version 0.39
 

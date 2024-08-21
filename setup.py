@@ -24,7 +24,6 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "build_service_doubles = acceptable._build_doubles:main",
             "acceptable = acceptable.__main__:main",
         ]
     },
