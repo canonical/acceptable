@@ -153,7 +153,8 @@ class ValidateOutputTests(TestCase):
         self.assertRaises(AssertionError, app.post_json, [])
 
     def assertResponseJsonEqual(self, response, expected_json):
-        data = json.loads(response.data.decode(response.charset))
+        charset = response.mimetype_params.get("charset", "utf-8")
+        data = json.loads(response.data.decode(charset))
         self.assertEqual(expected_json, data)
 
     def test_passes_on_good_payload_single_return_parameter(self):

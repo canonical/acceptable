@@ -138,7 +138,8 @@ def wrap_request(fn, schema):
         # is not informative enough.
         if payload is None:
             try:
-                payload = json.loads(request.data.decode(request.charset))
+                charset = request.mimetype_params.get("charset", "utf-8")
+                payload = json.loads(request.data.decode(charset))
             except ValueError as e:
                 raise DataValidationError(
                     ["Error decoding JSON request body: %s" % str(e)]
