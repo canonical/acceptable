@@ -31,7 +31,7 @@ lint: env/.done
 
 .PHONY: test
 test: env/.done
-	env/bin/python setup.py test
+	env/bin/pytest
 
 .PHONY: tox
 tox: env/bin/tox

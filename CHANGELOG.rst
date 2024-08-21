@@ -1,6 +1,6 @@
 Version Next
 
- * ...
+ * Port test runner to pytest.
 
 Version 0.39
 
