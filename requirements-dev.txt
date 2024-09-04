@@ -3,6 +3,8 @@ coveralls
 flake8
 fixtures
 isort
+pytest
+pytest-cov
 testscenarios
 testtools
 responses

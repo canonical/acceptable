@@ -150,7 +150,7 @@ Development
 
 To run a single test module invoke::
 
-    python setup.py test --test-suite acceptable.tests.test_module
+    env/bin/pytest acceptable/tests/test_module.py
 
 or::
 

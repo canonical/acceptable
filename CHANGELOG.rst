@@ -1,6 +1,7 @@
 Version Next
 
- * ...
+ * Port test runner to pytest.
+ * Fix compatibility issue with Werkezeug 3 related to deprecated ``request.charset``.
 
 Version 0.40
 

@@ -434,7 +434,8 @@ class IsResponse(Matcher):
             return mismatch
         data = response.data
         if self._decode:
-            data = data.decode(response.charset)
+            charset = response.mimetype_params.get("charset", "utf-8")
+            data = data.decode(charset)
         return self.expected_content.match(data)
 
     def __str__(self):
