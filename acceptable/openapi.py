@@ -99,7 +99,7 @@ def _to_dict(source: Any):
         return source._to_dict()  # noqa
     elif isinstance(source, dict):
         return {key: _to_dict(value) for key, value in source.items()}
-    elif type(source) == list:
+    elif type(source) is list:
         return [_to_dict(value) for value in source]
     elif hasattr(source, "__dict__"):
         return {key: _to_dict(value) for key, value in source.__dict__.items()}
