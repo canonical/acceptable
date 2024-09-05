@@ -3,6 +3,12 @@ Version Next
  * Port test runner to pytest.
  * Fix compatibility issue with Werkezeug 3 related to deprecated ``request.charset``.
 
+Version 0.40
+
+ * Port test runner to pytest.
+ * Fix compatibility issue with Werkezeug 3 related to deprecated ``request.charset``.
+ * Drop service doubles and mocks, and ``acceptable doubles``. Use the OpenAPI spec with tools such as Connexion instead.
+
 Version 0.39
 
  * Assorted fixes and improvements in generated OpenAPI specs

@@ -20,8 +20,6 @@ Design Goals:
 
 - Make it easy to generate API documentation.
 
-- Tools for generating testing doubles from the API metadata.
-
 
 Usage
 -----

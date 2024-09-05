@@ -5,7 +5,7 @@
 
 from setuptools import find_packages, setup
 
-VERSION = "0.39"
+VERSION = "0.40"
 
 setup(
     name="acceptable",
@@ -22,10 +22,5 @@ setup(
     extras_require=dict(flask=["Flask"], django=["django>=2.1,<3"]),
     test_suite="acceptable.tests",
     include_package_data=True,
-    entry_points={
-        "console_scripts": [
-            "build_service_doubles = acceptable._build_doubles:main",
-            "acceptable = acceptable.__main__:main",
-        ]
-    },
+    entry_points={"console_scripts": ["acceptable = acceptable.__main__:main"]},
 )
