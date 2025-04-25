@@ -1,11 +1,13 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+import importlib.abc
+import importlib.util
 import sys
 from unittest.mock import MagicMock
 
 
-class DummyFinder(object):
-    """Implements PEP 302 module finder and loader which will pretend to
+class DummyFinder(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """Implements PEP 451 module finder and loader which will pretend to
     load modules but actually just create mocks that look like them.
 
     This allows python code to be loaded when its dependencies are not
@@ -27,29 +29,30 @@ class DummyFinder(object):
         self.finders = finders
         self.allowed = set(allowed_real_modules)
 
-    def find_module(self, fullname, path=None):
+    def find_spec(self, fullname, path, target=None):
         if fullname in self.allowed:
             for finder in self.finders:
-                loader = finder.find_module(fullname, path)
-                if loader is not None:
-                    return loader
+                spec = finder.find_spec(fullname, path, target)
+                if spec is not None:
+                    return spec
             else:
                 return None
-        return self
 
-    def load_module(self, fullname):
-        try:
-            return sys.modules[fullname]
-        except KeyError:
-            pass
+        return importlib.util.spec_from_loader(fullname, self)
+
+    def create_module(self, spec):
+        return None
+
+    def exec_module(self, module):
         mod = MagicMock()
-        sys.modules[fullname] = mod
         mod.__file__ = "<DummyFinder>"
         mod.__loader__ = self
         mod.__path__ = []
-        mod.__package__ = fullname
+        mod.__package__ = module.__name__
         mod.__doc__ = "DummyImporterContext dummy"
-        return mod
+        mod.__spec__ = module.__spec__
+
+        sys.modules[module.__name__] = mod
 
 
 class DummyImporterContext(object):
