@@ -79,7 +79,7 @@ class OasInfo:
 @dataclass
 class OasRoot31:
     openapi: str = "3.1.0"
-    info: OasInfo = OasInfo()
+    info: OasInfo = field(default_factory=OasInfo)
     tags: list = field(default_factory=lambda: [])
     servers: list = field(default_factory=lambda: [{"url": "http://localhost"}])
     paths: dict = field(default_factory=lambda: defaultdict(dict))
