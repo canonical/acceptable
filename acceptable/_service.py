@@ -6,7 +6,12 @@ import textwrap
 from collections import OrderedDict
 
 from acceptable import _validation
-from acceptable.util import clean_docstring, get_callsite_location, sort_schema
+from acceptable.util import (
+    clean_docstring,
+    get_callsite_location,
+    get_function_location,
+    sort_schema,
+)
 
 
 class InvalidAPI(Exception):
@@ -395,7 +400,7 @@ class AcceptableAPI:
         if self.request_schema:
             wrapped = _validation.wrap_request(wrapped, self.request_schema)
 
-        location = get_callsite_location()
+        location = get_function_location(fn)
         # this will be the lineno of the last decorator, so we want one
         # below it for the actual function
         location["lineno"] += 1
@@ -415,7 +420,7 @@ class AcceptableAPI:
     # legacy view decorator
     def view(self, introduced_at):
         def decorator(fn):
-            location = get_callsite_location()
+            location = get_function_location(fn)
             # this will be the lineno of the last decorator, so we want one
             # below it for the actual function
             location["lineno"] += 1

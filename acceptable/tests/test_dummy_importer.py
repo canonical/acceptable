@@ -1,6 +1,9 @@
 # Copyright 2019 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+import importlib.abc
+import importlib.util
 import sys
+import types
 
 import testtools
 from testtools.assertions import assert_that
@@ -15,19 +18,25 @@ class DummyImporterContextTests(testtools.TestCase):
             import zzzxxxvvv  # noqa
 
     def test_allowed_real_modules(self):
-        class FakeModuleLoader(object):
+        class FakeModuleLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
             def __init__(self):
                 self.imported = False
-                self.module = object()
+                self.module = types.SimpleNamespace()
 
-            def find_module(self, fullname, path=None):
+            def find_spec(self, fullname, path, target=None):
                 if fullname == "zzzxxxvvv.test":
-                    return self
+                    return importlib.util.spec_from_loader(fullname, self)
+                return None
 
-            def load_module(self, fullname):
+            def create_module(self, spec):
+                return None
+
+            def exec_module(self, module):
                 self.imported = True
-                sys.modules[fullname] = self.module
-                return self.module
+                sys.modules[module.__name__] = self.module
+                self.module.__name__ = module.__name__
+                self.module.__loader__ = self
+                self.module.__spec__ = module.__spec__
 
         fml = FakeModuleLoader()
         sys.meta_path.insert(0, fml)

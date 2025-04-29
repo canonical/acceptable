@@ -1,6 +1,7 @@
 import difflib
 import inspect
 import pprint
+import re
 import sys
 import textwrap
 from collections import OrderedDict
@@ -12,6 +13,34 @@ def get_callsite_location(depth=1):
         "filename": inspect.getsourcefile(frame),
         "lineno": frame.f_lineno,
         "module": inspect.getmodule(frame),
+    }
+
+
+def get_function_location(fn):
+    # get the innermost wrapped function (the view itself)
+    while getattr(fn, "__wrapped__", None) is not None:
+        fn = fn.__wrapped__
+
+    source_lines, start_line = inspect.getsourcelines(fn)
+
+    # unfortunately because getsourcelines considers decorators to be part of the
+    # function, we need to manually find the line that contains the actual `def <...>(`
+    # part.
+    def_pattern = re.compile(r"^\s*def\s+\w+\s*\(")
+    for offset, line in enumerate(source_lines):
+        if def_pattern.match(line):
+            return {
+                "filename": inspect.getsourcefile(fn),
+                "lineno": start_line + offset,
+                "module": inspect.getmodule(fn),
+            }
+
+    # if we can't find a function definition, we just return whatever line Python thinks
+    # is the start of the function.
+    return {
+        "filename": inspect.getsourcefile(fn),
+        "lineno": start_line,
+        "module": inspect.getmodule(fn),
     }
 
 
