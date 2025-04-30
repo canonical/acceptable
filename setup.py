@@ -5,7 +5,7 @@
 
 from setuptools import find_packages, setup
 
-VERSION = "0.40"
+VERSION = "0.41"
 
 setup(
     name="acceptable",
