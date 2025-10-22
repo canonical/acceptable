@@ -44,7 +44,7 @@ class OasOperation:
     def _to_dict(self):
         result = {
             "tags": self.tags,
-            "description": tidy_string(self.description) or "None.",
+            "description": self.description or "None.",
             "operationId": self.operation_id,
             "parameters": list(self._parameters_to_openapi()),
         }
@@ -107,13 +107,6 @@ def _to_dict(source: Any):
         return source
 
 
-def tidy_string(untidy: Any):
-    tidy = str(untidy).replace("\n", " ")
-    while "  " in tidy:
-        tidy = tidy.replace("  ", " ")
-    return tidy.strip()
-
-
 def convert_endpoint_to_operation(
     endpoint: AcceptableAPI, method: str, path_parameters: dict
 ):
@@ -132,7 +125,7 @@ def convert_endpoint_to_operation(
     return OasOperation(
         tags=[endpoint.service.group] if endpoint.service.group else [],
         summary=endpoint.title,
-        description=tidy_string(endpoint.docs),
+        description=endpoint.docs,
         operation_id=f"{endpoint.name}-{method}",
         path_parameters=path_parameters,
         query_parameters=query_parameters,
