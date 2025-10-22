@@ -11,7 +11,7 @@ fmt: isort black
 
 .PHONY: clean
 clean:
-	rm -rf env docs html .tox .eggs build
+	rm -rf env docs html .tox .eggs build dist
 
 env/.done: requirements-dev.txt setup.py
 	virtualenv -p python3 env
@@ -36,3 +36,11 @@ test: env/.done
 .PHONY: tox
 tox: env/bin/tox
 	env/bin/tox
+
+.PHONY: wheel
+wheel: env/.done
+	env/bin/python setup.py bdist_wheel
+
+.PHONY: sdist
+sdist: env/.done
+	env/bin/python setup.py sdist
