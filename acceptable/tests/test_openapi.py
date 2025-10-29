@@ -70,40 +70,6 @@ class ToDictTests(testtools.TestCase):
         assert "beeblebrox" == result
 
 
-class TidyStringTests(testtools.TestCase):
-    @staticmethod
-    def test_none():
-        assert "None" == openapi.tidy_string(None)
-
-    @staticmethod
-    def test_empty():
-        assert "" == openapi.tidy_string("")
-
-    @staticmethod
-    def test_tidy_returns_tidy():
-        assert "simple" == openapi.tidy_string("simple")
-
-    @staticmethod
-    def test_collapse_newline():
-        assert "hello world" == openapi.tidy_string("hello\nworld")
-
-    @staticmethod
-    def test_collapse_two_spaces():
-        assert "hello world" == openapi.tidy_string("hello  world")
-
-    @staticmethod
-    def test_collapse_three_spaces():
-        assert "hello world" == openapi.tidy_string("hello   world")
-
-    @staticmethod
-    def test_strip_trailing_spaces():
-        assert "hello world" == openapi.tidy_string(" hello world ")
-
-    @staticmethod
-    def test_collapse_edge_case():
-        assert "hello world" == openapi.tidy_string("hello\n world ")
-
-
 class ParameterExtractionTests(testtools.TestCase):
     def test_blank(self):
         url, parameters = openapi.extract_path_parameters("")
@@ -154,7 +120,7 @@ class EndpointToOperationTests(testtools.TestCase):
             url="https://test.example",
         )
         operation = openapi.convert_endpoint_to_operation(endpoint, "get", {})
-        assert "None" == operation.description
+        assert operation.description is None
         assert "test-name-get" == operation.operation_id
         assert operation.summary is None
         assert 0 == len(operation.tags)
