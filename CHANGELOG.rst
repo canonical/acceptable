@@ -1,5 +1,11 @@
 Version Next
 
+
+
+Version 0.42
+
+  * Improve Openapi service descriptions
+
 Version 0.41
 
  * Add support for Python 3.12
