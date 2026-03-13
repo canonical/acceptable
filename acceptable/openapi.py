@@ -1,6 +1,7 @@
 """
 Helpers to translate acceptable metadata to OpenAPI specifications (OAS).
 """
+
 import json
 import logging
 import re
