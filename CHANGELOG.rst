@@ -1,6 +1,6 @@
 Version Next
 
-
+  * Drop max required black version
 
 Version 0.42
 
