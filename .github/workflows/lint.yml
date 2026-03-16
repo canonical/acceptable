@@ -10,7 +10,6 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check --verbose --skip-magic-trailing-comma"
-          version: "~= 22.0"
       - uses: actions/setup-python@v4
       - uses: py-actions/flake8@v2
         with:

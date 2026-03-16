@@ -17,8 +17,7 @@ class LintTestCase(testtools.TestCase):
 
 class LintTests(LintTestCase):
     def test_not_modify(self):
-        metadata, locations, path = self.get_metadata(
-            """
+        metadata, locations, path = self.get_metadata("""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api')
@@ -26,8 +25,7 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """
-        )
+        """)
 
         self.assertIn("$version", metadata)
         orig = metadata.copy()
@@ -35,8 +33,7 @@ class LintTests(LintTestCase):
         self.assertEqual(metadata, orig)
 
     def test_missing_api_documentation(self):
-        metadata, locations, path = self.get_metadata(
-            """
+        metadata, locations, path = self.get_metadata("""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api', introduced_at=1)
@@ -44,8 +41,7 @@ class LintTests(LintTestCase):
             @api
             def view():
                 pass
-        """
-        )
+        """)
 
         msgs = list(lint.metadata_lint(metadata, metadata, locations))
         self.assertEqual(msgs[0].level, lint.WARNING)
@@ -63,8 +59,7 @@ class LintTests(LintTestCase):
         self.assertEqual(msgs[0].location["lineno"], 7)
 
     def test_missing_introduced_at(self):
-        metadata, locations, path = self.get_metadata(
-            """
+        metadata, locations, path = self.get_metadata("""
             from acceptable import *
             service = AcceptableService('myservice', 'group')
             api = service.api('/', 'api')
@@ -72,8 +67,7 @@ class LintTests(LintTestCase):
             @api
             def view():
                 "Docs"
-        """
-        )
+        """)
 
         msgs = list(lint.metadata_lint({}, metadata, locations))
         self.assertEqual(msgs[0].level, lint.ERROR)
