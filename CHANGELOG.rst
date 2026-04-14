@@ -1,5 +1,9 @@
 Version Next
 
+Version 0.43
+
+  * Add support for OpenAPI "servers"
+  * Fix rendering of OpenAPI query parameters
   * Drop max required black version
 
 Version 0.42
