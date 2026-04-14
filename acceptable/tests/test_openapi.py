@@ -86,7 +86,7 @@ class ParameterExtractionTests(testtools.TestCase):
             "https://www.example.com/<test>"
         )
         assert url == "https://www.example.com/{test}"
-        assert parameters == {"test": "str"}
+        assert parameters == {"test": "string"}
 
     def test_typed_parameter(self):
         url, parameters = openapi.extract_path_parameters(

@@ -21,7 +21,7 @@ paths:
         name: q
         required: true
         schema:
-          type: str
+          type: string
       - in: query
         name: param1
         required: true

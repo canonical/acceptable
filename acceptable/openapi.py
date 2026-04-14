@@ -160,7 +160,7 @@ def extract_path_parameters(url: str) -> Tuple[str, dict]:
 
         # if no type is defined, use str
         if c == 0:
-            parameters[p] = "str"
+            parameters[p] = "string"
 
         # if type is defined, use that
         elif c == 1:
