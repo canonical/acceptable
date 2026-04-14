@@ -151,7 +151,7 @@ class OpenApiTests(testtools.TestCase):
         result = openapi.dump(metadata).splitlines(keepends=True)
         with open("examples/oas_empty_expected.yaml", "r") as _expected:
             expected = _expected.readlines()
-        self.assertListEqual(expected, result)
+        assert result == expected
 
     def test_single_endpoint_with_multiple_methods(self):
         metadata = APIMetadata()
@@ -164,3 +164,16 @@ class OpenApiTests(testtools.TestCase):
 
         assert list(spec["paths"].keys()) == ["/foo"]
         assert list(spec["paths"]["/foo"].keys()) == ["get", "post"]
+
+    def test_metadata_servers(self):
+        sample_servers = [{"url": "http://test", "description": "Testing"}]
+        metadata = APIMetadata(servers=sample_servers)
+
+        result = openapi.dump(metadata)
+        spec = yaml.safe_load(result)
+
+        with open("examples/oas_empty_expected.yaml", "r") as _expected:
+            expected = yaml.safe_load(_expected.read())
+            expected["servers"] = sample_servers
+
+        assert spec == expected

@@ -26,11 +26,12 @@ class APIMetadata:
     and verify uniqueness.
     """
 
-    def __init__(self):
+    def __init__(self, servers=None):
         self.services = OrderedDict()
         self.api_names = set()
         self.urls = set()
         self._current_version = None
+        self.servers = servers
 
     def register_service(self, service, group, docs=None, title=None):
         if service not in self.services:

@@ -208,6 +208,9 @@ def dump(metadata: APIMetadata, stream=None):
     for tag in sorted(tags):
         oas.tags.append({"name": tag})
 
+    if metadata.servers:
+        oas.servers = metadata.servers
+
     return yaml.safe_dump(
         _to_dict(oas), stream, default_flow_style=False, encoding=None
     )
