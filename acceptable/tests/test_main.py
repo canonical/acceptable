@@ -530,6 +530,7 @@ class RenderMarkdownTests(testtools.TestCase):
             "documentation-builder",
             "--base-directory={}".format(markdown_dir.path),
             "--output-path={}".format(html_dir.path),
+            "--quiet",
         ]
         try:
             subprocess.check_output(build)

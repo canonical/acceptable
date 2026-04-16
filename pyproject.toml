@@ -6,7 +6,7 @@ profile = "black"
 skip = ["env", ".tox"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=acceptable --capture=no"
+addopts = "--cov=acceptable"
 
 [tool.coverage.report]
 omit = ["acceptable/tests/*"]
