@@ -1,6 +1,6 @@
 from django import forms
-from django.conf.urls import include, url
-from django.utils.translation import ugettext_lazy as _
+from django.urls import include, re_path
+from django.utils.translation import gettext_lazy as _
 
 from acceptable import AcceptableService
 
@@ -44,9 +44,9 @@ class TestHandler(object):
 
 
 urlpatterns = [
-    url("^test$", TestHandler(), name="test"),
-    url("^test2/(.*)$", TestHandler(), name="test2"),
-    url("^login$", TestHandler(), name="login"),
-    url("^prefix1/", include(("django_app.urls", "admin"))),
-    url("^prefix2/", include(("django_app.urls", "admin"), namespace="other")),
+    re_path("^test$", TestHandler(), name="test"),
+    re_path("^test2/(.*)$", TestHandler(), name="test2"),
+    re_path("^login$", TestHandler(), name="login"),
+    re_path("^prefix1/", include(("django_app.urls", "admin"))),
+    re_path("^prefix2/", include(("django_app.urls", "admin"), namespace="other")),
 ]

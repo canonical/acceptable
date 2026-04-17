@@ -5,7 +5,7 @@
 
 from setuptools import find_packages, setup
 
-VERSION = "0.42"
+VERSION = "0.43"
 
 setup(
     name="acceptable",
@@ -19,7 +19,13 @@ setup(
     long_description="".join(open("README.rst").readlines()[2:]),
     long_description_content_type="text/x-rst",
     install_requires=["jsonschema", "pyyaml", "Jinja2"],
-    extras_require=dict(flask=["Flask"], django=["django>=2.1,<3"]),
+    extras_require={
+        "flask": ["Flask"],
+        "django": [
+            'django>=2.1,<5;python_version<"3.12"',
+            'django>=4.2.8,<5;python_version>="3.12"',
+        ],
+    },
     test_suite="acceptable.tests",
     include_package_data=True,
     entry_points={"console_scripts": ["acceptable = acceptable.__main__:main"]},

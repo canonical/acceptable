@@ -160,7 +160,7 @@ def extract_path_parameters(url: str) -> Tuple[str, dict]:
 
         # if no type is defined, use str
         if c == 0:
-            parameters[p] = "str"
+            parameters[p] = "string"
 
         # if type is defined, use that
         elif c == 1:
@@ -207,6 +207,9 @@ def dump(metadata: APIMetadata, stream=None):
 
     for tag in sorted(tags):
         oas.tags.append({"name": tag})
+
+    if metadata.servers:
+        oas.servers = metadata.servers
 
     return yaml.safe_dump(
         _to_dict(oas), stream, default_flow_style=False, encoding=None
