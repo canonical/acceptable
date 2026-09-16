@@ -38,7 +38,7 @@ No documentation yet.
 ### URL Parameters
 
 ```json
-{{api.params_schema|tojson(4)}}
+{{api.params_schema|tojson}}
 ```
 
 {% for name, desc in api.params_schema['properties'].items() %}
@@ -84,7 +84,7 @@ No documentation yet.
 ### Request JSON Schema
 
 ```json
-{{api.request_schema|tojson(4)}}
+{{api.request_schema|tojson}}
 ```
 {% endif %}
 
@@ -92,7 +92,7 @@ No documentation yet.
 ### Response JSON Schema
 
 ```json
-{{api.response_schema|tojson(4)}}
+{{api.response_schema|tojson}}
 ```
 {% endif %}
 {% endfor %}
