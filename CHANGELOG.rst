@@ -1,5 +1,10 @@
 Version Next
 
+Version 0.44
+
+  * Render JSON schemas in generated documentation with 2-space
+    indentation instead of 4.
+
 Version 0.43
 
   * Add support for OpenAPI "servers"

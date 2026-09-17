@@ -14,7 +14,7 @@ from acceptable import get_metadata, lint, openapi
 from acceptable.dummy_importer import DummyImporterContext
 
 
-def tojson_filter(json_object, indent=4):
+def tojson_filter(json_object, indent=2):
     return json.dumps(json_object, indent=indent)
 
 
