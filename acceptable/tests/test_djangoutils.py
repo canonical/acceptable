@@ -280,6 +280,7 @@ def expected_metadata():
                     "methods": ["POST"],
                     "request_schema": djangoutil.get_form_schema(TestForm),
                     "response_schema": None,
+                    "response_status": 200,
                     "params_schema": None,
                     "doc": "Documentation.\n\nMultiline.",
                     "changelog": {},

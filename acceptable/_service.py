@@ -5,6 +5,7 @@
 
 import textwrap
 from collections import OrderedDict
+from http import HTTPStatus
 
 from acceptable import _validation
 from acceptable.util import (
@@ -137,6 +138,7 @@ class APIMetadata:
                 group_apis[name]["methods"] = api.methods
                 group_apis[name]["request_schema"] = api.request_schema
                 group_apis[name]["response_schema"] = api.response_schema
+                group_apis[name]["response_status"] = api.response_status
                 group_apis[name]["params_schema"] = api.params_schema
                 group_apis[name]["doc"] = api.docs
                 group_apis[name]["changelog"] = api._changelog
@@ -335,6 +337,7 @@ class AcceptableAPI:
         self._request_schema_location = None
         self._response_schema = None
         self._response_schema_location = None
+        self._response_status = 200
         self._params_schema = None
         self._params_schema_location = None
         self._changelog = OrderedDict()
@@ -353,6 +356,14 @@ class AcceptableAPI:
 
     def resolve_url(self):
         return self.url
+
+    @property
+    def response_status(self):
+        return self._response_status
+
+    @response_status.setter
+    def response_status(self, status):
+        self._response_status = HTTPStatus(status).value
 
     @property
     def request_schema(self):

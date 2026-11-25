@@ -93,6 +93,15 @@ class APIMetadataTestCase(TestCase):
             ["api5", "api1", "api3", "api2"], list(serialized["group"]["apis"])
         )
 
+    def test_serialize_includes_response_status(self):
+        metadata = APIMetadata()
+        service = AcceptableService("test", metadata=metadata)
+        api = service.api("/api", "api", introduced_at=1)
+        api.response_status = 204
+
+        serialized, _ = metadata.serialize()
+        self.assertEqual(204, serialized["default"]["apis"]["api"]["response_status"])
+
 
 class AcceptableServiceTestCase(TestCase):
     def test_can_register_url_route(self):
@@ -140,6 +149,7 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, "blah")
         self.assertEqual(api.methods, ["GET"])
+        self.assertEqual(api.response_status, 200)
         self.assertEqual(api, fixture.metadata.services["service"][None]["blah"])
 
     def test_acceptable_api_explicit_docs_works(self):
@@ -163,6 +173,14 @@ class AcceptableAPITestCase(TestCase):
         api.response_schema = schema
         self.assertEqual(api.request_schema, schema)
         self.assertEqual(api.response_schema, schema)
+
+    def test_acceptable_api_response_status_invalid(self):
+        fixture = self.useFixture(ServiceFixture())
+        api = fixture.service.api("/api", "blah")
+
+        self.assertRaises(ValueError, setattr, api, "response_status", None)
+        self.assertRaises(ValueError, setattr, api, "response_status", "204")
+        self.assertRaises(ValueError, setattr, api, "response_status", 999)
 
     def test_acceptable_api_schemas_are_sorted(self):
         fixture = self.useFixture(ServiceFixture())

@@ -33,6 +33,7 @@ And example, for flask::
     foo_api = service.api('foo', '/foo', introduced_at=1, methods=['POST'])
     foo_api.request_schema = <JSON Schema...>
     foo_api.response_schema = <JSON Schema...>
+    foo_api.response_status = 201
     foo_api.changelog(3, 'Changed other thing')
     foo_api.changelog(2, 'Changed something')
 
@@ -51,6 +52,12 @@ You can now generate API metadata like so::
     acceptable metadata your.import.path > api.json
 
 This metadata can now be used to generate documentation, and provide API linting.
+
+``response_status`` sets the HTTP status code for the API's response as an
+integer or ``http.HTTPStatus`` value (default ``200``). The status is metadata
+only and does not change or validate the view's response status. If an endpoint
+supports multiple HTTP methods with different response statuses or schemas,
+define a separate ``service.api(...)`` for each method.
 
 
 Django

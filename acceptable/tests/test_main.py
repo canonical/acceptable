@@ -129,6 +129,7 @@ class MetadataTests(testtools.TestCase):
                             "changelog": {4: "changelog"},
                             "request_schema": {"type": "object"},
                             "response_schema": {"type": "object"},
+                            "response_status": 200,
                             "params_schema": {"type": "object"},
                             "introduced_at": 1,
                             "title": "Root",
@@ -208,6 +209,7 @@ class MetadataTests(testtools.TestCase):
                             "changelog": {4: "changelog"},
                             "request_schema": {"type": "object"},
                             "response_schema": {"type": "object"},
+                            "response_status": 200,
                             "params_schema": {
                                 "type": "object",
                                 "properties": {"test": {"type": "string"}},

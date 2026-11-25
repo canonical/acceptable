@@ -49,6 +49,7 @@
           },
           "type": "object"
         },
+        "response_status": 200,
         "params_schema": {
           "properties": {
             "param1": {

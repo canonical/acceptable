@@ -7,6 +7,7 @@ import logging
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
+from http import HTTPStatus
 from typing import Any, Tuple
 
 import yaml
@@ -24,6 +25,7 @@ class OasOperation:
     response_schema: Any
     path_parameters: dict
     query_parameters: dict
+    response_status: int = 200
 
     def _parameters_to_openapi(self):
         # To ensure a stable output we sort the parameter dictionary.
@@ -58,9 +60,13 @@ class OasOperation:
                 "content": {"application/json": {"schema": self.request_schema}}
             }
 
-        result["responses"] = {"200": {"description": self.summary or "OK"}}
+        response_status = HTTPStatus(self.response_status)
+        status = str(response_status.value)
+        result["responses"] = {
+            status: {"description": self.summary or response_status.phrase}
+        }
         if self.response_schema:
-            result["responses"]["200"]["content"] = {
+            result["responses"][status]["content"] = {
                 "application/json": {"schema": self.response_schema}
             }
 
@@ -132,6 +138,7 @@ def convert_endpoint_to_operation(
         query_parameters=query_parameters,
         request_schema=_request_schema,
         response_schema=_response_schema,
+        response_status=endpoint.response_status,
     )
 
 
