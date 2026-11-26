@@ -93,15 +93,6 @@ class APIMetadataTestCase(TestCase):
             ["api5", "api1", "api3", "api2"], list(serialized["group"]["apis"])
         )
 
-    def test_serialize_includes_response_status(self):
-        metadata = APIMetadata()
-        service = AcceptableService("test", metadata=metadata)
-        api = service.api("/api", "api", introduced_at=1)
-        api.response_status = 204
-
-        serialized, _ = metadata.serialize()
-        self.assertEqual(204, serialized["default"]["apis"]["api"]["response_status"])
-
 
 class AcceptableServiceTestCase(TestCase):
     def test_can_register_url_route(self):
@@ -109,7 +100,7 @@ class AcceptableServiceTestCase(TestCase):
             return "test view", 200
 
         service = AcceptableService("service", metadata=APIMetadata())
-        api = service.api("/foo", "foo_api")
+        api = service.api("/foo", "foo_api", response_status=201)
         api.register_view(view, "1.0")
 
         app = Flask(__name__)
@@ -149,7 +140,6 @@ class AcceptableAPITestCase(TestCase):
         self.assertEqual(api.options, {})
         self.assertEqual(api.name, "blah")
         self.assertEqual(api.methods, ["GET"])
-        self.assertEqual(api.response_status, 200)
         self.assertEqual(api, fixture.metadata.services["service"][None]["blah"])
 
     def test_acceptable_api_explicit_docs_works(self):
@@ -176,11 +166,13 @@ class AcceptableAPITestCase(TestCase):
 
     def test_acceptable_api_response_status_invalid(self):
         fixture = self.useFixture(ServiceFixture())
-        api = fixture.service.api("/api", "blah")
 
-        self.assertRaises(ValueError, setattr, api, "response_status", None)
-        self.assertRaises(ValueError, setattr, api, "response_status", "204")
-        self.assertRaises(ValueError, setattr, api, "response_status", 999)
+        self.assertRaises(
+            TypeError, fixture.service.api, "/api", "blah", response_status=200.0
+        )
+        self.assertRaises(
+            ValueError, fixture.service.api, "/api", "blah", response_status=999
+        )
 
     def test_acceptable_api_schemas_are_sorted(self):
         fixture = self.useFixture(ServiceFixture())

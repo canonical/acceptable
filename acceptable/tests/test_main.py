@@ -96,7 +96,7 @@ class MetadataTests(testtools.TestCase):
             from acceptable import AcceptableService
             service = AcceptableService('myservice', 'group')
 
-            root_api = service.api('/', 'root', introduced_at=1)
+            root_api = service.api('/', 'root', introduced_at=1, response_status=201)
             root_api.request_schema = {'type': 'object'}
             root_api.response_schema = {'type': 'object'}
             root_api.params_schema = {'type': 'object'}
@@ -129,7 +129,7 @@ class MetadataTests(testtools.TestCase):
                             "changelog": {4: "changelog"},
                             "request_schema": {"type": "object"},
                             "response_schema": {"type": "object"},
-                            "response_status": 200,
+                            "response_status": 201,
                             "params_schema": {"type": "object"},
                             "introduced_at": 1,
                             "title": "Root",

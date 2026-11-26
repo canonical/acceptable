@@ -142,6 +142,8 @@ class DjangoAPI(AcceptableAPI):
         undocumented=False,
         deprecated_at=None,
         title=None,
+        *,
+        response_status=200
     ):
         # leave url blank, as we can't know it until django has set itself up
         # properly
@@ -155,6 +157,7 @@ class DjangoAPI(AcceptableAPI):
             undocumented,
             deprecated_at,
             title,
+            response_status=response_status,
         )
 
         self._form = None

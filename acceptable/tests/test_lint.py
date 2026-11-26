@@ -1,5 +1,7 @@
 # Copyright 2017 Canonical Ltd.  This software is licensed under the
 # GNU Lesser General Public License version 3 (see the file LICENSE).
+from copy import deepcopy
+
 import testtools
 
 from acceptable import get_metadata, lint
@@ -206,6 +208,27 @@ class LintTests(LintTestCase):
         self.assertEqual(msgs[0].level, lint.ERROR)
         self.assertEqual("url", msgs[0].name)
         self.assertIn("/other", msgs[0].msg)
+
+    def test_response_status_lint(self):
+        new, locations, _ = self.get_metadata("""
+            from acceptable import AcceptableService
+            service = AcceptableService('myservice', 'group')
+            api = service.api('/', 'api', introduced_at=1, response_status=202)
+            api.docs = 'Docs'
+        """)
+        old = deepcopy(new)
+        old_api = old["group"]["apis"]["api"]
+        old_api["response_status"] = 201
+
+        [message] = list(lint.metadata_lint(old, new, locations))
+        self.assertEqual(lint.ERROR, message.level)
+        self.assertEqual("response_status", message.name)
+        self.assertIn("changed from 201 to 202", message.msg)
+        self.assertEqual(locations["api"]["api"], message.location)
+
+        # Older metadata did not record the response status.
+        del old_api["response_status"]
+        self.assertEqual([], list(lint.metadata_lint(old, new, locations)))
 
     def test_required_on_new_api_ok(self):
         old, _, _ = self.get_metadata(

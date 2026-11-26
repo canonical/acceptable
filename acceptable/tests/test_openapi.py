@@ -125,7 +125,6 @@ class EndpointToOperationTests(testtools.TestCase):
         assert "test-name-get" == operation.operation_id
         assert operation.summary is None
         assert 0 == len(operation.tags)
-        assert 200 == operation.response_status
 
     @staticmethod
     def test_populated():
@@ -139,14 +138,12 @@ class EndpointToOperationTests(testtools.TestCase):
             url="https://test.example",
         )
         endpoint.docs = "test docs"  # maps to operation.description
-        endpoint.response_status = 201
         operation = openapi.convert_endpoint_to_operation(endpoint, "get", {})
         assert "test docs" == operation.description
         assert "test-name-get" == operation.operation_id
         assert "test title" == operation.summary
         assert 1 == len(operation.tags)
         assert "test group" == operation.tags[0]
-        assert 201 == operation.response_status
 
 
 class OpenApiTests(testtools.TestCase):
@@ -161,7 +158,10 @@ class OpenApiTests(testtools.TestCase):
         metadata = APIMetadata()
         service = AcceptableService("service", metadata=metadata)
         service.api("/foo", "get_foo", methods=["GET"])
-        service.api("/foo", "create_foo", methods=["POST"])
+        api = service.api(
+            "/foo", "create_foo", methods=["POST"], response_status=HTTPStatus.CREATED
+        )
+        api.response_schema = {"type": "object"}
 
         result = openapi.dump(metadata)
         spec = yaml.safe_load(result)
@@ -169,26 +169,9 @@ class OpenApiTests(testtools.TestCase):
         assert list(spec["paths"].keys()) == ["/foo"]
         assert list(spec["paths"]["/foo"].keys()) == ["get", "post"]
 
-    def test_non_200_response_status(self):
-        metadata = APIMetadata()
-        service = AcceptableService("service", metadata=metadata)
-        api = service.api("/resource", "delete_resource", methods=["DELETE"])
-        api.response_status = 204
-
-        spec = yaml.safe_load(openapi.dump(metadata))
-        assert spec["paths"]["/resource"]["delete"]["responses"] == {
-            "204": {"description": "No Content"}
-        }
-
-    def test_non_200_response_status_with_schema(self):
-        metadata = APIMetadata()
-        service = AcceptableService("service", metadata=metadata)
-        api = service.api("/resource", "create_resource", methods=["POST"])
-        api.response_status = HTTPStatus.CREATED
-        api.response_schema = {"type": "object"}
-
-        spec = yaml.safe_load(openapi.dump(metadata))
-        assert spec["paths"]["/resource"]["post"]["responses"] == {
+        path = spec["paths"]["/foo"]
+        assert path["get"]["responses"] == {"200": {"description": "OK"}}
+        assert path["post"]["responses"] == {
             "201": {
                 "description": "Created",
                 "content": {"application/json": {"schema": {"type": "object"}}},

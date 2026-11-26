@@ -152,12 +152,23 @@ def lint_api(api_name, old, new, locations, old_introduced_at):
             location=api_location,
         )
 
-    # cannot add required fields
+    # TODO: Check whether the URL and method are still registered under another
+    # API name in the same service before reporting a method removal.
     for removed in set(old.get("methods", [])) - set(new["methods"]):
         yield LintError(
             "methods",
             "HTTP method {} removed",
             removed,
+            api_name=api_name,
+            location=api_location,
+        )
+
+    if "response_status" in old and old["response_status"] != new["response_status"]:
+        yield LintError(
+            "response_status",
+            "response_status changed from {} to {}",
+            old["response_status"],
+            new["response_status"],
             api_name=api_name,
             location=api_location,
         )

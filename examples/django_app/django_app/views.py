@@ -27,7 +27,7 @@ class TestForm(forms.Form):
     )
 
 
-api = service.django_api("test", introduced_at=1)
+api = service.django_api("test", introduced_at=1, response_status=201)
 api.django_form = TestForm
 
 

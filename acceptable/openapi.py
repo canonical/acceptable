@@ -25,7 +25,7 @@ class OasOperation:
     response_schema: Any
     path_parameters: dict
     query_parameters: dict
-    response_status: int = 200
+    response_status: int
 
     def _parameters_to_openapi(self):
         # To ensure a stable output we sort the parameter dictionary.
@@ -61,14 +61,10 @@ class OasOperation:
             }
 
         response_status = HTTPStatus(self.response_status)
-        status = str(response_status.value)
-        result["responses"] = {
-            status: {"description": self.summary or response_status.phrase}
-        }
+        response = {"description": self.summary or response_status.phrase}
         if self.response_schema:
-            result["responses"][status]["content"] = {
-                "application/json": {"schema": self.response_schema}
-            }
+            response["content"] = {"application/json": {"schema": self.response_schema}}
+        result["responses"] = {str(response_status.value): response}
 
         return result
 
