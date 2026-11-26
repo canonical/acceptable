@@ -2,6 +2,7 @@
 # GNU Lesser General Public License version 3 (see the file LICENSE).
 from collections import defaultdict
 from dataclasses import dataclass
+from http import HTTPStatus
 
 import testtools
 import yaml
@@ -157,13 +158,25 @@ class OpenApiTests(testtools.TestCase):
         metadata = APIMetadata()
         service = AcceptableService("service", metadata=metadata)
         service.api("/foo", "get_foo", methods=["GET"])
-        service.api("/foo", "create_foo", methods=["POST"])
+        api = service.api(
+            "/foo", "create_foo", methods=["POST"], response_status=HTTPStatus.CREATED
+        )
+        api.response_schema = {"type": "object"}
 
         result = openapi.dump(metadata)
         spec = yaml.safe_load(result)
 
         assert list(spec["paths"].keys()) == ["/foo"]
         assert list(spec["paths"]["/foo"].keys()) == ["get", "post"]
+
+        path = spec["paths"]["/foo"]
+        assert path["get"]["responses"] == {"200": {"description": "OK"}}
+        assert path["post"]["responses"] == {
+            "201": {
+                "description": "Created",
+                "content": {"application/json": {"schema": {"type": "object"}}},
+            }
+        }
 
     def test_metadata_servers(self):
         sample_servers = [{"url": "http://test", "description": "Testing"}]

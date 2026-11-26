@@ -100,7 +100,7 @@ class AcceptableServiceTestCase(TestCase):
             return "test view", 200
 
         service = AcceptableService("service", metadata=APIMetadata())
-        api = service.api("/foo", "foo_api")
+        api = service.api("/foo", "foo_api", response_status=201)
         api.register_view(view, "1.0")
 
         app = Flask(__name__)
@@ -163,6 +163,16 @@ class AcceptableAPITestCase(TestCase):
         api.response_schema = schema
         self.assertEqual(api.request_schema, schema)
         self.assertEqual(api.response_schema, schema)
+
+    def test_acceptable_api_response_status_invalid(self):
+        fixture = self.useFixture(ServiceFixture())
+
+        self.assertRaises(
+            TypeError, fixture.service.api, "/api", "blah", response_status=200.0
+        )
+        self.assertRaises(
+            ValueError, fixture.service.api, "/api", "blah", response_status=999
+        )
 
     def test_acceptable_api_schemas_are_sorted(self):
         fixture = self.useFixture(ServiceFixture())

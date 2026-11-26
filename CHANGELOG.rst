@@ -1,5 +1,11 @@
 Version Next
 
+  * Add a ``response_status`` argument to ``service.api()`` and
+    ``service.django_api()`` to document non-200 responses in metadata
+    and OpenAPI output (default ``200``).
+  * Report a lint error when the ``response_status`` of an existing API
+    changes.
+
 Version 0.44
 
   * Render JSON schemas in generated documentation with 2-space

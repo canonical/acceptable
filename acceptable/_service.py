@@ -5,6 +5,7 @@
 
 import textwrap
 from collections import OrderedDict
+from http import HTTPStatus
 
 from acceptable import _validation
 from acceptable.util import (
@@ -137,6 +138,7 @@ class APIMetadata:
                 group_apis[name]["methods"] = api.methods
                 group_apis[name]["request_schema"] = api.request_schema
                 group_apis[name]["response_schema"] = api.response_schema
+                group_apis[name]["response_status"] = api.response_status
                 group_apis[name]["params_schema"] = api.params_schema
                 group_apis[name]["doc"] = api.docs
                 group_apis[name]["changelog"] = api._changelog
@@ -238,13 +240,16 @@ class AcceptableService:
         undocumented=False,
         deprecated_at=None,
         title=None,
-        **options
+        *,
+        response_status=200,
+        **options,
     ):
         """Add an API to the service.
 
         :param url: This is the url that the API should be registered at.
         :param name: This is the name of the api, and will be registered with
             flask apps under.
+        :param response_status: HTTP status to document, not the status to return.
 
         Other keyword arguments may be used, and they will be passed to the
         flask application when initialised. Of particular interest is the
@@ -262,6 +267,7 @@ class AcceptableService:
             deprecated_at=deprecated_at,
             title=title,
             location=location,
+            response_status=response_status,
         )
         self.metadata.register_api(self.name, self.group, api)
         return api
@@ -273,11 +279,14 @@ class AcceptableService:
         undocumented=False,
         deprecated_at=None,
         title=None,
-        **options
+        *,
+        response_status=200,
+        **options,
     ):
         """Add a django API handler to the service.
 
         :param name: This is the name of the django url to use.
+        :param response_status: HTTP status to document, not the status to return.
 
         The 'methods' parameter can be supplied as normal, you can also user
         the @api.handler decorator to link this API to its handler.
@@ -295,6 +304,7 @@ class AcceptableService:
             undocumented=undocumented,
             deprecated_at=deprecated_at,
             title=title,
+            response_status=response_status,
         )
         self.metadata.register_api(self.name, self.group, api)
         return api
@@ -321,6 +331,8 @@ class AcceptableAPI:
         undocumented=False,
         deprecated_at=None,
         title=None,
+        *,
+        response_status=200,
     ):
 
         self.service = service
@@ -335,6 +347,9 @@ class AcceptableAPI:
         self._request_schema_location = None
         self._response_schema = None
         self._response_schema_location = None
+        if not isinstance(response_status, int):
+            raise TypeError(f"response_status must be an integer: {response_status!r}")
+        self.response_status = HTTPStatus(response_status).value
         self._params_schema = None
         self._params_schema_location = None
         self._changelog = OrderedDict()
